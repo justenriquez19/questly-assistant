@@ -1,9 +1,9 @@
 import OpenAI from 'openai';
 import { Document } from 'mongoose';
 
-import { ALES_PLACE_MAIN_FUNCTIONS, EMPTY_FUNCTIONS } from '../shared/constants/functions.constants';
-import { AppConstants, AuxiliarMessages, AvailableGptModels, ErrorMessages, FunctionNames, GptRoles } from '../shared/constants/app.constants';
-import { BOT_BEHAVIOR_DESCRIPTION, FIRST_CONTACT_BEHAVIOR } from '../shared/constants/ales-bible.constants';
+import { ALES_PLACE_MAIN_FUNCTIONS } from '../shared/constants/functions.constants';
+import { AppConstants, AuxiliarMessages, AvailableGptModels, ErrorMessages, FunctionNames, GptRoles, ResponseMessages } from '../shared/constants/app.constants';
+import { BOT_BEHAVIOR_DESCRIPTION } from '../shared/constants/ales-bible.constants';
 import { ChatCompletion, ChatCompletionMessageParam } from 'openai/resources';
 import { ChatGptHistoryBody, CreateChatCompletionFunction, ExecuteFunctionBody, IChatGptApiError } from '../shared/interfaces/gpt-interfaces';
 import { IHistoryStructure, PersistentChatModel } from '../shared/models/persistent-chats';
@@ -33,6 +33,10 @@ export class GPTAssistant {
     if (!context.isFirstContact) {
       chatGptResponse = await this.getChatGptResponse(context.chatHistory, this.currentFunctions, BOT_BEHAVIOR_DESCRIPTION);
     } else {
+      context.chatHistory.push({
+        role: GptRoles.Assistant,
+        content: `${ResponseMessages.FirstConcact1}${currentClientName}${ResponseMessages.FirstConcact2}`
+      });
       await context.save();
 
       return {

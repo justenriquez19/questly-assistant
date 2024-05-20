@@ -2,7 +2,7 @@ import { Client, Message } from 'whatsapp-web.js';
 import express, { Express } from 'express';
 import qrcode from 'qrcode-terminal';
 
-import { AppConstants, AuxiliarMessages, ErrorMessages, FunctionNames, ResponseMessages } from './shared/constants/app.constants';
+import { AppConstants, AuxiliarMessages, ErrorMessages, FunctionNames, ResponseMessages, TimeoutDurations } from './shared/constants/app.constants';
 import { CoreUtilFunctions } from './services/core-utils.service';
 import { ExtendedMessage } from './shared/interfaces/gpt-interfaces';
 import { GPTAssistant } from './services/gpt-assisntant.service';
@@ -16,6 +16,8 @@ export class QuestlyAIssistant {
   private assistant: GPTAssistant;
   private client: Client;
   private mongoService: MongoService;
+  private userMessages: Map<string, ExtendedMessage[]>;
+  private userMessageTimers: Map<string, NodeJS.Timeout>;
   public coreUtilFunctions: CoreUtilFunctions;
 
   /**
@@ -24,6 +26,8 @@ export class QuestlyAIssistant {
   constructor() {
     this.assistant = new GPTAssistant();
     this.coreUtilFunctions = new CoreUtilFunctions();
+    this.userMessages = new Map();
+    this.userMessageTimers = new Map();
     this.mongoService = MongoService.getInstance();
     this.client = new Client({
       webVersionCache: {
@@ -78,16 +82,47 @@ export class QuestlyAIssistant {
     try {
       const currentSenderId = message.from;
       const messageContent = message.body;
-      const currentSenderUser = this.coreUtilFunctions.cutUntilSpace(message._data.notifyName);
       console.log(`${AuxiliarMessages.MessageReceivedFrom} ${currentSenderId}: ${messageContent}`);
 
-      if (message.hasMedia) {
-        await this.handleMediaMessage(messageContent, currentSenderId, currentSenderUser, message);
+      if (this.userMessages.has(currentSenderId)) {
+        this.userMessages.get(currentSenderId)!.push(message);
+        clearTimeout(this.userMessageTimers.get(currentSenderId)!);
       } else {
-        await this.handleTextMessage(messageContent, currentSenderId, currentSenderUser, message);
+        this.userMessages.set(currentSenderId, [message]);
+      }
+
+      this.userMessageTimers.set(currentSenderId, setTimeout(async () => {
+        await this.processGroupedMessages(currentSenderId);
+      }, TimeoutDurations.TimeBetweenMessages));
+
+    } catch (error) {
+      console.error(ErrorMessages.DefaultMessage, error);
+    }
+  }
+
+  /**
+   * @description Processes grouped messages for a sender when the timer expires.
+   * @param {string} senderId - The ID of the sender.
+   */
+  private async processGroupedMessages(senderId: string): Promise<void> {
+    const messages = this.userMessages.get(senderId);
+    if (!messages || messages.length === 0) return;
+
+    const combinedMessageContent = messages.map(msg => msg.body).join(AppConstants.BLANK_SPACE);
+    const firstMessage = messages[0];
+    const userName = this.coreUtilFunctions.cutUntilSpace(firstMessage._data.notifyName);
+
+    try {
+      if (firstMessage.hasMedia) {
+        await this.handleMediaMessage(combinedMessageContent, senderId, userName, firstMessage);
+      } else {
+        await this.handleTextMessage(combinedMessageContent, senderId, userName, firstMessage);
       }
     } catch (error) {
       console.error(ErrorMessages.DefaultMessage, error);
+    } finally {
+      this.userMessages.delete(senderId);
+      this.userMessageTimers.delete(senderId);
     }
   }
 
