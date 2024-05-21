@@ -44,7 +44,8 @@ export enum ResponseMessages {
   AskPreferedName2 = '. Saludar por su primer nombre y preguntar si ese nombre le parece bien o prefiere otro.',
   FirstConcact1 = "¡Hola! Parece que es la primera vez que te contactas con el asistente virtual de Ale's Place. Veo que te llamas ",
   FirstConcact2 = ', ¿es correcto? ¿O prefieres que te llame de otra forma? 😊',
-  MeidaNotAllowed = 'Disculpa, actualmente no podemos recibir mensajes de audio o vídeo, ¿podrías escribirnos? Muchas gracias',
+  MediaNotSupported = 'Disculpa, actualmente no puedo responder mensajes de voz 🔊, fotos 📸 o vídeos 🎥. En caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
+  MediaNotSupportedComplement = 'Por cierto, actualmente no puedo responder mensajes de voz 🔊, fotos 📸 o vídeos 🎥. En caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
   RedirectToWebsite = 'Entra a www.alesplace.com/catalogo-de-servicios para agendar una cita'
 }
 

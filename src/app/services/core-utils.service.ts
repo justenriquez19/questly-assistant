@@ -14,4 +14,13 @@ export class CoreUtilFunctions {
   public cutUntilSpace(input: string): string {
     return input.split(AppConstants.BLANK_SPACE)[0];
   }
+
+  /**
+   * @description Checks if the input string contains any non-whitespace characters.
+   * @param {string} input - The string to be validated.
+   * @returns {boolean} True if the string contains non-whitespace characters, false otherwise.
+   */
+  public isNotOnlyWhitespace(input: string): boolean {
+    return input.trim().length > 0;
+  }
 }

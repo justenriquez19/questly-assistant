@@ -2,7 +2,7 @@ import { Client, Message } from 'whatsapp-web.js';
 import express, { Express } from 'express';
 import qrcode from 'qrcode-terminal';
 
-import { AppConstants, AuxiliarMessages, ErrorMessages, FunctionNames, ResponseMessages, TimeoutDurations } from './shared/constants/app.constants';
+import { AppConstants, AuxiliarMessages, ErrorMessages, FunctionNames, GptRoles, ResponseMessages, TimeoutDurations } from './shared/constants/app.constants';
 import { CoreUtilFunctions } from './services/core-utils.service';
 import { ExtendedMessage } from './shared/interfaces/gpt-interfaces';
 import { GPTAssistant } from './services/gpt-assisntant.service';
@@ -84,19 +84,28 @@ export class QuestlyAIssistant {
       const messageContent = message.body;
       console.log(`${AuxiliarMessages.MessageReceivedFrom} ${currentSenderId}: ${messageContent}`);
 
-      if (this.userMessages.has(currentSenderId)) {
-        this.userMessages.get(currentSenderId)!.push(message);
-        clearTimeout(this.userMessageTimers.get(currentSenderId)!);
-      } else {
-        this.userMessages.set(currentSenderId, [message]);
-      }
-
+      this.handleMessageStorage(currentSenderId, message);
+      
       this.userMessageTimers.set(currentSenderId, setTimeout(async () => {
         await this.processGroupedMessages(currentSenderId);
       }, TimeoutDurations.TimeBetweenMessages));
 
     } catch (error) {
       console.error(ErrorMessages.DefaultMessage, error);
+    }
+  }
+
+  /**
+   * @description Stores and groups received messages by sender ID.
+   * @param {string} senderId - The ID of the sender.
+   * @param {ExtendedMessage} message - The received message.
+   */
+  private handleMessageStorage(senderId: string, message: ExtendedMessage): void {
+    if (this.userMessages.has(senderId)) {
+      this.userMessages.get(senderId)!.push(message);
+      clearTimeout(this.userMessageTimers.get(senderId)!);
+    } else {
+      this.userMessages.set(senderId, [message]);
     }
   }
 
@@ -108,35 +117,60 @@ export class QuestlyAIssistant {
     const messages = this.userMessages.get(senderId);
     if (!messages || messages.length === 0) return;
 
-    const combinedMessageContent = messages.map(msg => msg.body).join(AppConstants.BLANK_SPACE);
+    const combinedMessageContent = this.combineMessagesContent(messages);
     const firstMessage = messages[0];
     const userName = this.coreUtilFunctions.cutUntilSpace(firstMessage._data.notifyName);
+    const isMediaDetected = this.isMediaDetectedInMessages(messages);
 
-    try {
-      if (firstMessage.hasMedia) {
-        await this.handleMediaMessage(combinedMessageContent, senderId, userName, firstMessage);
-      } else {
-        await this.handleTextMessage(combinedMessageContent, senderId, userName, firstMessage);
-      }
-    } catch (error) {
-      console.error(ErrorMessages.DefaultMessage, error);
-    } finally {
-      this.userMessages.delete(senderId);
-      this.userMessageTimers.delete(senderId);
+    if (this.isSingleEmptyMediaMessage(messages)) {
+      await this.handleSingleEmptyMediaMessage(combinedMessageContent, senderId, firstMessage);
+    } else {
+      await this.handleTextMessage(combinedMessageContent, senderId, userName, firstMessage, isMediaDetected);
     }
+
+    this.clearUserMessages(senderId);
   }
 
   /**
-   * @description Handles messages with media content.
-   * @param {string} messageContent - The content of the received message.
+   * @description Combines the content of multiple messages into a single string.
+   * @param {ExtendedMessage[]} messages - The array of messages to combine.
+   * @returns {string} - The combined message content.
+   */
+  private combineMessagesContent(messages: ExtendedMessage[]): string {
+    return messages.map(msg => msg.body).join(AppConstants.BLANK_SPACE);
+  }
+
+  /**
+   * @description Checks if any message in the array contains media.
+   * @param {ExtendedMessage[]} messages - The array of messages to check.
+   * @returns {boolean} - True if any message contains media, false otherwise.
+   */
+  private isMediaDetectedInMessages(messages: ExtendedMessage[]): boolean {
+    return messages.some(msg => msg.hasMedia);
+  }
+
+  /**
+   * @description Checks if the messages array contains a single empty media message.
+   * @param {ExtendedMessage[]} messages - The array of messages to check.
+   * @returns {boolean} - True if it contains a single empty media message, false otherwise.
+   */
+  private isSingleEmptyMediaMessage(messages: ExtendedMessage[]): boolean {
+    return messages.length === 1 && messages[0].hasMedia && messages[0].body === AppConstants.EMPTY_STRING;
+  }
+
+  /**
+   * @description Handles a single empty media message by replying with a specific response.
+   * @param {string} messageContent - The content of the message.
    * @param {string} senderId - The ID of the sender.
-   * @param {string} senderUser - The user name of the sender.
    * @param {Message} message - The message object received from WhatsApp.
    */
-  private async handleMediaMessage(messageContent: string, senderId: string, senderUser: string, message: Message): Promise<void> {
-    await this.assistant.processFunctions(messageContent, senderId, senderUser);
-    const finalResponse = await this.assistant.processResponse(FunctionNames.MediaDetected, ResponseMessages.MeidaNotAllowed, senderId);
-    message.reply(finalResponse);
+  private async handleSingleEmptyMediaMessage(messageContent: string, senderId: string, message: ExtendedMessage): Promise<void> {
+    const processed = await this.assistant.processFunctions(messageContent, senderId, AppConstants.EMPTY_STRING);
+    if (processed.functionName !== FunctionNames.FirstConcact) {
+      await this.assistant.addNewMessage(ResponseMessages.MediaNotSupported, senderId, GptRoles.Assistant);
+      await message.reply(ResponseMessages.MediaNotSupported);
+      this.clearUserMessages(senderId);
+    }
   }
 
   /**
@@ -145,36 +179,38 @@ export class QuestlyAIssistant {
    * @param {string} senderId - The ID of the sender.
    * @param {string} senderUserName - The user name of the sender.
    * @param {Message} message - The message object received from WhatsApp.
+   * @param {boolean} hasMedia - Indicates if any message contains media.
    */
-  private async handleTextMessage(messageContent: string, senderId: string, senderUserName: string, message: Message): Promise<void> {
+  private async handleTextMessage(messageContent: string, senderId: string, senderUserName: string, message: Message, hasMedia: boolean): Promise<void> {
     const processed = await this.assistant.processFunctions(messageContent, senderId, senderUserName);
 
+    let responseText: string;
     switch (processed.functionName) {
       case FunctionNames.AddApointment:
-        await this.replyCallingFunction(FunctionNames.AddApointment, ResponseMessages.RedirectToWebsite, senderId, message);
+        responseText = await this.assistant.processResponse(FunctionNames.AddApointment, ResponseMessages.RedirectToWebsite, senderId);
         break;
-
       case FunctionNames.FirstConcact:
-        const firstContactResponse = `${ResponseMessages.FirstConcact1}${senderUserName}${ResponseMessages.FirstConcact2}`;
-        message.reply(firstContactResponse);
+        responseText = `${ResponseMessages.FirstConcact1}${senderUserName}${ResponseMessages.FirstConcact2}`;
         break;
-
       default:
-        message.reply(processed.message.content as string);
+        responseText = processed.message.content as string;
         break;
     }
+
+    if (hasMedia) {
+      responseText += `\n\n${ResponseMessages.MediaNotSupportedComplement}`;
+    }
+
+    message.reply(responseText);
   }
 
   /**
-   * @description Replies to the sender using a provided function behavior that is processed by the assistant.
-   * @param {string} functionName - The name of the function being processed.
-   * @param {string} responseText - The text of the response to be sent.
+   * @description Clears the stored messages and timers for a specific sender.
    * @param {string} senderId - The ID of the sender.
-   * @param {Message} message - The message object to reply to.
    */
-  private async replyCallingFunction(functionName: string, responseText: string, senderId: string, message: Message): Promise<void> {
-    const response = await this.assistant.processResponse(functionName, responseText, senderId);
-    message.reply(response);
+  private clearUserMessages(senderId: string): void {
+    this.userMessages.delete(senderId);
+    this.userMessageTimers.delete(senderId);
   }
 
   /**

@@ -176,12 +176,35 @@ export class GPTAssistant {
     if (!context) {
       context = await this.createInitialContext(text, currentChatId, currentClientName);
     } else {
+      if (text !== AppConstants.EMPTY_STRING) {
+        context.chatHistory.push({
+          role: GptRoles.User,
+          content: text
+        });
+      }
       context.isFirstContact = false;
-      context.chatHistory.push({
-        role: GptRoles.User,
-        content: text
-      });
     }
+
+    await context.save();
+
+    return context;
+  }
+
+  /**
+   * @description Adds a new message to the chat history and updates the context for the given chat ID.
+   * @param {string} text - The content of the message to be added.
+   * @param {string} currentChatId - The ID of the current chat.
+   * @param {string} roleProvided - The role of the sender (e.g., 'user', 'assistant').
+   * @returns {Promise<Document & IHistoryStructure>} - Returns the updated context document with the new message added.
+   */
+  public async addNewMessage(text: string, currentChatId: string, roleProvided: string): Promise<Document & IHistoryStructure> {
+    let context = await this.getContextByChatId(currentChatId);
+
+    context.chatHistory.push({
+      role: roleProvided,
+      content: text
+    });
+    context.isFirstContact = false;
 
     await context.save();
 
