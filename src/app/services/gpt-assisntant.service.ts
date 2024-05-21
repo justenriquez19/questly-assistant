@@ -233,6 +233,7 @@ export class GPTAssistant {
       clientName: currentClientName,
       timeOfLastMessage: new Date(),
       isFirstContact: true,
+      shouldRespond: true,
       chatHistory: [
         {
           role: GptRoles.User,
@@ -263,5 +264,31 @@ export class GPTAssistant {
    */
   private isGptApiError(error: unknown): error is IChatGptApiError {
     return typeof error === 'object' && error !== null && 'message' in error;
+  }
+
+  /**
+   * @description Updates the `shouldRespond` property of the chat context.
+   * @param {string} currentChatId - The ID of the current chat.
+   * @param {boolean} newShouldRespondValue - The new value for the `shouldRespond` property.
+   * @returns {Promise<Document & IHistoryStructure>} - Returns the updated context document.
+   * @throws {Error} If the context for the given chat ID is not found.
+   */
+  public async updateShouldRespond(currentChatId: string, newShouldRespondValue: boolean): Promise<Document & IHistoryStructure> {
+    try {
+      const context = await this.getContextByChatId(currentChatId);
+
+      if (!context) {
+        throw new Error(`${ErrorMessages.ContextNotFound} ${currentChatId}`);
+      }
+      context.shouldRespond = newShouldRespondValue;
+      context.isFirstContact = false;
+
+      await context.save();
+
+      return context;
+    } catch (error) {
+      console.error(`${ErrorMessages.FailedUpdatingContext} ${currentChatId}`, error);
+      throw error;
+    }
   }
 }

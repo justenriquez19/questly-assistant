@@ -69,3 +69,7 @@ export const FIRST_CONTACT_BEHAVIOR = `
 export const ADD_APPOINTMENT_DESCRIPTION = `
   Agendar una cita. Se considera que se quiere agendar una cita siempre que la clienta pregunte sobre citas u horarios, o muestre interés en saber si hay citas disponibles.
 `;
+
+export const TALK_TO_HUMAN_DESCRIPTION = `
+  Hablar con un humano. Se considera que se quiere hablar con un humano siempre que la clienta pida hablar con una persona, no quiera hablar con el chatbot o pida hablar con Ale.
+`;

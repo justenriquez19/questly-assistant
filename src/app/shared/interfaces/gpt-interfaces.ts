@@ -9,6 +9,8 @@ export interface HistoryStructure {
   chatHistory: ChatGptHistoryBody[];
   chatId: string;
   clientName: string;
+  isFirstContact: boolean;
+  shouldRespond: boolean;
   timeOfLastMessage: Date;
 }
 

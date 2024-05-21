@@ -10,6 +10,7 @@ export interface IHistoryStructure extends Document {
     chatId: string;
     clientName: string;
     isFirstContact: boolean;
+    shouldRespond: boolean;
     timeOfLastMessage: Date;
 }
 
@@ -23,6 +24,7 @@ const HistoryStructureSchema = new Schema<IHistoryStructure>({
     chatId: { type: String, required: true },
     clientName: { type: String, required: true },
     isFirstContact: { type: Boolean, required: true },
+    shouldRespond: { type: Boolean, required: true },
     timeOfLastMessage: { type: Date, required: true }
 });
 

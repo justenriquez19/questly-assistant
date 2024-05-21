@@ -8,6 +8,8 @@ export class AppConstants {
   public static readonly ELLIPSES: string = '...';
   public static readonly EMPTY_STRING: string = '';
   public static readonly MESSAGE_KEY: string = 'message';
+  public static readonly OBJECT_KEY: string = 'object';
+  public static readonly ONE_DOLLAR: string = '$1';
   public static readonly QR_KEY: string = 'qr';
   public static readonly READY_KEY: string = 'ready';
   public static readonly REMOTE_KEY: "remote" = 'remote';
@@ -36,7 +38,8 @@ export enum GptRoles {
 export enum FunctionNames {
   AddApointment = 'add_apointment',
   FirstConcact = 'first_contact',
-  MediaDetected = 'media_detected'
+  MediaDetected = 'media_detected',
+  TalkToHuman = 'talk_to_human'
 };
 
 export enum ResponseMessages {
@@ -46,7 +49,11 @@ export enum ResponseMessages {
   FirstConcact2 = ', ¿es correcto? ¿O prefieres que te llame de otra forma? 😊',
   MediaNotSupported = 'Disculpa, actualmente no puedo responder mensajes de voz 🔊, fotos 📸 o vídeos 🎥. En caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
   MediaNotSupportedComplement = 'Por cierto, actualmente no puedo responder mensajes de voz 🔊, fotos 📸 o vídeos 🎥. En caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
-  RedirectToWebsite = 'Entra a www.alesplace.com/catalogo-de-servicios para agendar una cita'
+  PendingMessage1 = `¡Hola! 👋 Este es el asistente de notificaciones de Ale's Place 😊, parece que el usuario "`,
+  PendingMessage2 = `", con el número de teléfono 📞`,
+  PendingMessage3 = `quiere contactar directamente contigo, por favor, respóndole lo antes posible. Gracias 😊✨`,
+  RedirectToWebsite = 'Entra a www.alesplace.com/catalogo-de-servicios para agendar una cita',
+  StopConversation = '¡Entendido! A partir de este momento ya no podré responderte. Ale se pondrá en contacto contigo pronto 😊'
 }
 
 export enum TimeoutDurations {
@@ -55,7 +62,19 @@ export enum TimeoutDurations {
 
 export enum ErrorMessages {
   CallingError = 'Error calling OpenAi endpoint',
+  ContextNotFound = 'Context not found for chat ID:',
   DefaultMessage = 'Controlled error: ',
+  FailedUpdatingContext = 'Failed trying to update context for chat ID:',
+  NotificationFailed = 'Failed to send notification to number:',
   RateLimitError = 'The OpenAi account has exceded its available balance: ',
   UnexpectedError = 'There has been an unexpected error: '
 };
+
+export enum NotificationContacts {
+  MainContact = '5219831844892@c.us',
+  TestContact = '5219831381983@c.us'
+}
+
+export class RegexExpressions {
+  public static readonly GET_JUST_NUMBER = /^.*(\d{10})@c\.us$/
+}

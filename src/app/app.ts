@@ -2,7 +2,7 @@ import { Client, Message } from 'whatsapp-web.js';
 import express, { Express } from 'express';
 import qrcode from 'qrcode-terminal';
 
-import { AppConstants, AuxiliarMessages, ErrorMessages, FunctionNames, GptRoles, ResponseMessages, TimeoutDurations } from './shared/constants/app.constants';
+import { AppConstants, AuxiliarMessages, ErrorMessages, FunctionNames, GptRoles, NotificationContacts, RegexExpressions, ResponseMessages, TimeoutDurations } from './shared/constants/app.constants';
 import { CoreUtilFunctions } from './services/core-utils.service';
 import { ExtendedMessage } from './shared/interfaces/gpt-interfaces';
 import { GPTAssistant } from './services/gpt-assisntant.service';
@@ -76,20 +76,30 @@ export class QuestlyAIssistant {
 
   /**
    * @description Processes received WhatsApp messages.
-   * @param {Message} message - The message object received from WhatsApp.
+   * @param {ExtendedMessage} message - The message object received from WhatsApp.
    */
   private async onMessageReceived(message: ExtendedMessage): Promise<void> {
     try {
-      const currentSenderId = message.from;
+      const currentSenderId = message.from.replace(RegexExpressions.GET_JUST_NUMBER, AppConstants.ONE_DOLLAR);
       const messageContent = message.body;
       console.log(`${AuxiliarMessages.MessageReceivedFrom} ${currentSenderId}: ${messageContent}`);
 
-      this.handleMessageStorage(currentSenderId, message);
+      let context = await this.assistant.getContextByChatId(currentSenderId);
 
-      this.userMessageTimers.set(currentSenderId, setTimeout(async () => {
-        await this.processGroupedMessages(currentSenderId);
-      }, TimeoutDurations.TimeBetweenMessages));
+      if (context) {
+        if (!context.shouldRespond && this.coreUtilFunctions.isMoreThanDaysAgo(context.timeOfLastMessage, 0.5)) {
+          context.shouldRespond = true;
+          context = await this.assistant.updateShouldRespond(currentSenderId, true);
+        }
+      }
 
+      if (!context || context.shouldRespond) {
+        this.handleMessageStorage(currentSenderId, message);
+
+        this.userMessageTimers.set(currentSenderId, setTimeout(async () => {
+          await this.processGroupedMessages(currentSenderId);
+        }, TimeoutDurations.TimeBetweenMessages));
+      }
     } catch (error) {
       console.error(ErrorMessages.DefaultMessage, error);
     }
@@ -190,7 +200,7 @@ export class QuestlyAIssistant {
   }
 
   /**
-   * @description Handles text messages.
+   * @description Handles text messages received from WhatsApp.
    * @param {string} messageContent - The content of the received message.
    * @param {string} senderId - The ID of the sender.
    * @param {string} senderUserName - The user name of the sender.
@@ -198,27 +208,39 @@ export class QuestlyAIssistant {
    * @param {boolean} hasMedia - Indicates if any message contains media.
    */
   private async handleTextMessage(messageContent: string, senderId: string, senderUserName: string, message: Message, hasMedia: boolean): Promise<void> {
-    const processed = await this.assistant.processFunctions(messageContent, senderId, senderUserName);
+    try {
+      const processed = await this.assistant.processFunctions(messageContent, senderId, senderUserName);
 
-    let responseText: string;
-    switch (processed.functionName) {
-      case FunctionNames.AddApointment:
-        responseText = await this.assistant.processResponse(FunctionNames.AddApointment, ResponseMessages.RedirectToWebsite, senderId);
-        break;
-      case FunctionNames.FirstConcact:
-        responseText = `${ResponseMessages.FirstConcact1}${senderUserName}${ResponseMessages.FirstConcact2}`;
-        break;
-      default:
-        responseText = processed.message.content as string;
-        break;
+      let responseText: string;
+      switch (processed.functionName) {
+        case FunctionNames.AddApointment:
+          responseText = await this.assistant.processResponse(FunctionNames.AddApointment, ResponseMessages.RedirectToWebsite, senderId);
+          break;
+        case FunctionNames.FirstConcact:
+          responseText = `${ResponseMessages.FirstConcact1}${senderUserName}${ResponseMessages.FirstConcact2}`;
+          break;
+        case FunctionNames.TalkToHuman:
+          await this.assistant.updateShouldRespond(senderId, false);
+          responseText = ResponseMessages.StopConversation;
+          await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant);
+          const notificationMessage = `${ResponseMessages.PendingMessage1}${senderUserName}${ResponseMessages.PendingMessage2} ${senderId} ${ResponseMessages.PendingMessage3}`;
+          await this.sendNotification(NotificationContacts.TestContact, notificationMessage);
+          break;
+        default:
+          responseText = processed.message.content as string;
+          break;
+      }
+
+      if (hasMedia) {
+        responseText += `\n\n${ResponseMessages.MediaNotSupportedComplement}`;
+      }
+
+      await message.reply(responseText);
+    } catch (error) {
+      console.error(ErrorMessages.DefaultMessage, error);
     }
-
-    if (hasMedia) {
-      responseText += `\n\n${ResponseMessages.MediaNotSupportedComplement}`;
-    }
-
-    message.reply(responseText);
   }
+
 
   /**
    * @description Clears the stored messages and timers for a specific sender.
@@ -236,5 +258,18 @@ export class QuestlyAIssistant {
     this.app.listen(3000, () => {
       console.log(AppConstants.SERVER_RUNNING_MESSAGE);
     });
+  }
+
+  /**
+   * @description Sends a notification to a specified phone number.
+   * @param {string} phoneNumber - The phone number to send the notification to.
+   * @param {string} message - The message to send.
+   */
+  private async sendNotification(phoneNumber: string, message: string): Promise<void> {
+    try {
+      await this.client.sendMessage(phoneNumber, message);
+    } catch (error) {
+      console.error(`${ErrorMessages.NotificationFailed} ${phoneNumber}`, error);
+    }
   }
 }
