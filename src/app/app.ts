@@ -85,7 +85,7 @@ export class QuestlyAIssistant {
       console.log(`${AuxiliarMessages.MessageReceivedFrom} ${currentSenderId}: ${messageContent}`);
 
       this.handleMessageStorage(currentSenderId, message);
-      
+
       this.userMessageTimers.set(currentSenderId, setTimeout(async () => {
         await this.processGroupedMessages(currentSenderId);
       }, TimeoutDurations.TimeBetweenMessages));
@@ -123,7 +123,7 @@ export class QuestlyAIssistant {
     const isMediaDetected = this.isMediaDetectedInMessages(messages);
 
     if (this.isSingleEmptyMediaMessage(messages)) {
-      await this.handleSingleEmptyMediaMessage(combinedMessageContent, senderId, firstMessage);
+      await this.handleSingleEmptyMediaMessage(senderId, userName, firstMessage);
     } else {
       await this.handleTextMessage(combinedMessageContent, senderId, userName, firstMessage, isMediaDetected);
     }
@@ -160,17 +160,33 @@ export class QuestlyAIssistant {
 
   /**
    * @description Handles a single empty media message by replying with a specific response.
-   * @param {string} messageContent - The content of the message.
    * @param {string} senderId - The ID of the sender.
+   * @param {string} userName - The user name of the sender.
    * @param {Message} message - The message object received from WhatsApp.
    */
-  private async handleSingleEmptyMediaMessage(messageContent: string, senderId: string, message: ExtendedMessage): Promise<void> {
-    const processed = await this.assistant.processFunctions(messageContent, senderId, AppConstants.EMPTY_STRING);
-    if (processed.functionName !== FunctionNames.FirstConcact) {
+  private async handleSingleEmptyMediaMessage(senderId: string, userName: string, message: ExtendedMessage): Promise<void> {
+    let context = await this.assistant.getContextByChatId(senderId);
+
+    if (!context) {
+      context = await this.assistant.createInitialContext(AppConstants.EMPTY_STRING, senderId, userName);
+    }
+
+    if (context.isFirstContact) {
+      const responseText = `${ResponseMessages.FirstConcact1}${userName}${ResponseMessages.FirstConcact2}\n\n${ResponseMessages.MediaNotSupportedComplement}`;
+      context.chatHistory.push({
+        role: GptRoles.Assistant,
+        content: responseText
+      });
+      context.isFirstContact = false;
+      await context.save();
+
+      await message.reply(responseText);
+    } else {
       await this.assistant.addNewMessage(ResponseMessages.MediaNotSupported, senderId, GptRoles.Assistant);
       await message.reply(ResponseMessages.MediaNotSupported);
-      this.clearUserMessages(senderId);
     }
+
+    this.clearUserMessages(senderId);
   }
 
   /**

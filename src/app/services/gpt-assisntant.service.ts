@@ -216,7 +216,7 @@ export class GPTAssistant {
    * @param {string} currentChatId - The current chat ID.
    * @returns {Promise<Document & IHistoryStructure>} - The chat context.
    */
-  private async getContextByChatId(currentChatId: string): Promise<Document & IHistoryStructure> {
+  public async getContextByChatId(currentChatId: string): Promise<Document & IHistoryStructure> {
     return PersistentChatModel.findOne({ chatId: currentChatId }).exec() as Promise<Document & IHistoryStructure>;
   }
 
@@ -227,7 +227,7 @@ export class GPTAssistant {
    * @param {string} currentClientName - The current client's name.
    * @returns {Promise<Document & IHistoryStructure>} - The new chat context.
    */
-  private async createInitialContext(text: string, currentChatId: string, currentClientName: string): Promise<Document & IHistoryStructure> {
+  public async createInitialContext(text: string, currentChatId: string, currentClientName: string): Promise<Document & IHistoryStructure> {
     const newContext = new PersistentChatModel({
       chatId: currentChatId,
       clientName: currentClientName,
