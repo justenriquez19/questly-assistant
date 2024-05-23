@@ -226,6 +226,10 @@ export class QuestlyAIssistant {
           const notificationMessage = `${ResponseMessages.PendingMessage1}${senderUserName}${ResponseMessages.PendingMessage2} ${senderId} ${ResponseMessages.PendingMessage3}`;
           await this.sendNotification(NotificationContacts.TestContact, notificationMessage);
           break;
+        case FunctionNames.GetCustomResponse:
+          responseText = ResponseMessages.GetCustomResponse;
+          await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant);
+          break;
         default:
           responseText = processed.message.content as string;
           break;

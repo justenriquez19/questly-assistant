@@ -25,7 +25,7 @@ export enum AuxiliarMessages {
 };
 
 export class AvailableGptModels {
-  public static readonly GPT_3_5_TURBO_16K_0613 = 'gpt-3.5-turbo-16k-0613'
+  public static readonly GPT_3_5_TURBO_16K_0613 = 'gpt-3.5-turbo-16k-0613';
 };
 
 export enum GptRoles {
@@ -38,6 +38,7 @@ export enum GptRoles {
 export enum FunctionNames {
   AddApointment = 'add_apointment',
   FirstConcact = 'first_contact',
+  GetCustomResponse = 'get_custom_response',
   MediaDetected = 'media_detected',
   TalkToHuman = 'talk_to_human'
 };
@@ -47,6 +48,7 @@ export enum ResponseMessages {
   AskPreferedName2 = '. Saludar por su primer nombre y preguntar si ese nombre le parece bien o prefiere otro.',
   FirstConcact1 = "¡Hola! Parece que es la primera vez que te contactas con el asistente virtual de Ale's Place. Veo que te llamas ",
   FirstConcact2 = ', ¿es correcto? ¿O prefieres que te llame de otra forma? 😊',
+  GetCustomResponse = 'No te preocupes, quizás yo no tengo esa información, ¡pero Ale seguro que sí! 🌸 Si quieres hablar con ella, solo dime, "Quiero hablar con Ale". Si no, ¡puedo seguir ayudándote! 🙌',
   MediaNotSupported = 'Disculpa, actualmente no puedo responder mensajes de voz 🔊, fotos 📸 o vídeos 🎥. En caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
   MediaNotSupportedComplement = 'Por cierto, actualmente no puedo responder mensajes de voz 🔊, fotos 📸 o vídeos 🎥. En caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
   PendingMessage1 = `¡Hola! 👋 Este es el asistente de notificaciones de Ale's Place 😊, parece que el usuario "`,

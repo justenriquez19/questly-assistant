@@ -1,5 +1,5 @@
 import { FunctionsListInterface } from "../interfaces/gpt-interfaces";
-import { ADD_APPOINTMENT_DESCRIPTION, TALK_TO_HUMAN_DESCRIPTION } from "./ales-bible.constants";
+import { ADD_APPOINTMENT_DESCRIPTION, GET_CUSTOM_RESPONSE, TALK_TO_HUMAN_DESCRIPTION } from "./ales-bible.constants";
 import { AppConstants, FunctionNames } from "./app.constants";
 
 export const ALES_PLACE_MAIN_FUNCTIONS: FunctionsListInterface = {
@@ -15,6 +15,14 @@ export const ALES_PLACE_MAIN_FUNCTIONS: FunctionsListInterface = {
     {
       name: FunctionNames.TalkToHuman,
         description: TALK_TO_HUMAN_DESCRIPTION,
+          parameters: {
+          type: AppConstants.OBJECT_KEY,
+          properties: {}
+      }
+    },
+    {
+      name: FunctionNames.GetCustomResponse,
+        description: GET_CUSTOM_RESPONSE,
           parameters: {
           type: AppConstants.OBJECT_KEY,
           properties: {}
