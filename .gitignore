@@ -50,3 +50,6 @@ typings/
 
 # MacOS system files
 .DS_Store
+
+# WhatsApp Session
+.wwebjs_auth

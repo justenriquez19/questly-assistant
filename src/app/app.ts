@@ -1,4 +1,4 @@
-import { Client, Message } from 'whatsapp-web.js';
+import { Client, LocalAuth, Message } from 'whatsapp-web.js';
 import express, { Express } from 'express';
 import qrcode from 'qrcode-terminal';
 
@@ -30,6 +30,7 @@ export class QuestlyAIssistant {
     this.userMessageTimers = new Map();
     this.mongoService = MongoService.getInstance();
     this.client = new Client({
+      authStrategy: new LocalAuth(),
       webVersionCache: {
         type: AppConstants.REMOTE_KEY,
         remotePath: AppConstants.WEB_VERSION_PATCH,
