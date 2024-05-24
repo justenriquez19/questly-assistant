@@ -26,6 +26,7 @@ export enum AuxiliarMessages {
 
 export class AvailableGptModels {
   public static readonly GPT_3_5_TURBO_16K_0613 = 'gpt-3.5-turbo-16k-0613';
+  public static readonly GPT_4_O = 'gpt-4o';
 };
 
 export enum GptRoles {

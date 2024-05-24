@@ -105,7 +105,7 @@ export class GPTAssistant {
   private async getChatGptResponse(chatHistory: ChatGptHistoryBody[], functionsList: CreateChatCompletionFunction[], expectedBehavior: string): Promise<ChatCompletion> {
     try {
       const chatResponse = await this.chatGpt.chat.completions.create({
-        model: AvailableGptModels.GPT_3_5_TURBO_16K_0613,
+        model: AvailableGptModels.GPT_4_O,
         messages: [
           {
             role: GptRoles.System,
@@ -137,7 +137,7 @@ export class GPTAssistant {
   private async sendFunctionToChatGpt(chatHistory: ChatGptHistoryBody[], functionToExecute: ExecuteFunctionBody): Promise<ChatCompletion> {
     try {
       const chatResponse = await this.chatGpt.chat.completions.create({
-        model: AvailableGptModels.GPT_3_5_TURBO_16K_0613,
+        model: AvailableGptModels.GPT_4_O,
         messages: [
           {
             role: GptRoles.System,
