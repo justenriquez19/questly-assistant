@@ -38,7 +38,8 @@ RUN apt-get update -qq && \
     lsb-release \
     xdg-utils \
     wget \
-    libglib2.0-0 \
+    libglib2.0-0
+
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
