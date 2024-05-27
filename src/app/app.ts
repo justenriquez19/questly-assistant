@@ -2,7 +2,19 @@ import { Client, LocalAuth, Message } from 'whatsapp-web.js';
 import express, { Express } from 'express';
 import qrcode from 'qrcode-terminal';
 
-import { AppConstants, AuxiliarMessages, ErrorMessages, FunctionNames, GptRoles, NotificationContacts, RegexExpressions, ResponseMessages, TimeoutDurations } from './shared/constants/app.constants';
+import {
+  AppConstants,
+  AuxiliarMessages,
+  ErrorMessages,
+  FunctionNames,
+  GptRoles,
+  MediaNotSupportedResponses,
+  MediaTypes,
+  NotificationContacts,
+  RegexExpressions,
+  ResponseMessages,
+  TimeoutDurations
+} from './shared/constants/app.constants';
 import { CoreUtilFunctions } from './services/core-utils.service';
 import { ExtendedMessage } from './shared/interfaces/gpt-interfaces';
 import { GPTAssistant } from './services/gpt-assisntant.service';
@@ -18,14 +30,14 @@ export class QuestlyAIssistant {
   private mongoService: MongoService;
   private userMessages: Map<string, ExtendedMessage[]>;
   private userMessageTimers: Map<string, NodeJS.Timeout>;
-  public coreUtilFunctions: CoreUtilFunctions;
+  private utils: CoreUtilFunctions;
 
   /**
    * @description Initializes the QuestlyAIssistant with necessary services and client configuration.
    */
   constructor() {
     this.assistant = new GPTAssistant();
-    this.coreUtilFunctions = new CoreUtilFunctions();
+    this.utils = new CoreUtilFunctions();
     this.userMessages = new Map();
     this.userMessageTimers = new Map();
     this.mongoService = MongoService.getInstance();
@@ -88,7 +100,7 @@ export class QuestlyAIssistant {
       let context = await this.assistant.getContextByChatId(currentSenderId);
 
       if (context) {
-        if (!context.shouldRespond && this.coreUtilFunctions.isMoreThanDaysAgo(context.timeOfLastMessage, 0.5)) {
+        if (!context.shouldRespond && this.utils.isMoreThanDaysAgo(context.timeOfLastMessage, 0.5)) {
           context.shouldRespond = true;
           context = await this.assistant.updateShouldRespond(currentSenderId, true);
         }
@@ -125,18 +137,21 @@ export class QuestlyAIssistant {
    * @param {string} senderId - The ID of the sender.
    */
   private async processGroupedMessages(senderId: string): Promise<void> {
+    let userName: string = AppConstants.DEF_USER_NAME;
     const messages = this.userMessages.get(senderId);
     if (!messages || messages.length === 0) return;
 
     const combinedMessageContent = this.combineMessagesContent(messages);
     const firstMessage = messages[0];
-    const userName = this.coreUtilFunctions.cutUntilSpace(firstMessage._data.notifyName);
-    const isMediaDetected = this.isMediaDetectedInMessages(messages);
+    if (firstMessage._data?.notifyName) {
+      userName = this.utils.cutUntilSpace(firstMessage._data.notifyName) ?? firstMessage._data.notifyName;
+    }
+    const mediaType = this.getFirstMediaType(messages);
 
     if (this.isSingleEmptyMediaMessage(messages)) {
       await this.handleSingleEmptyMediaMessage(senderId, userName, firstMessage);
     } else {
-      await this.handleTextMessage(combinedMessageContent, senderId, userName, firstMessage, isMediaDetected);
+      await this.handleTextMessage(combinedMessageContent, senderId, userName, firstMessage, mediaType);
     }
 
     this.clearUserMessages(senderId);
@@ -152,12 +167,13 @@ export class QuestlyAIssistant {
   }
 
   /**
-   * @description Checks if any message in the array contains media.
+   * @description Checks if any message in the array contains media and returns the type of the first media message.
    * @param {ExtendedMessage[]} messages - The array of messages to check.
-   * @returns {boolean} - True if any message contains media, false otherwise.
+   * @returns {string | null} - The type of the first media message if detected, otherwise null.
    */
-  private isMediaDetectedInMessages(messages: ExtendedMessage[]): boolean {
-    return messages.some(msg => msg.hasMedia);
+  private getFirstMediaType(messages: ExtendedMessage[]): string {
+    const mediaMessage = messages.find(msg => msg.hasMedia);
+    return mediaMessage ? mediaMessage.type : AppConstants.EMPTY_STRING;
   }
 
   /**
@@ -176,14 +192,22 @@ export class QuestlyAIssistant {
    * @param {Message} message - The message object received from WhatsApp.
    */
   private async handleSingleEmptyMediaMessage(senderId: string, userName: string, message: ExtendedMessage): Promise<void> {
+    let messageByMediaType: string;
+    let responseText: string;
     let context = await this.assistant.getContextByChatId(senderId);
+    const messageType = message.type as string;
 
     if (!context) {
       context = await this.assistant.createInitialContext(AppConstants.EMPTY_STRING, senderId, userName);
     }
 
     if (context.isFirstContact) {
-      const responseText = `${ResponseMessages.FirstConcact1}${userName}${ResponseMessages.FirstConcact2}\n\n${ResponseMessages.MediaNotSupportedComplement}`;
+      messageByMediaType = this.getErrorMessageByMediaType(messageType, false);
+      if (userName !== AppConstants.DEF_USER_NAME) {
+        responseText = `${ResponseMessages.FirstContact1}${userName}${ResponseMessages.FirstContact2}\n\n${messageByMediaType}`;
+      } else {
+        responseText = `${ResponseMessages.FirstContactWithNoName}\n\n${messageByMediaType}`;
+      }
       context.chatHistory.push({
         role: GptRoles.Assistant,
         content: responseText
@@ -193,8 +217,9 @@ export class QuestlyAIssistant {
 
       await message.reply(responseText);
     } else {
-      await this.assistant.addNewMessage(ResponseMessages.MediaNotSupported, senderId, GptRoles.Assistant);
-      await message.reply(ResponseMessages.MediaNotSupported);
+      messageByMediaType = this.getErrorMessageByMediaType(messageType, true);
+      await this.assistant.addNewMessage(messageByMediaType, senderId, GptRoles.Assistant);
+      await message.reply(messageByMediaType);
     }
 
     this.clearUserMessages(senderId);
@@ -206,9 +231,9 @@ export class QuestlyAIssistant {
    * @param {string} senderId - The ID of the sender.
    * @param {string} senderUserName - The user name of the sender.
    * @param {Message} message - The message object received from WhatsApp.
-   * @param {boolean} hasMedia - Indicates if any message contains media.
+   * @param {boolean} mediaType - Indicates if any message contains media.
    */
-  private async handleTextMessage(messageContent: string, senderId: string, senderUserName: string, message: Message, hasMedia: boolean): Promise<void> {
+  private async handleTextMessage(messageContent: string, senderId: string, senderUserName: string, message: Message, mediaType: string): Promise<void> {
     try {
       const processed = await this.assistant.processFunctions(messageContent, senderId, senderUserName);
 
@@ -218,7 +243,11 @@ export class QuestlyAIssistant {
           responseText = await this.assistant.processResponse(FunctionNames.AddApointment, ResponseMessages.RedirectToWebsite, senderId);
           break;
         case FunctionNames.FirstConcact:
-          responseText = `${ResponseMessages.FirstConcact1}${senderUserName}${ResponseMessages.FirstConcact2}`;
+          if (senderUserName !== AppConstants.DEF_USER_NAME) {
+            responseText = `${ResponseMessages.FirstContact1}${senderUserName}${ResponseMessages.FirstContact2}`;
+          } else {
+            responseText = ResponseMessages.FirstContactWithNoName;
+          }
           break;
         case FunctionNames.TalkToHuman:
           await this.assistant.updateShouldRespond(senderId, false);
@@ -236,8 +265,12 @@ export class QuestlyAIssistant {
           break;
       }
 
-      if (hasMedia) {
-        responseText += `\n\n${ResponseMessages.MediaNotSupportedComplement}`;
+      if (mediaType !== AppConstants.EMPTY_STRING) {
+        const messageType = message.type as string;
+        const messageByMediaType = this.getErrorMessageByMediaType(messageType, false);
+        if (messageByMediaType !== AppConstants.EMPTY_STRING) {
+          responseText += `\n\n${messageByMediaType}`;
+        }
       }
 
       await message.reply(responseText);
@@ -275,6 +308,29 @@ export class QuestlyAIssistant {
       await this.client.sendMessage(phoneNumber, message);
     } catch (error) {
       console.error(`${ErrorMessages.NotificationFailed} ${phoneNumber}`, error);
+    }
+  }
+
+  /**
+   * @description Gets the error message based on the media type.
+   * @param {string} messageType - The type of the media message.
+   * @param {boolean} isSingleEmptyMediaMessage - Indicates if it's a single empty media message.
+   * @returns {string} - The error message for the specified media type.
+   */
+  private getErrorMessageByMediaType(messageType: string, isSingleEmptyMediaMessage: boolean): string {
+    switch (messageType) {
+      case MediaTypes.Sticker:
+        return isSingleEmptyMediaMessage ? MediaNotSupportedResponses.Sticker : AppConstants.EMPTY_STRING;
+      case MediaTypes.Image:
+        return isSingleEmptyMediaMessage ? MediaNotSupportedResponses.Image : MediaNotSupportedResponses.ImageComplement;
+      case MediaTypes.Video:
+        return isSingleEmptyMediaMessage ? MediaNotSupportedResponses.Video : MediaNotSupportedResponses.VideoComplement;
+      case MediaTypes.Audio:
+        return isSingleEmptyMediaMessage ? MediaNotSupportedResponses.Audio : MediaNotSupportedResponses.AudioComplement;
+      case MediaTypes.VoiceMessage:
+        return isSingleEmptyMediaMessage ? MediaNotSupportedResponses.Audio : MediaNotSupportedResponses.AudioComplement;
+      default:
+        return isSingleEmptyMediaMessage ? MediaNotSupportedResponses.Default : MediaNotSupportedResponses.DefaultComplement;
     }
   }
 }

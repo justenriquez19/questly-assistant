@@ -35,7 +35,7 @@ export class GPTAssistant {
     } else {
       context.chatHistory.push({
         role: GptRoles.Assistant,
-        content: `${ResponseMessages.FirstConcact1}${currentClientName}${ResponseMessages.FirstConcact2}`
+        content: `${ResponseMessages.FirstContact1}${currentClientName}${ResponseMessages.FirstContact2}`
       });
       await context.save();
 

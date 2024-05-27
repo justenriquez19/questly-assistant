@@ -5,6 +5,7 @@ export class AppConstants {
   public static readonly AUTO_KEY: "auto" = 'auto';
   public static readonly BLANK_SPACE: string = ' ';
   public static readonly CLIENT_IS_READY: string = 'The client is up!';
+  public static readonly DEF_USER_NAME: string = 'nobody';
   public static readonly ELLIPSES: string = '...';
   public static readonly EMPTY_STRING: string = '';
   public static readonly MESSAGE_KEY: string = 'message';
@@ -47,16 +48,35 @@ export enum FunctionNames {
 export enum ResponseMessages {
   AskPreferedName1 = 'Su nombre completo es: ',
   AskPreferedName2 = '. Saludar por su primer nombre y preguntar si ese nombre le parece bien o prefiere otro.',
-  FirstConcact1 = "¡Hola! Parece que es la primera vez que te contactas con el asistente virtual de Ale's Place. Veo que te llamas ",
-  FirstConcact2 = ', ¿es correcto? ¿O prefieres que te llame de otra forma? 😊',
+  FirstContact1 = "¡Hola! Parece que es la primera vez que te contactas con el asistente virtual de Ale's Place. Primero que nada, veo que te llamas ",
+  FirstContact2 = ', ¿es correcto? ¿O prefieres que te llame de otra forma? 😊',
+  FirstContactWithNoName = `¡Hola! Parece que es la primera vez que te contactas con el asistente virtual de Ale's Place. Primero que nada ¿Cómo te gustaría que te llame? 😊`,
   GetCustomResponse = 'No te preocupes, quizás yo no tengo esa información, ¡pero Ale seguro que sí! 🌸 Si quieres hablar con ella, solo dime, "Quiero hablar con Ale". Si no, ¡puedo seguir ayudándote! 🙌',
-  MediaNotSupported = 'Disculpa, actualmente no puedo responder mensajes de voz 🔊, fotos 📸 o vídeos 🎥. En caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
-  MediaNotSupportedComplement = 'Por cierto, actualmente no puedo responder mensajes de voz 🔊, fotos 📸 o vídeos 🎥. En caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
   PendingMessage1 = `¡Hola! 👋 Este es el asistente de notificaciones de Ale's Place 😊, parece que el usuario "`,
   PendingMessage2 = `", con el número de teléfono 📞`,
   PendingMessage3 = `quiere contactar directamente contigo, por favor, respóndole lo antes posible. Gracias 😊✨`,
   RedirectToWebsite = 'Entra a www.alesplace.com/catalogo-de-servicios para agendar una cita',
   StopConversation = '¡Entendido! A partir de este momento ya no podré responderte. Ale se pondrá en contacto contigo pronto 😊'
+}
+
+export enum MediaNotSupportedResponses {
+  Audio = 'Disculpa, actualmente no puedo escuchar mensajes de voz 🔊❌ ¿Podrías escribirme? O en caso de que necesites que Ale lo escuche, solo pídeme hablar con ella 😊👉',
+  AudioComplement = 'Por cierto, actualmente no puedo escuchar mensajes de voz 🔊❌ ¿Podrías escribirme? O en caso de que necesites que Ale lo escuche, solo pídeme hablar con ella 😊👉',
+  Default = 'Disculpa, actualmente no puedo responder mensajes de voz 🔊, fotos 📸, stickers 🖼️ o vídeos 🎥. En caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
+  DefaultComplement = 'Por cierto, actualmente no puedo responder mensajes de voz 🔊, fotos 📸, stickers 🖼️ o vídeos 🎥. En caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
+  Image = 'Disculpa, actualmente no ver lo que hay en las imágnes que me envías 🖼️❌ ¿Podrías describirlo? O en caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
+  ImageComplement = 'Por cierto, actualmente no ver lo que hay en las imágnes que me envías 🖼️❌ ¿Podrías describirlo? O en caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
+  Sticker = '¡Ups! 😕 Disculpa, no puedo ver los stickers que me envías 🚫, pero estoy seguro de que este es genial 👌',
+  Video = 'Disculpa, actualmente no ver lo que hay en los vídeos que me envías 📽️❌ ¿Podrías describirlo? O en caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
+  VideoComplement = 'Por cierto, actualmente no ver lo que hay en los vídeos que me envías 📽️❌ ¿Podrías describirlo? O en caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
+}
+
+export enum MediaTypes {
+  Audio = 'audio',
+  Image = 'image',
+  Sticker = 'sticker',
+  Video = 'video',
+  VoiceMessage = 'ptt'
 }
 
 export enum TimeoutDurations {
