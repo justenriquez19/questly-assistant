@@ -12,27 +12,46 @@ WORKDIR /app
 # Set production environment
 ENV NODE_ENV="production"
 
-# Throw-away build stage to reduce size of final image
-FROM base as build
-
-# Install packages needed to build node modules
+# Install packages needed to build node modules and run Puppeteer
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
+    apt-get install --no-install-recommends -y \
+    build-essential \
+    node-gyp \
+    pkg-config \
+    python-is-python3 \
+    libgconf-2-4 \
+    libx11-6 \
+    libx11-xcb1 \
+    libxcb1 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxi6 \
+    libxtst6 \
+    libnss3 \
+    libxrandr2 \
+    libgtk-3-0 \
+    libgbm-dev \
+    ca-certificates \
+    fonts-liberation \
+    libasound2 \
+    lsb-release \
+    xdg-utils \
+    wget \
+    libglib2.0-0 \
+    libgobject-2.0-0
 
-# Install node modules
-COPY --link package-lock.json package.json ./
-RUN npm ci
+# Copy package.json and package-lock.json
+COPY package*.json ./
 
-# Copy application code
-COPY --link . .
+# Install dependencies
+RUN npm install
 
+# Copy rest of the application code
+COPY . .
 
-# Final stage for app image
-FROM base
-
-# Copy built application
-COPY --from=build /app /app
-
-# Start the server by default, this can be overwritten at runtime
+# Expose the port
 EXPOSE 3000
-CMD [ "npm", "run", "start" ]
+
+# Command to run the application
+CMD ["npm", "run", "start"]
