@@ -15,7 +15,7 @@ ENV NODE_ENV="production"
 # Throw-away build stage to reduce size of final image
 FROM base as build
 
-# Install packages needed to build node modules
+# Install packages needed to build node modules and run Puppeteer
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y \
     build-essential \
@@ -29,34 +29,39 @@ RUN apt-get update -qq && \
     libxcomposite1 \
     libxcursor1 \
     libxdamage1 \
-    libxext6 \
-    libxfixes3 \
     libxi6 \
-    libxrandr2 \
-    libxrender1 \
-    libxss1 \
     libxtst6 \
+    libnss3 \
+    libxrandr2 \
+    libgtk-3-0 \
+    libgbm-dev \
     ca-certificates \
     fonts-liberation \
-    libappindicator1 \
-    libnss3 \
+    libasound2 \
     lsb-release \
     xdg-utils \
     wget
 
-# Install node modules
-COPY --link package-lock.json package.json ./
-RUN npm ci
+# Copy package.json and package-lock.json
+COPY package*.json ./
 
-# Copy application code
-COPY --link . .
+# Install dependencies
+RUN npm install
 
-# Final stage for app image
+# Copy rest of the application code
+COPY . .
+
+# Build the TypeScript code
+RUN npm run build
+
+# Use base image for runtime
 FROM base
 
-# Copy built application
+# Copy built code and node_modules from build stage
 COPY --from=build /app /app
 
-# Start the server by default, this can be overwritten at runtime
+# Expose the port
 EXPOSE 3000
+
+# Command to run the application
 CMD ["npm", "run", "start"]
