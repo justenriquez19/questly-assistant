@@ -39,8 +39,6 @@ RUN apt-get update -qq && \
     xdg-utils \
     wget \
     libglib2.0-0 \
-    libgobject-2.0-0
-
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
