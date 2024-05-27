@@ -45,6 +45,9 @@ export class QuestlyAIssistant {
     this.mongoService = MongoService.getInstance();
     this.client = new Client({
       authStrategy: new LocalAuth(),
+      puppeteer: {
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      },
       webVersionCache: {
         type: AppConstants.REMOTE_KEY,
         remotePath: AppConstants.WEB_VERSION_PATCH,
