@@ -48,20 +48,17 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
-# Copy rest of the application code
+# Copy the rest of the application code
 COPY . .
 
-# Build the TypeScript code
-RUN npm run build
-
-# Use base image for runtime
+# Final stage for the app image
 FROM base
 
-# Copy built code and node_modules from build stage
+# Copy built application
 COPY --from=build /app /app
 
-# Expose the port
+# Expose the port on which the app will run
 EXPOSE 3000
 
-# Command to run the application
+# Define the command to run the application
 CMD ["npm", "run", "start"]
