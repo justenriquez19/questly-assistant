@@ -40,7 +40,9 @@ RUN apt-get update -qq && \
     libasound2 \
     lsb-release \
     xdg-utils \
-    wget
+    wget \
+    libgobject-2.0-0 \
+    libglib2.0-0
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
@@ -53,6 +55,31 @@ COPY . .
 
 # Final stage for the app image
 FROM base
+
+# Install runtime dependencies for Puppeteer
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+    libgconf-2-4 \
+    libx11-6 \
+    libx11-xcb1 \
+    libxcb1 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxi6 \
+    libxtst6 \
+    libnss3 \
+    libxrandr2 \
+    libgtk-3-0 \
+    libgbm-dev \
+    ca-certificates \
+    fonts-liberation \
+    libasound2 \
+    lsb-release \
+    xdg-utils \
+    wget \
+    libgobject-2.0-0 \
+    libglib2.0-0
 
 # Copy built application
 COPY --from=build /app /app
