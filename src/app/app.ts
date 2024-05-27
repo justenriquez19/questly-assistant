@@ -20,6 +20,8 @@ import { ExtendedMessage } from './shared/interfaces/gpt-interfaces';
 import { GPTAssistant } from './services/gpt-assisntant.service';
 import { MongoService } from './services/mongodb.service';
 
+const port = Number(process.env.PORT) || 3000;
+
 /**
  * @description Handles WhatsApp bot interactions and server initialization.
  */
@@ -293,7 +295,7 @@ export class QuestlyAIssistant {
    * @description Starts the Express server.
    */
   private startServer(): void {
-    this.app.listen(3000, () => {
+    this.app.listen(port, '0.0.0.0', () => {
       console.log(AppConstants.SERVER_RUNNING_MESSAGE);
     });
   }
