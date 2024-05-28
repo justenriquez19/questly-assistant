@@ -1,6 +1,6 @@
 import { Client, LocalAuth, Message } from 'whatsapp-web.js';
-import express, { Express } from 'express';
-import qrcode from 'qrcode-terminal';
+import { toDataURL } from 'qrcode';
+import express, { Express, Response } from 'express';
 
 import {
   AppConstants,
@@ -20,8 +20,6 @@ import { ExtendedMessage } from './shared/interfaces/gpt-interfaces';
 import { GPTAssistant } from './services/gpt-assisntant.service';
 import { MongoService } from './services/mongodb.service';
 
-const port = Number(process.env.PORT) || 3000;
-
 /**
  * @description Handles WhatsApp bot interactions and server initialization.
  */
@@ -30,6 +28,8 @@ export class QuestlyAIssistant {
   private assistant: GPTAssistant;
   private client: Client;
   private mongoService: MongoService;
+  private port: number;
+  private qrCode: string;
   private userMessages: Map<string, ExtendedMessage[]>;
   private userMessageTimers: Map<string, NodeJS.Timeout>;
   private utils: CoreUtilFunctions;
@@ -39,19 +39,24 @@ export class QuestlyAIssistant {
    */
   constructor() {
     this.assistant = new GPTAssistant();
-    this.utils = new CoreUtilFunctions();
+    this.mongoService = MongoService.getInstance();
+    this.port = Number(process.env.PORT) || AppConstants.CURRENT_PORT;
+    this.qrCode = AppConstants.EMPTY_STRING;
     this.userMessages = new Map();
     this.userMessageTimers = new Map();
-    this.mongoService = MongoService.getInstance();
+    this.utils = new CoreUtilFunctions();
     this.client = new Client({
       authStrategy: new LocalAuth(),
       puppeteer: {
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: [
+          AppConstants.PUPPETEER_PATCH_NO_SANDBOX,
+          AppConstants.PUPPETEER_PATCH_NO_UID
+        ]
       },
       webVersionCache: {
         type: AppConstants.REMOTE_KEY,
-        remotePath: AppConstants.WEB_VERSION_PATCH,
-      },
+        remotePath: AppConstants.WEB_VERSION_PATCH
+      }
     });
 
     this.initialize();
@@ -64,6 +69,7 @@ export class QuestlyAIssistant {
     this.mongoService.connect();
     this.app = express();
     this.initializeClient();
+    this.initializeRoutes();
     this.startServer();
   }
 
@@ -81,8 +87,8 @@ export class QuestlyAIssistant {
    * @description Generates and displays the QR code for WhatsApp Web authentication.
    * @param {string} qr - The QR code string to be generated and displayed.
    */
-  private onQrCode(qr: string): void {
-    qrcode.generate(qr, { small: true });
+  private async onQrCode(qr: string): Promise<void> {
+    this.qrCode = await toDataURL(qr);
   }
 
   /**
@@ -284,7 +290,6 @@ export class QuestlyAIssistant {
     }
   }
 
-
   /**
    * @description Clears the stored messages and timers for a specific sender.
    * @param {string} senderId - The ID of the sender.
@@ -298,9 +303,28 @@ export class QuestlyAIssistant {
    * @description Starts the Express server.
    */
   private startServer(): void {
-    this.app.listen(port, '0.0.0.0', () => {
+    this.app.listen(this.port, AppConstants.DEF_PUBLIC_IP, () => {
       console.log(AppConstants.SERVER_RUNNING_MESSAGE);
     });
+  }
+
+  /**
+   * @description Initializes the Express routes.
+   */
+  private initializeRoutes(): void {
+    this.app.get(AppConstants.QR_ROUTE, (_, res) => this.getQrCode(res));
+  }  
+
+  /**
+   * @description Handles the request for the QR code.
+   * @param {Response} res - The response object.
+   */
+  private async getQrCode(res: Response): Promise<void> {
+    if (this.qrCode) {
+      res.send(`${AppConstants.QR_CODE_GEN_01}${this.qrCode} ${AppConstants.QR_CODE_GEN_02}`);
+    } else {
+      res.send(ErrorMessages.shouldRereshQrView);
+    }
   }
 
   /**

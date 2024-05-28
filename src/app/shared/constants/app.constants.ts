@@ -5,16 +5,23 @@ export class AppConstants {
   public static readonly AUTO_KEY: "auto" = 'auto';
   public static readonly BLANK_SPACE: string = ' ';
   public static readonly CLIENT_IS_READY: string = 'The client is up!';
+  public static readonly CURRENT_PORT: number = 3000;
+  public static readonly DEF_PUBLIC_IP: string = '0.0.0.0';
   public static readonly DEF_USER_NAME: string = 'nobody';
   public static readonly ELLIPSES: string = '...';
   public static readonly EMPTY_STRING: string = '';
   public static readonly MESSAGE_KEY: string = 'message';
   public static readonly OBJECT_KEY: string = 'object';
   public static readonly ONE_DOLLAR: string = '$1';
+  public static readonly PUPPETEER_PATCH_NO_SANDBOX: string = '--no-sandbox';
+  public static readonly PUPPETEER_PATCH_NO_UID: string = '--disable-setuid-sandbox';
+  public static readonly QR_CODE_GEN_01: string = '<img src="';
+  public static readonly QR_CODE_GEN_02: string = '" alt="QR Code" />';
   public static readonly QR_KEY: string = 'qr';
+  public static readonly QR_ROUTE: string = '/qr';
   public static readonly READY_KEY: string = 'ready';
   public static readonly REMOTE_KEY: "remote" = 'remote';
-  public static readonly SERVER_RUNNING_MESSAGE: string = 'Servidor corriendo en http://localhost:3000';
+  public static readonly SERVER_RUNNING_MESSAGE: string = 'Server running at port: 3000';
   public static readonly TITLE: string = 'questly-AIssistant';
   public static readonly WEB_VERSION_PATCH: string = 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html';
 };
@@ -80,7 +87,7 @@ export enum MediaTypes {
 }
 
 export enum TimeoutDurations {
-  TimeBetweenMessages = 8000
+  TimeBetweenMessages = 0
 };
 
 export enum ErrorMessages {
@@ -89,6 +96,7 @@ export enum ErrorMessages {
   DefaultMessage = 'Controlled error: ',
   FailedUpdatingContext = 'Failed trying to update context for chat ID:',
   NotificationFailed = 'Failed to send notification to number:',
+  shouldRereshQrView = 'QR code is not generated yet. Please reload this page.',
   RateLimitError = 'The OpenAi account has exceded its available balance: ',
   UnexpectedError = 'There has been an unexpected error: '
 };
