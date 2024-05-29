@@ -47,22 +47,21 @@ export class GPTAssistant {
     }
     const message = chatGptResponse.choices[0].message;
 
-    // Add system message to chat history
-    if (message.content) {
-      context.timeOfLastMessage = new Date();
-      context.chatHistory.push({
-        role: message.role,
-        content: message.content as string
-      });
-    }
-    await context.save();
-
     if (message.function_call) {
       const functionName = message.function_call.name;
       const args = message.function_call.arguments;
       message.content = AuxiliarMessages.FunctionsToCall + functionName;
 
       return { functionName, args, message };
+    } else {
+      if (message.content) {
+        context.timeOfLastMessage = new Date();
+        context.chatHistory.push({
+          role: message.role,
+          content: message.content as string
+        });
+      }
+      await context.save();
     }
 
     return { functionName: null, args: null, message };
@@ -73,15 +72,16 @@ export class GPTAssistant {
    * @param {string} functionName - The name of the function executed.
    * @param {string} functionResponse - The response from the executed function.
    * @param {string} currentChatId - The current chat ID.
+   * @param {string} expectedBehavior - The expected behavior for the GPT model.
    * @returns {Promise<string>} - The content of the GPT model's response.
    */
-  public async processResponse(functionName: string, functionResponse: string, currentChatId: string): Promise<string> {
+  public async processResponse(functionName: string, functionResponse: string, currentChatId: string, expectedBehavior?: string): Promise<string> {
     let context = await this.getContextByChatId(currentChatId);
     const functionToExecute = {
       functionName,
       functionResponse
     };
-    const chatGptResponse = await this.sendFunctionToChatGpt(context.chatHistory, functionToExecute);
+    const chatGptResponse = await this.sendFunctionToChatGpt(context.chatHistory, functionToExecute, expectedBehavior);
 
     // Add system message to chat history
     context.timeOfLastMessage = new Date();
@@ -132,16 +132,17 @@ export class GPTAssistant {
    * @description Send the function execution result to the GPT model and get a response.
    * @param {ChatGptHistoryBody[]} chatHistory - The chat history.
    * @param {ExecuteFunctionBody} functionToExecute - The function to execute.
+   * @param {string} expectedBehavior - The expected behavior for the GPT model.
    * @returns {Promise<ChatCompletion>} - The GPT model's response.
    */
-  private async sendFunctionToChatGpt(chatHistory: ChatGptHistoryBody[], functionToExecute: ExecuteFunctionBody): Promise<ChatCompletion> {
+  private async sendFunctionToChatGpt(chatHistory: ChatGptHistoryBody[], functionToExecute: ExecuteFunctionBody, expectedBehavior?: string): Promise<ChatCompletion> {
     try {
       const chatResponse = await this.chatGpt.chat.completions.create({
         model: AvailableGptModels.GPT_4_O,
         messages: [
           {
             role: GptRoles.System,
-            content: BOT_BEHAVIOR_DESCRIPTION
+            content: expectedBehavior ?? BOT_BEHAVIOR_DESCRIPTION
           },
           ...chatHistory as ChatCompletionMessageParam[],
           {

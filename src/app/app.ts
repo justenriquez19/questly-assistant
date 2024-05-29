@@ -2,6 +2,7 @@ import { Client, LocalAuth, Message } from 'whatsapp-web.js';
 import { toDataURL } from 'qrcode';
 import express, { Express, Response } from 'express';
 
+import { ADD_APPOINTMENT_BEHAVIOR_DESCRIPTION } from './shared/constants/ales-bible.constants';
 import {
   AppConstants,
   AuxiliarMessages,
@@ -251,7 +252,7 @@ export class QuestlyAIssistant {
       let responseText: string;
       switch (processed.functionName) {
         case FunctionNames.AddApointment:
-          responseText = await this.assistant.processResponse(FunctionNames.AddApointment, ResponseMessages.RedirectToWebsite, senderId);
+          responseText = await this.assistant.processResponse(FunctionNames.AddApointment, ResponseMessages.RedirectToWebsite, senderId, ADD_APPOINTMENT_BEHAVIOR_DESCRIPTION);
           break;
         case FunctionNames.FirstConcact:
           if (senderUserName !== AppConstants.DEF_USER_NAME) {
