@@ -48,8 +48,10 @@ export enum FunctionNames {
   AddApointment = 'add_apointment',
   FirstConcact = 'first_contact',
   GetCustomResponse = 'get_custom_response',
+  GetPersonalAssistance = 'get_personal_assistance',
   MediaDetected = 'media_detected',
-  TalkToHuman = 'talk_to_human'
+  TalkToAle = 'talk_to_ale',
+  UpdateUserName = 'update_user_name'
 };
 
 export enum ResponseMessages {
@@ -63,7 +65,8 @@ export enum ResponseMessages {
   PendingMessage2 = `", con el número de teléfono 📞`,
   PendingMessage3 = `quiere contactar directamente contigo, por favor, respóndole lo antes posible. Gracias 😊✨`,
   RedirectToWebsite = 'Entra a www.alesplace.com/catalogo-de-servicios para agendar una cita',
-  StopConversation = '¡Entendido! A partir de este momento ya no podré responderte. Ale se pondrá en contacto contigo pronto 😊'
+  StopConversation = '¡Entendido! A partir de este momento ya no podré responderte. Ale se pondrá en contacto contigo pronto para atenderte personalmente 😊',
+  YourNameIs = 'Entiendo, te llamas'
 }
 
 export enum MediaNotSupportedResponses {
@@ -110,4 +113,8 @@ export enum NotificationContacts {
 
 export class RegexExpressions {
   public static readonly GET_JUST_NUMBER = /^.*(\d{10})@c\.us$/
+}
+
+export enum PropertiesDescription {
+  UserName = 'El nombre del usuario'
 }

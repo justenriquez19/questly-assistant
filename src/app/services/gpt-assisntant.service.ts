@@ -3,9 +3,9 @@ import { Document } from 'mongoose';
 
 import { ALES_PLACE_MAIN_FUNCTIONS } from '../shared/constants/functions.constants';
 import { AppConstants, AuxiliarMessages, AvailableGptModels, ErrorMessages, FunctionNames, GptRoles, ResponseMessages } from '../shared/constants/app.constants';
-import { BOT_BEHAVIOR_DESCRIPTION } from '../shared/constants/ales-bible.constants';
+import { BOT_GENERAL_BEHAVIOR } from '../shared/constants/ales-bible.constants';
 import { ChatCompletion, ChatCompletionMessageParam } from 'openai/resources';
-import { ChatGptHistoryBody, CreateChatCompletionFunction, ExecuteFunctionBody, IChatGptApiError } from '../shared/interfaces/gpt-interfaces';
+import { ChatGptHistoryBody, CreateChatCompletionFunction, ExecuteFunctionBody, IChatGptApiError, UpdateContextParams } from '../shared/interfaces/gpt-interfaces';
 import { IHistoryStructure, PersistentChatModel } from '../shared/models/persistent-chats';
 
 export class GPTAssistant {
@@ -31,7 +31,7 @@ export class GPTAssistant {
     const context = await this.addNewUserMessage(text, currentChatId, currentClientName);
 
     if (!context.isFirstContact) {
-      chatGptResponse = await this.getChatGptResponse(context.chatHistory, this.currentFunctions, BOT_BEHAVIOR_DESCRIPTION);
+      chatGptResponse = await this.getChatGptResponse(context.chatHistory, this.currentFunctions, BOT_GENERAL_BEHAVIOR);
     } else {
       return {
         functionName: FunctionNames.FirstConcact,
@@ -43,7 +43,7 @@ export class GPTAssistant {
 
     if (message.function_call) {
       const functionName = message.function_call.name;
-      const args = message.function_call.arguments;
+      const args = JSON.parse(message.function_call.arguments);
       message.content = AuxiliarMessages.FunctionsToCall + functionName;
 
       return { functionName, args, message };
@@ -132,12 +132,13 @@ export class GPTAssistant {
    */
   private async sendFunctionToChatGpt(chatHistory: ChatGptHistoryBody[], functionToExecute: ExecuteFunctionBody, expectedBehavior?: string): Promise<ChatCompletion> {
     try {
+      const behavior = expectedBehavior ? BOT_GENERAL_BEHAVIOR + expectedBehavior : BOT_GENERAL_BEHAVIOR;
       const chatResponse = await this.chatGpt.chat.completions.create({
         model: AvailableGptModels.GPT_4_O,
         messages: [
           {
             role: GptRoles.System,
-            content: expectedBehavior ?? BOT_BEHAVIOR_DESCRIPTION
+            content: behavior
           },
           ...chatHistory as ChatCompletionMessageParam[],
           {
@@ -271,27 +272,29 @@ export class GPTAssistant {
   }
 
   /**
-   * @description Updates the `shouldRespond` property of the chat context.
-   * @param {string} currentChatId - The ID of the current chat.
-   * @param {boolean} newShouldRespondValue - The new value for the `shouldRespond` property.
+   * @description Updates the specified fields of the chat context.
+   * @param {UpdateContextParams} params - The parameters including chat ID and fields to update.
    * @returns {Promise<Document & IHistoryStructure>} - Returns the updated context document.
    * @throws {Error} If the context for the given chat ID is not found.
    */
-  public async updateShouldRespond(currentChatId: string, newShouldRespondValue: boolean): Promise<Document & IHistoryStructure> {
+  public async updateContext(params: UpdateContextParams): Promise<Document & IHistoryStructure> {
+    const { chatId, updateFields } = params;
+
     try {
-      const context = await this.getContextByChatId(currentChatId);
+      const context = await this.getContextByChatId(chatId);
 
       if (!context) {
-        throw new Error(`${ErrorMessages.ContextNotFound} ${currentChatId}`);
+        throw new Error(`${ErrorMessages.ContextNotFound} ${chatId}`);
       }
-      context.shouldRespond = newShouldRespondValue;
+
+      Object.assign(context, updateFields);
       context.isFirstContact = false;
 
       await context.save();
 
       return context;
     } catch (error) {
-      console.error(`${ErrorMessages.FailedUpdatingContext} ${currentChatId}`, error);
+      console.error(`${ErrorMessages.FailedUpdatingContext} ${chatId}`, error);
       throw error;
     }
   }

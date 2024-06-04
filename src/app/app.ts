@@ -118,7 +118,10 @@ export class QuestlyAIssistant {
       if (context) {
         if (!context.shouldRespond && this.utils.isMoreThanDaysAgo(context.timeOfLastMessage, 0.5)) {
           context.shouldRespond = true;
-          context = await this.assistant.updateShouldRespond(currentSenderId, true);
+          context = await this.assistant.updateContext({
+            chatId: currentSenderId,
+            updateFields: { shouldRespond: true }
+          });
         }
       }
 
@@ -288,16 +291,27 @@ export class QuestlyAIssistant {
 
           await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant);
           break;
-        case FunctionNames.TalkToHuman:
-          await this.assistant.updateShouldRespond(senderId, false);
+        case FunctionNames.TalkToAle:
+        case FunctionNames.GetPersonalAssistance:
+          await this.assistant.updateContext({
+            chatId: senderId,
+            updateFields: { shouldRespond: false }
+          });
           responseText = ResponseMessages.StopConversation;
-          await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant);
-          const notificationMessage = `${ResponseMessages.PendingMessage1}${senderUserName}${ResponseMessages.PendingMessage2} ${senderId} ${ResponseMessages.PendingMessage3}`;
+          const currentClientName = (await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant)).clientName;
+          const notificationMessage = `${ResponseMessages.PendingMessage1}${currentClientName}${ResponseMessages.PendingMessage2} ${senderId} ${ResponseMessages.PendingMessage3}`;
           await this.sendNotification(NotificationContacts.TestContact, notificationMessage);
           break;
         case FunctionNames.GetCustomResponse:
           responseText = ResponseMessages.GetCustomResponse;
           await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant);
+          break;
+        case FunctionNames.UpdateUserName:
+          await this.assistant.updateContext({
+            chatId: senderId,
+            updateFields: {clientName: processed.args.name }
+          });
+          responseText = await this.assistant.processResponse(FunctionNames.UpdateUserName, `${ResponseMessages.YourNameIs} ${processed.args.name}`, senderId, ADD_APPOINTMENT_BEHAVIOR_DESCRIPTION);
           break;
         default:
           responseText = processed.message.content as string;

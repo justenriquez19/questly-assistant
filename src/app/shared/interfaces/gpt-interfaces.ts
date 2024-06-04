@@ -1,3 +1,4 @@
+import { IHistoryStructure } from "../models/persistent-chats";
 import { Message } from "whatsapp-web.js";
 
 export interface ChatGptHistoryBody {
@@ -47,4 +48,9 @@ export interface IChatGptApiError {
     status: number;
   };
   message: string;
+}
+
+export interface UpdateContextParams {
+  chatId: string;
+  updateFields: Partial<IHistoryStructure>;
 }
