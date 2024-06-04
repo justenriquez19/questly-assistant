@@ -80,6 +80,7 @@ export enum MediaNotSupportedResponses {
 
 export enum MediaTypes {
   Audio = 'audio',
+  Chat = 'chat',
   Image = 'image',
   Sticker = 'sticker',
   Video = 'video',
@@ -87,7 +88,7 @@ export enum MediaTypes {
 }
 
 export enum TimeoutDurations {
-  TimeBetweenMessages = 0
+  TimeBetweenMessages = 4000
 };
 
 export enum ErrorMessages {

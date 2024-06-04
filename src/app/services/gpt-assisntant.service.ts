@@ -33,12 +33,6 @@ export class GPTAssistant {
     if (!context.isFirstContact) {
       chatGptResponse = await this.getChatGptResponse(context.chatHistory, this.currentFunctions, BOT_BEHAVIOR_DESCRIPTION);
     } else {
-      context.chatHistory.push({
-        role: GptRoles.Assistant,
-        content: `${ResponseMessages.FirstContact1}${currentClientName}${ResponseMessages.FirstContact2}`
-      });
-      await context.save();
-
       return {
         functionName: FunctionNames.FirstConcact,
         args: null,
@@ -171,7 +165,7 @@ export class GPTAssistant {
    * @param {string} currentClientName - The current client's name.
    * @returns {Promise<Document & IHistoryStructure>} - The chat context.
    */
-  private async setInitialContext(text: string, currentChatId: string, currentClientName: string): Promise<Document & IHistoryStructure> {
+  public async setInitialContext(text: string, currentChatId: string, currentClientName: string): Promise<Document & IHistoryStructure> {
     let context = await this.getContextByChatId(currentChatId);
 
     if (!context) {
@@ -228,7 +222,7 @@ export class GPTAssistant {
    * @param {string} currentClientName - The current client's name.
    * @returns {Promise<Document & IHistoryStructure>} - The new chat context.
    */
-  public async createInitialContext(text: string, currentChatId: string, currentClientName: string): Promise<Document & IHistoryStructure> {
+  private async createInitialContext(text: string, currentChatId: string, currentClientName: string): Promise<Document & IHistoryStructure> {
     const newContext = new PersistentChatModel({
       chatId: currentChatId,
       clientName: currentClientName,

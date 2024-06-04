@@ -28,9 +28,11 @@ export class QuestlyAIssistant {
   private app!: Express;
   private assistant: GPTAssistant;
   private client: Client;
+  private isProcessingMessages: boolean;
   private mongoService: MongoService;
   private port: number;
   private qrCode: string;
+  private tempMessageQueue: Map<string, ExtendedMessage[]>;
   private userMessages: Map<string, ExtendedMessage[]>;
   private userMessageTimers: Map<string, NodeJS.Timeout>;
   private utils: CoreUtilFunctions;
@@ -45,6 +47,8 @@ export class QuestlyAIssistant {
     this.qrCode = AppConstants.EMPTY_STRING;
     this.userMessages = new Map();
     this.userMessageTimers = new Map();
+    this.tempMessageQueue = new Map();
+    this.isProcessingMessages = false;
     this.utils = new CoreUtilFunctions();
     this.client = new Client({
       authStrategy: new LocalAuth(),
@@ -120,10 +124,6 @@ export class QuestlyAIssistant {
 
       if (!context || context.shouldRespond) {
         this.handleMessageStorage(currentSenderId, message);
-
-        this.userMessageTimers.set(currentSenderId, setTimeout(async () => {
-          await this.processGroupedMessages(currentSenderId);
-        }, TimeoutDurations.TimeBetweenMessages));
       }
     } catch (error) {
       console.error(ErrorMessages.DefaultMessage, error);
@@ -136,12 +136,31 @@ export class QuestlyAIssistant {
    * @param {ExtendedMessage} message - The received message.
    */
   private handleMessageStorage(senderId: string, message: ExtendedMessage): void {
+    if (this.isProcessingMessages) {
+      if (this.tempMessageQueue.has(senderId)) {
+        this.tempMessageQueue.get(senderId)!.push(message);
+      } else {
+        this.tempMessageQueue.set(senderId, [message]);
+      }
+      return;
+    }
+
     if (this.userMessages.has(senderId)) {
       this.userMessages.get(senderId)!.push(message);
-      clearTimeout(this.userMessageTimers.get(senderId)!);
+      if (this.userMessageTimers.has(senderId)) {
+        clearTimeout(this.userMessageTimers.get(senderId)!);
+      }
     } else {
       this.userMessages.set(senderId, [message]);
     }
+
+    this.userMessageTimers.set(senderId, setTimeout(async () => {
+      this.isProcessingMessages = true;
+      await this.processGroupedMessages(senderId);
+      this.isProcessingMessages = false;
+
+      this.processTempQueue(senderId);
+    }, TimeoutDurations.TimeBetweenMessages));
   }
 
   /**
@@ -149,15 +168,14 @@ export class QuestlyAIssistant {
    * @param {string} senderId - The ID of the sender.
    */
   private async processGroupedMessages(senderId: string): Promise<void> {
-    let userName: string = AppConstants.DEF_USER_NAME;
     const messages = this.userMessages.get(senderId);
     if (!messages || messages.length === 0) return;
 
     const combinedMessageContent = this.combineMessagesContent(messages);
     const firstMessage = messages[0];
-    if (firstMessage._data?.notifyName) {
-      userName = this.utils.cutUntilSpace(firstMessage._data.notifyName) ?? firstMessage._data.notifyName;
-    }
+    const userName = firstMessage._data?.notifyName
+      ? this.utils.cutUntilSpace(firstMessage._data.notifyName) ?? firstMessage._data.notifyName
+      : AppConstants.DEF_USER_NAME;
     const mediaType = this.getFirstMediaType(messages);
 
     if (this.isSingleEmptyMediaMessage(messages)) {
@@ -179,13 +197,21 @@ export class QuestlyAIssistant {
   }
 
   /**
-   * @description Checks if any message in the array contains media and returns the type of the first media message.
+   * @description Checks if all non-chat messages are of the same type and returns that type, otherwise returns 'chat' if there is a mix of types.
    * @param {ExtendedMessage[]} messages - The array of messages to check.
-   * @returns {string | null} - The type of the first media message if detected, otherwise null.
+   * @returns {string} - The type of the non-chat messages if they are all the same, otherwise 'chat'.
    */
   private getFirstMediaType(messages: ExtendedMessage[]): string {
-    const mediaMessage = messages.find(msg => msg.hasMedia);
-    return mediaMessage ? mediaMessage.type : AppConstants.EMPTY_STRING;
+    const nonChatMessages = messages.filter(msg => msg.type as string !== MediaTypes.Chat);
+
+    if (nonChatMessages.length === 0) {
+      return MediaTypes.Chat;
+    }
+
+    const firstType = nonChatMessages[0].type;
+    const allSameType = nonChatMessages.every(msg => msg.type === firstType);
+
+    return allSameType ? firstType : MediaTypes.Chat;
   }
 
   /**
@@ -210,26 +236,22 @@ export class QuestlyAIssistant {
     const messageType = message.type as string;
 
     if (!context) {
-      context = await this.assistant.createInitialContext(AppConstants.EMPTY_STRING, senderId, userName);
+      context = await this.assistant.setInitialContext(`*${MediaTypes.Sticker}*`, senderId, userName);
     }
 
     if (context.isFirstContact) {
       messageByMediaType = this.getErrorMessageByMediaType(messageType, false);
-      if (userName !== AppConstants.DEF_USER_NAME) {
-        responseText = `${ResponseMessages.FirstContact1}${userName}${ResponseMessages.FirstContact2}\n\n${messageByMediaType}`;
-      } else {
-        responseText = `${ResponseMessages.FirstContactWithNoName}\n\n${messageByMediaType}`;
-      }
-      context.chatHistory.push({
-        role: GptRoles.Assistant,
-        content: responseText
-      });
-      context.isFirstContact = false;
-      await context.save();
+      const messageByUsername = userName !== AppConstants.DEF_USER_NAME
+        ? `${ResponseMessages.FirstContact1}${userName}${ResponseMessages.FirstContact2}`
+        : `${ResponseMessages.FirstContactWithNoName}`;
+      responseText = messageByMediaType !== AppConstants.EMPTY_STRING ? `${messageByUsername}\n\n${messageByMediaType}` : messageByUsername;
+
+      await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant);
 
       await message.reply(responseText);
     } else {
       messageByMediaType = this.getErrorMessageByMediaType(messageType, true);
+      await this.assistant.addNewMessage(`*${messageType}*`, senderId, GptRoles.User);
       await this.assistant.addNewMessage(messageByMediaType, senderId, GptRoles.Assistant);
       await message.reply(messageByMediaType);
     }
@@ -255,11 +277,11 @@ export class QuestlyAIssistant {
           responseText = await this.assistant.processResponse(FunctionNames.AddApointment, ResponseMessages.RedirectToWebsite, senderId, ADD_APPOINTMENT_BEHAVIOR_DESCRIPTION);
           break;
         case FunctionNames.FirstConcact:
-          if (senderUserName !== AppConstants.DEF_USER_NAME) {
-            responseText = `${ResponseMessages.FirstContact1}${senderUserName}${ResponseMessages.FirstContact2}`;
-          } else {
-            responseText = ResponseMessages.FirstContactWithNoName;
-          }
+          responseText = senderUserName !== AppConstants.DEF_USER_NAME
+            ? `${ResponseMessages.FirstContact1}${senderUserName}${ResponseMessages.FirstContact2}`
+            : `${ResponseMessages.FirstContactWithNoName}\n\n${ResponseMessages.FirstContact2}`;
+
+          await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant);
           break;
         case FunctionNames.TalkToHuman:
           await this.assistant.updateShouldRespond(senderId, false);
@@ -277,9 +299,8 @@ export class QuestlyAIssistant {
           break;
       }
 
-      if (mediaType !== AppConstants.EMPTY_STRING) {
-        const messageType = message.type as string;
-        const messageByMediaType = this.getErrorMessageByMediaType(messageType, false);
+      if (mediaType !== MediaTypes.Chat) {
+        const messageByMediaType = this.getErrorMessageByMediaType(mediaType, false);
         if (messageByMediaType !== AppConstants.EMPTY_STRING) {
           responseText += `\n\n${messageByMediaType}`;
         }
@@ -297,7 +318,10 @@ export class QuestlyAIssistant {
    */
   private clearUserMessages(senderId: string): void {
     this.userMessages.delete(senderId);
-    this.userMessageTimers.delete(senderId);
+    if (this.userMessageTimers.has(senderId)) {
+      clearTimeout(this.userMessageTimers.get(senderId)!);
+      this.userMessageTimers.delete(senderId);
+    }
   }
 
   /**
@@ -314,7 +338,7 @@ export class QuestlyAIssistant {
    */
   private initializeRoutes(): void {
     this.app.get(AppConstants.QR_ROUTE, (_, res) => this.getQrCode(res));
-  }  
+  }
 
   /**
    * @description Handles the request for the QR code.
@@ -361,6 +385,20 @@ export class QuestlyAIssistant {
         return isSingleEmptyMediaMessage ? MediaNotSupportedResponses.Audio : MediaNotSupportedResponses.AudioComplement;
       default:
         return isSingleEmptyMediaMessage ? MediaNotSupportedResponses.Default : MediaNotSupportedResponses.DefaultComplement;
+    }
+  }
+
+  /**
+   * Procesa los mensajes en la cola temporal después de que se complete el procesamiento actual.
+   * @param {string} senderId - El ID del remitente.
+   */
+  private processTempQueue(senderId: string): void {
+    if (this.tempMessageQueue.has(senderId)) {
+      const tempMessages = this.tempMessageQueue.get(senderId)!;
+      this.tempMessageQueue.delete(senderId);
+      for (const message of tempMessages) {
+        this.handleMessageStorage(senderId, message);
+      }
     }
   }
 }
