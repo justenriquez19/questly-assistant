@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IChatGptHistoryBody {
     content: string;
+    messageDate: Date;
     role: string;
 }
 
@@ -15,8 +16,9 @@ export interface IHistoryStructure extends Document {
 }
 
 const ChatGptHistoryBodySchema = new Schema<IChatGptHistoryBody>({
-    role: { type: String, required: true },
-    content: { type: String, required: true }
+    content: { type: String, required: true },
+    messageDate: { type: Date, required: true },
+    role: { type: String, required: true }
 });
 
 const HistoryStructureSchema = new Schema<IHistoryStructure>({

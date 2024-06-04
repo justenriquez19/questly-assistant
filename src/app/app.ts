@@ -193,7 +193,12 @@ export class QuestlyAIssistant {
    * @returns {string} - The combined message content.
    */
   private combineMessagesContent(messages: ExtendedMessage[]): string {
-    return messages.map(msg => msg.body).join(AppConstants.BLANK_SPACE);
+    return messages.map(msg => {
+      if (!msg.body) {
+        return msg.type as string === MediaTypes.VoiceMessage ? `*${MediaTypes.Audio}*` : `*${msg.type}*`;
+      }
+      return msg.body;
+    }).join(AppConstants.BLANK_SPACE);
   }
 
   /**
@@ -211,7 +216,7 @@ export class QuestlyAIssistant {
     const firstType = nonChatMessages[0].type;
     const allSameType = nonChatMessages.every(msg => msg.type === firstType);
 
-    return allSameType ? firstType : MediaTypes.Chat;
+    return allSameType ? firstType : MediaTypes.Mixed;
   }
 
   /**
@@ -236,7 +241,7 @@ export class QuestlyAIssistant {
     const messageType = message.type as string;
 
     if (!context) {
-      context = await this.assistant.setInitialContext(`*${MediaTypes.Sticker}*`, senderId, userName);
+      context = await this.assistant.addNewUserMessage(`*${MediaTypes.Sticker}*`, senderId, userName);
     }
 
     if (context.isFirstContact) {

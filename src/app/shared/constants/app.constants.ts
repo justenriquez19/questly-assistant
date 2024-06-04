@@ -82,6 +82,7 @@ export enum MediaTypes {
   Audio = 'audio',
   Chat = 'chat',
   Image = 'image',
+  Mixed = 'mixed',
   Sticker = 'sticker',
   Video = 'video',
   VoiceMessage = 'ptt'

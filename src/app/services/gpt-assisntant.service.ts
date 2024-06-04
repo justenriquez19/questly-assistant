@@ -28,7 +28,7 @@ export class GPTAssistant {
    */
   public async processFunctions(text: string, currentChatId: string, currentClientName: string) {
     let chatGptResponse: ChatCompletion;
-    const context = await this.setInitialContext(text, currentChatId, currentClientName);
+    const context = await this.addNewUserMessage(text, currentChatId, currentClientName);
 
     if (!context.isFirstContact) {
       chatGptResponse = await this.getChatGptResponse(context.chatHistory, this.currentFunctions, BOT_BEHAVIOR_DESCRIPTION);
@@ -49,10 +49,10 @@ export class GPTAssistant {
       return { functionName, args, message };
     } else {
       if (message.content) {
-        context.timeOfLastMessage = new Date();
         context.chatHistory.push({
           role: message.role,
-          content: message.content as string
+          content: message.content as string,
+          messageDate: new Date()
         });
       }
       await context.save();
@@ -81,7 +81,8 @@ export class GPTAssistant {
     context.timeOfLastMessage = new Date();
     context.chatHistory.push({
       role: chatGptResponse.choices[0].message.role,
-      content: chatGptResponse.choices[0].message.content as string
+      content: chatGptResponse.choices[0].message.content as string,
+      messageDate: new Date()
     });
 
     await context.save();
@@ -165,7 +166,7 @@ export class GPTAssistant {
    * @param {string} currentClientName - The current client's name.
    * @returns {Promise<Document & IHistoryStructure>} - The chat context.
    */
-  public async setInitialContext(text: string, currentChatId: string, currentClientName: string): Promise<Document & IHistoryStructure> {
+  public async addNewUserMessage(text: string, currentChatId: string, currentClientName: string): Promise<Document & IHistoryStructure> {
     let context = await this.getContextByChatId(currentChatId);
 
     if (!context) {
@@ -174,8 +175,10 @@ export class GPTAssistant {
       if (text !== AppConstants.EMPTY_STRING) {
         context.chatHistory.push({
           role: GptRoles.User,
-          content: text
+          content: text,
+          messageDate: new Date()
         });
+        context.timeOfLastMessage = new Date();
       }
       context.isFirstContact = false;
     }
@@ -197,9 +200,14 @@ export class GPTAssistant {
 
     context.chatHistory.push({
       role: roleProvided,
-      content: text
+      content: text,
+      messageDate: new Date()
     });
     context.isFirstContact = false;
+
+    if (roleProvided === GptRoles.User) {
+      context.timeOfLastMessage = new Date();
+    }
 
     await context.save();
 
@@ -232,7 +240,8 @@ export class GPTAssistant {
       chatHistory: [
         {
           role: GptRoles.User,
-          content: `${text}${AuxiliarMessages.MyNameIs} ${currentClientName}`
+          content: `${text}${AuxiliarMessages.MyNameIs} ${currentClientName}`,
+          messageDate: new Date()
         }
       ]
     });
