@@ -24,6 +24,7 @@ export class AppConstants {
   public static readonly READY_KEY: string = 'ready';
   public static readonly REMOTE_KEY: "remote" = 'remote';
   public static readonly SERVER_RUNNING_MESSAGE: string = 'Server running at port: 3000';
+  public static readonly TEL_KEY: string = 'TEL';
   public static readonly TITLE: string = 'questly-AIssistant';
   public static readonly WEB_VERSION_PATCH: string = 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html';
 };
@@ -118,8 +119,10 @@ export enum NotificationContacts {
 }
 
 export class RegexExpressions {
+  public static readonly DELETE_NON_DIGIT_CHAR = /\D/g;
   public static readonly GET_FIRST_TEN_NUMBERS = /\b\d{10}\b/;
   public static readonly GET_PHONE_NUMBER = /^.*(\d{10})@c\.us$/;
+  public static readonly V_CARD_PHONE_EXTRACTOR = /(\+?\d{1,4}?\s?\(?\d{1,4}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9})/;
 }
 
 export enum PropertiesDescription {

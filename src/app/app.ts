@@ -143,33 +143,49 @@ export class QuestlyAIssistant {
    */
   private async onMessageCreated(message: ExtendedMessage): Promise<void> {
     try {
-      const messageContent = message.body;
-      console.log(`${AuxiliarMessages.MessageReceivedFrom}${GptRoles.System} ${messageContent}`);
+      if (message.fromMe) {
+        const messageContent = message.body;
+        console.log(`${AuxiliarMessages.MessageReceivedFrom}${GptRoles.System}: ${messageContent}`);
 
-      if (messageContent.includes(AppConstants.NOT_REPLY)) {
-        return;
-      }
-
-      const phoneNumberMatch = messageContent.match(RegexExpressions.GET_FIRST_TEN_NUMBERS);
-      if (phoneNumberMatch) {
-        const phoneNumber = phoneNumberMatch[0];
-        let context = await this.assistant.getContextByChatId(phoneNumber);
-        if (context) {
-          context = await this.assistant.updateContext({
-            chatId: phoneNumber,
-            updateFields: { shouldRespond: false }
-          });
-        } else {
-          context = await this.assistant.addNewUserMessage(`${AuxiliarMessages.TempContext}${phoneNumber}`, phoneNumber, AppConstants.DEF_USER_NAME);
-          await this.assistant.updateContext({
-            chatId: phoneNumber,
-            updateFields: { shouldRespond: false, shouldDeleteAfterContact: true, timeOfLastMessage: new Date() }
-          });
+        if (messageContent.includes(AppConstants.NOT_REPLY)) {
+          return;
         }
-        const responseText = `${ResponseMessages.ManualDeactivation1}\n\n${phoneNumber}\n\n${ResponseMessages.ManualDeactivation2}\n\n${AppConstants.NOT_REPLY}`;
-        await message.reply(responseText);
 
-        return;
+        let phoneNumber: string | null = null;
+
+        const phoneNumberMatch = messageContent.match(RegexExpressions.GET_FIRST_TEN_NUMBERS);
+        if (phoneNumberMatch) {
+          phoneNumber = phoneNumberMatch[0];
+        } else {
+          const vCardLine = messageContent.split('\n').find(line => line.includes(AppConstants.TEL_KEY));
+          if (vCardLine) {
+            const vCardPhoneMatch = vCardLine.match(RegexExpressions.V_CARD_PHONE_EXTRACTOR);
+            if (vCardPhoneMatch) {
+              phoneNumber = vCardPhoneMatch[0].replace(RegexExpressions.DELETE_NON_DIGIT_CHAR, AppConstants.EMPTY_STRING);
+              phoneNumber = phoneNumber.substring(3);
+            }
+          }
+        }
+
+        if (phoneNumber) {
+          let context = await this.assistant.getContextByChatId(phoneNumber);
+          if (context) {
+            context = await this.assistant.updateContext({
+              chatId: phoneNumber,
+              updateFields: { shouldRespond: false }
+            });
+          } else {
+            context = await this.assistant.addNewUserMessage(`${AuxiliarMessages.TempContext}${phoneNumber}`, phoneNumber, AppConstants.DEF_USER_NAME);
+            await this.assistant.updateContext({
+              chatId: phoneNumber,
+              updateFields: { shouldRespond: false, shouldDeleteAfterContact: true, timeOfLastMessage: new Date() }
+            });
+          }
+          const responseText = `${ResponseMessages.ManualDeactivation1}\n\n${phoneNumber}\n\n${ResponseMessages.ManualDeactivation2}\n\n${AppConstants.NOT_REPLY}`;
+          await message.reply(responseText);
+
+          return;
+        }
       }
     } catch (error) {
       console.error(ErrorMessages.DefaultMessage, error);
