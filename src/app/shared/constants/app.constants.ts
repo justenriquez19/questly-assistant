@@ -7,7 +7,7 @@ export class AppConstants {
   public static readonly CLIENT_IS_READY: string = 'The client is up!';
   public static readonly CURRENT_PORT: number = 3000;
   public static readonly DEF_PUBLIC_IP: string = '0.0.0.0';
-  public static readonly DEF_USER_NAME: string = 'nobody';
+  public static readonly DEF_USER_NAME: string = 'Nobody';
   public static readonly ELLIPSES: string = '...';
   public static readonly EMPTY_STRING: string = '';
   public static readonly MESSAGE_CREATE_KEY: string = 'message_create';
@@ -59,19 +59,19 @@ export enum FunctionNames {
 };
 
 export enum ResponseMessages {
-  AskPreferedName1 = 'Su nombre completo es: ',
-  AskPreferedName2 = '. Saludar por su primer nombre y preguntar si ese nombre le parece bien o prefiere otro.',
-  FirstContact1 = "¡Hola! Parece que es la primera vez que te contactas con el asistente virtual de Ale's Place. Primero que nada, veo que te llamas ",
-  FirstContact2 = ', ¿es correcto? ¿O prefieres que te llame de otra forma? 😊',
-  FirstContactWithNoName = `¡Hola! Parece que es la primera vez que te contactas con el asistente virtual de Ale's Place. Primero que nada ¿Cómo te gustaría que te llame? 😊`,
+  FirstContact1 = "¡Hola! 👋 Parece que es la primera vez que te contactas con el asistente virtual de Ale's Place ✨\n\nPrimero que nada, veo que te llamas ",
+  FirstContact2 = ', ¿verdad? ¿O prefieres que te llame de otra forma? 😊',
+  FirstContactWithNoName = `¡Hola! 👋 Parece que es la primera vez que te contactas con el asistente virtual de Ale's Place ✨\n\nPrimero que nada ¿Cómo te gustaría que te llame? 😊`,
   GetCustomResponse = 'No te preocupes, quizás yo no tengo esa información, ¡pero Ale seguro que sí! 🌸 Si quieres hablar con ella, solo dime, "Quiero hablar con Ale". Si no, ¡puedo seguir ayudándote! 🙌',
-  ManualDeactivation1 = `¡Hola! 👋 Este es el asistente de notificaciones de Ale's Place 😊. Se ha desactivado manualmente el servicio de chatbot para el usuario con el número de teléfono:`,
-  ManualDeactivation2 = `Podrás contactarlo sin interrupciones durante las próximas 12 horas 🕒✨`,
-  PendingMessage1 = `¡Hola! 👋 Este es el asistente de notificaciones de Ale's Place 😊, parece que el usuario "`,
-  PendingMessage2 = `", con el número de teléfono 📞`,
-  PendingMessage3 = `quiere contactar directamente contigo, por favor, respóndole lo antes posible. Gracias 😊✨`,
+  ManualDeactivation = `Se ha desactivado manualmente el servicio de chatbot para el usuario con el número de teléfono:`,
+  NoInterruptionContact = `Podrás contactarlo sin interrupciones durante las próximas 12 horas 🕒✨`,
+  NotificationSystem = `¡Hola! 👋 Este es el asistente de notificaciones de Ale's Place 😊`,
+  PendingMessage1 = `👤 El usuario:`,
+  PendingMessage2 = `📞 Con número:`,
+  PendingMessage3 = `Pidió hablar directamente contigo, por favor, respóndole lo antes posible. Gracias 😊✨`,
   RedirectToWebsite = 'Entra a www.alesplace.com/catalogo-de-servicios para agendar una cita',
-  StopConversation = '¡Entendido! A partir de este momento ya no podré responderte. Ale se pondrá en contacto contigo pronto para atenderte personalmente 😊',
+  StopConversation = `¡Entendido! \n\nA partir de este momento ya no podré responderte ❌\n\nSiéntete libre de enviar más detalles sobre lo que quieras platicarle 🌸
+  \nAle te contactará pronto para atenderte personalmente 😊`,
   YourNameIs = 'Entiendo, te llamas'
 }
 
@@ -119,9 +119,10 @@ export enum NotificationContacts {
 }
 
 export class RegexExpressions {
-  public static readonly DELETE_NON_DIGIT_CHAR = /\D/g;
+  public static readonly REMOVE_NON_DIGIT_CHAR = /\D/g;
   public static readonly GET_FIRST_TEN_NUMBERS = /\b\d{10}\b/;
   public static readonly GET_PHONE_NUMBER = /^.*(\d{10})@c\.us$/;
+  public static readonly REMOVE_NON_ALPHABETIC_CHAR = /[^a-zA-Z]/g;
   public static readonly V_CARD_PHONE_EXTRACTOR = /(\+?\d{1,4}?\s?\(?\d{1,4}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9})/;
 }
 

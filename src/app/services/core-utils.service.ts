@@ -1,4 +1,4 @@
-import { AppConstants } from "../shared/constants/app.constants";
+import { AppConstants, RegexExpressions } from "../shared/constants/app.constants";
 
 export class CoreUtilFunctions {
   /**
@@ -12,7 +12,39 @@ export class CoreUtilFunctions {
    * @returns {string} The substring before the first space.
    */
   public cutUntilSpace(input: string): string {
-    return input.split(AppConstants.BLANK_SPACE)[0];
+    if (input === null || input === undefined) {
+      return AppConstants.EMPTY_STRING;
+    }
+
+    const str = String(input);
+
+    return str.split(AppConstants.BLANK_SPACE)[0];
+  }
+
+  /**
+   * @description Removes any non-alphabetic characters from the input string.
+   * @param {string} input - The string to be processed.
+   * @returns {string} The cleaned string with only alphabetic characters.
+   */
+  public removeNonAlphabetic(input: string): string {
+    if (input === null || input === undefined) {
+      return AppConstants.EMPTY_STRING;
+    }
+
+    const str = String(input);
+
+    return str.replace(RegexExpressions.REMOVE_NON_ALPHABETIC_CHAR, AppConstants.EMPTY_STRING);
+  }
+
+  /**
+   * @description Cuts the input string at the first space and returns the first segment with only alphabetic characters.
+   * @param {string} input - The string to be processed.
+   * @returns {string} The cleaned substring before the first space with only alphabetic characters.
+   */
+  public processString(input: string): string {
+    const segment = this.cutUntilSpace(input);
+
+    return this.removeNonAlphabetic(segment);
   }
 
   /**

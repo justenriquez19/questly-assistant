@@ -161,7 +161,7 @@ export class QuestlyAIssistant {
           if (vCardLine) {
             const vCardPhoneMatch = vCardLine.match(RegexExpressions.V_CARD_PHONE_EXTRACTOR);
             if (vCardPhoneMatch) {
-              phoneNumber = vCardPhoneMatch[0].replace(RegexExpressions.DELETE_NON_DIGIT_CHAR, AppConstants.EMPTY_STRING);
+              phoneNumber = vCardPhoneMatch[0].replace(RegexExpressions.REMOVE_NON_DIGIT_CHAR, AppConstants.EMPTY_STRING);
               phoneNumber = phoneNumber.substring(3);
             }
           }
@@ -181,7 +181,9 @@ export class QuestlyAIssistant {
               updateFields: { shouldRespond: false, shouldDeleteAfterContact: true, timeOfLastMessage: new Date() }
             });
           }
-          const responseText = `${ResponseMessages.ManualDeactivation1}\n\n${phoneNumber}\n\n${ResponseMessages.ManualDeactivation2}\n\n${AppConstants.NOT_REPLY}`;
+          const responseText = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.ManualDeactivation}\n\n${phoneNumber}
+          \n${ResponseMessages.NoInterruptionContact}\n\n${AppConstants.NOT_REPLY}`;
+
           await message.reply(responseText);
 
           return;
@@ -235,9 +237,7 @@ export class QuestlyAIssistant {
 
     const combinedMessageContent = this.combineMessagesContent(messages);
     const firstMessage = messages[0];
-    const userName = firstMessage._data?.notifyName
-      ? this.utils.cutUntilSpace(firstMessage._data.notifyName) ?? firstMessage._data.notifyName
-      : AppConstants.DEF_USER_NAME;
+    const userName = this.getUserName(firstMessage._data?.notifyName);
     const mediaType = this.getFirstMediaType(messages);
 
     if (this.isSingleEmptyMediaMessage(messages)) {
@@ -346,7 +346,7 @@ export class QuestlyAIssistant {
         case FunctionNames.FirstConcact:
           responseText = senderUserName !== AppConstants.DEF_USER_NAME
             ? `${ResponseMessages.FirstContact1}${senderUserName}${ResponseMessages.FirstContact2}`
-            : `${ResponseMessages.FirstContactWithNoName}\n\n${ResponseMessages.FirstContact2}`;
+            : `${ResponseMessages.FirstContactWithNoName}`;
 
           await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant);
           break;
@@ -358,7 +358,9 @@ export class QuestlyAIssistant {
           });
           responseText = ResponseMessages.StopConversation;
           const currentClientName = (await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant)).clientName;
-          const notificationMessage = `${ResponseMessages.PendingMessage1}${currentClientName}${ResponseMessages.PendingMessage2} ${senderId} ${ResponseMessages.PendingMessage3}`;
+          const notificationMessage = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.PendingMessage1} ${currentClientName}
+          \n${ResponseMessages.PendingMessage2} ${senderId}\n\n${ResponseMessages.PendingMessage3}
+          \n${ResponseMessages.NoInterruptionContact}\n\n${AppConstants.NOT_REPLY}`;
           await this.sendNotification(NotificationContacts.TestContact, notificationMessage);
           break;
         case FunctionNames.GetCustomResponse:
@@ -478,5 +480,21 @@ export class QuestlyAIssistant {
         this.handleMessageStorage(senderId, message);
       }
     }
+  }
+
+  /**
+   * @description Processes the user's name, ensuring it is not empty and falls back to a default name if necessary.
+   * @param {string} notifyName - The name to be processed.
+   * @param {string} defaultName - The default name to use if the processed name is empty.
+   * @returns {string} The processed user name or the default name if the processed name is empty.
+   */
+  private getUserName(notifyName: string | undefined): string {
+    if (!notifyName) {
+      return AppConstants.DEF_USER_NAME;
+    }
+
+    const processedName = this.utils.processString(notifyName);
+
+    return processedName ? processedName : AppConstants.DEF_USER_NAME;
   }
 }

@@ -65,28 +65,28 @@ Todos los precios están sujetos a cambios segun el diseño o preferencias de ca
 `;
 
 export const ADD_APPOINTMENT_DESCRIPTION = `
-  Agendar una cita.
-  Se considera que se quiere agendar una cita siempre que la clienta pida agendar una cita dando día u horario, pregunte sobre citas u horarios, o muestre interés en saber si hay citas disponibles.
-  La frase más común para detectar esta función es: "Quiero agendar una cita".
+Agendar una cita.
+Se considera que se quiere agendar una cita siempre que la clienta pida agendar una cita dando día u horario, pregunte sobre citas u horarios, o muestre interés en saber si hay citas disponibles.
+La frase más común para detectar esta función es: "Quiero agendar una cita".
 `;
 
 export const TALK_TO_ALE_DESCRIPTION = `
-  Hablar con Ale. Se considera que se quiere hablar con Ale siempre que la clienta pida hablar con Ale, no quiera hablar con el asistente o pida hablar con una persona.
-  La frase más común para detectar esta función es: "Quiero hablar con Ale".
+Hablar con Ale. Se considera que se quiere hablar con Ale siempre que la clienta pida hablar con Ale, no quiera hablar con el asistente o pida hablar con una persona.
+La frase más común para detectar esta función es: "Quiero hablar con Ale".
 `;
 
 export const GET_PERSONAL_ASSISTANCE_DESCRIPTION = `
-  Obtener asistencia personalizada. Se considera que se quiere obtener asistencia personalizada siempre que la clienta esté experimentando un problema complejo,
-  confuso o dificil de resolver por si mismo. También si el usuario presenta dificultades o es incapaz de agendar su cita en el sitio Web.
-  La frase más común para detectar esta función es: "No puedo agendar mi cita".
+Obtener asistencia personalizada. Se considera que se quiere obtener asistencia personalizada siempre que la clienta esté experimentando un problema complejo,
+confuso o dificil de resolver por si mismo. También si el usuario presenta dificultades o es incapaz de agendar su cita en el sitio Web.
+La frase más común para detectar esta función es: "No puedo agendar mi cita".
 `;
 
 export const GET_CUSTOM_RESPONSE_DESCRIPTION = `
-  Obtener una respuesta personalizada.
-  Se considera que se quiere obtener una respuesta personalizada cuando la clienta pregunta sobre algún dato específico o cuya información no es clara o no está disponible para el asistente`;
+Obtener una respuesta personalizada.
+Se considera que se quiere obtener una respuesta personalizada cuando la clienta pregunta sobre algún dato específico o cuya información no es clara o no está disponible para el asistente`;
 
 export const UPDATE_USER_NAME_DESCRIPTION = `
-  Actualizar el nombre de usuario.
-  Se considera que se quiere actualizar el nombre de usuario cuando la clienta pide ser llamada de una forma específica o mencione su nombre.
-  La frases más comunes para detectar esta función son: "Mi nombre es" o "Me llamo"
+Actualizar el nombre de usuario.
+Se considera que se quiere actualizar el nombre de usuario cuando la clienta pide ser llamada de una forma específica o mencione su nombre.
+La frases más comunes para detectar esta función son: "Mi nombre es" o "Me llamo"
 `;
