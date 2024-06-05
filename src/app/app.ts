@@ -182,7 +182,7 @@ export class QuestlyAIssistant {
             });
           }
           const responseText = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.ManualDeactivation}\n\n${phoneNumber}
-          \n${ResponseMessages.NoInterruptionContact}\n\n${AppConstants.NOT_REPLY}`;
+            \n${ResponseMessages.NoInterruptionContact}\n\n${AppConstants.NOT_REPLY}`;
 
           await message.reply(responseText);
 
@@ -339,6 +339,8 @@ export class QuestlyAIssistant {
       const processed = await this.assistant.processFunctions(messageContent, senderId, senderUserName);
 
       let responseText: string;
+      let currentClientName: string;
+      let notificationMessage: string;
       switch (processed.functionName) {
         case FunctionNames.AddApointment:
           responseText = await this.assistant.processResponse(FunctionNames.AddApointment, ResponseMessages.RedirectToWebsite, senderId, ADD_APPOINTMENT_BEHAVIOR_DESCRIPTION);
@@ -357,10 +359,10 @@ export class QuestlyAIssistant {
             updateFields: { shouldRespond: false }
           });
           responseText = ResponseMessages.StopConversation;
-          const currentClientName = (await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant)).clientName;
-          const notificationMessage = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.PendingMessage1} ${currentClientName}
-          \n${ResponseMessages.PendingMessage2} ${senderId}\n\n${ResponseMessages.PendingMessage3}
-          \n${ResponseMessages.NoInterruptionContact}\n\n${AppConstants.NOT_REPLY}`;
+          currentClientName = (await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant)).clientName;
+          notificationMessage = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.PendingMessage1} ${currentClientName}
+            \n${ResponseMessages.PendingMessage2} ${senderId}\n\n${ResponseMessages.PendingMessage3}
+            \n${ResponseMessages.NoInterruptionContact}\n\n${AppConstants.NOT_REPLY}`;
           await this.sendNotification(NotificationContacts.TestContact, notificationMessage);
           break;
         case FunctionNames.GetCustomResponse:
@@ -373,6 +375,13 @@ export class QuestlyAIssistant {
             updateFields: { clientName: processed.args.name }
           });
           responseText = await this.assistant.processResponse(FunctionNames.UpdateUserName, `${ResponseMessages.YourNameIs} ${processed.args.name}`, senderId, ADD_APPOINTMENT_BEHAVIOR_DESCRIPTION);
+          break;
+        case FunctionNames.OpenTheDoor:
+          responseText = ResponseMessages.WelcomeCustomer;
+          currentClientName = (await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant)).clientName;
+          notificationMessage = `${ResponseMessages.NotificationSystem}\n\n${currentClientName} ${ResponseMessages.OpenTheDoor}
+            \n${AppConstants.NOT_REPLY}`;
+          await this.sendNotification(NotificationContacts.TestContact, notificationMessage);
           break;
         default:
           responseText = processed.message.content as string;

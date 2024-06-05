@@ -12,7 +12,7 @@ export class AppConstants {
   public static readonly EMPTY_STRING: string = '';
   public static readonly MESSAGE_CREATE_KEY: string = 'message_create';
   public static readonly MESSAGE_KEY: string = 'message';
-  public static readonly NOT_REPLY: string = 'Mensaje automático. No responder';
+  public static readonly NOT_REPLY: string = 'Mensaje automático. No responder.';
   public static readonly OBJECT_KEY: string = 'object';
   public static readonly ONE_DOLLAR: string = '$1';
   public static readonly PUPPETEER_PATCH_NO_SANDBOX: string = '--no-sandbox';
@@ -53,7 +53,7 @@ export enum FunctionNames {
   FirstConcact = 'first_contact',
   GetCustomResponse = 'get_custom_response',
   GetPersonalAssistance = 'get_personal_assistance',
-  MediaDetected = 'media_detected',
+  OpenTheDoor = 'open_the_door',
   TalkToAle = 'talk_to_ale',
   UpdateUserName = 'update_user_name'
 };
@@ -66,13 +66,16 @@ export enum ResponseMessages {
   ManualDeactivation = `Se ha desactivado manualmente el servicio de chatbot para el usuario con el número de teléfono:`,
   NoInterruptionContact = `Podrás contactarlo sin interrupciones durante las próximas 12 horas 🕒✨`,
   NotificationSystem = `¡Hola! 👋 Este es el asistente de notificaciones de Ale's Place 😊`,
+  OpenTheDoor = 'acaba de avisar que está esperando afuera, ¡ábrele lo antes posible! 🕒✨',
   PendingMessage1 = `👤 El usuario:`,
   PendingMessage2 = `📞 Con número:`,
   PendingMessage3 = `Pidió hablar directamente contigo, por favor, respóndole lo antes posible. Gracias 😊✨`,
   RedirectToWebsite = 'Entra a www.alesplace.com/catalogo-de-servicios para agendar una cita',
   StopConversation = `¡Entendido! \n\nA partir de este momento ya no podré responderte ❌\n\nSiéntete libre de enviar más detalles sobre lo que quieras platicarle 🌸
-  \nAle te contactará pronto para atenderte personalmente 😊`,
-  YourNameIs = 'Entiendo, te llamas'
+    \nAle te contactará pronto para atenderte personalmente 😊`,
+  YourNameIs = 'Entiendo, te llamas',
+  WelcomeCustomer = `¡Bienvenid@! 🌸\n\nLe acabo de notificar a Ale que llegaste, por favor, espera un momento 🕒✨
+    \nNo olvides tocar el timbre para ser atendida lo antes posible 🔔\nEstá del lado derecho de la reja, un poco hacia arriba.`
 }
 
 export enum MediaNotSupportedResponses {

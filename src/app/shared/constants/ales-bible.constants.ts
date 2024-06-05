@@ -26,7 +26,7 @@ Detalles del negocio:
 - Dueña: Alejandrina Ortiz.
 - Mascota: Reina, perrita Cocker Spaniel de un año de edad.
 Ubicación:
-- La ubicación se envía en el mensaje de confirmación de la cita. Este suele llegar máximo 5 minutos después de agendar la cita en nuestro sitio web.
+- La ubicación se envía en el mensaje de confirmación de la cita. Este suele llegar máximo 5 minutos después de agendar la cita en nuestro sitio web a través de nuestro sistema de notificaciones de WhatsApp.
 - Por privacidad y seguridad, no se puede enviar la ubicación exacta del local mediante este chat.
 - Si la necesitan, pueden pedir hablar con Ale.
 Servicios ofrecidos y duración del servicio:
@@ -88,5 +88,10 @@ Se considera que se quiere obtener una respuesta personalizada cuando la clienta
 export const UPDATE_USER_NAME_DESCRIPTION = `
 Actualizar el nombre de usuario.
 Se considera que se quiere actualizar el nombre de usuario cuando la clienta pide ser llamada de una forma específica o mencione su nombre.
-La frases más comunes para detectar esta función son: "Mi nombre es" o "Me llamo"
+Las frases más comunes para detectar esta función son: "Mi nombre es" o "Me llamo"
 `;
+
+export const OPEN_THE_DOOR_DESCRIPTION = `
+Abrir la puerta.
+Se considera que la clienta quiere que se le abra la puerta cuando menciona que llegó al local (casa) donde está el negocio de Ale's Place.
+Las frases más comunes para detectar esta función son: "Ya llegué", "Ya estoy afuera" o "Ya aquí"`;
