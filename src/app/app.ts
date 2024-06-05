@@ -85,6 +85,7 @@ export class QuestlyAIssistant {
     this.client.on(AppConstants.QR_KEY, this.onQrCode.bind(this));
     this.client.on(AppConstants.READY_KEY, this.onClientReady.bind(this));
     this.client.on(AppConstants.MESSAGE_KEY, this.onMessageReceived.bind(this));
+    this.client.on(AppConstants.MESSAGE_CREATE_KEY, this.onMessageCreated.bind(this));
     this.client.initialize();
   }
 
@@ -109,14 +110,17 @@ export class QuestlyAIssistant {
    */
   private async onMessageReceived(message: ExtendedMessage): Promise<void> {
     try {
-      const currentSenderId = message.from.replace(RegexExpressions.GET_JUST_NUMBER, AppConstants.ONE_DOLLAR);
+      const currentSenderId = message.from.replace(RegexExpressions.GET_PHONE_NUMBER, AppConstants.ONE_DOLLAR);
       const messageContent = message.body;
-      console.log(`${AuxiliarMessages.MessageReceivedFrom} ${currentSenderId}: ${messageContent}`);
+      console.log(`${AuxiliarMessages.MessageReceivedFrom}${currentSenderId}: ${messageContent}`);
 
       let context = await this.assistant.getContextByChatId(currentSenderId);
 
       if (context) {
-        if (!context.shouldRespond && this.utils.isMoreThanDaysAgo(context.timeOfLastMessage, 0.5)) {
+        if (context.shouldDeleteAfterContact && this.utils.isMoreThanDaysAgo(context.timeOfLastMessage, 0.5)) {
+          await this.assistant.deleteContextByChatId(currentSenderId);
+          context = await this.assistant.getContextByChatId(currentSenderId);
+        } else if (!context.shouldRespond && this.utils.isMoreThanDaysAgo(context.timeOfLastMessage, 0.5)) {
           context.shouldRespond = true;
           context = await this.assistant.updateContext({
             chatId: currentSenderId,
@@ -127,6 +131,45 @@ export class QuestlyAIssistant {
 
       if (!context || context.shouldRespond) {
         this.handleMessageStorage(currentSenderId, message);
+      }
+    } catch (error) {
+      console.error(ErrorMessages.DefaultMessage, error);
+    }
+  }
+
+  /**
+   * @description Handles the creation of messages from the bot's own number and performs specific actions based on the message content.
+   * @param {ExtendedMessage} message - The message object received from WhatsApp.
+   */
+  private async onMessageCreated(message: ExtendedMessage): Promise<void> {
+    try {
+      const messageContent = message.body;
+      console.log(`${AuxiliarMessages.MessageReceivedFrom}${GptRoles.System} ${messageContent}`);
+
+      if (messageContent.includes(AppConstants.NOT_REPLY)) {
+        return;
+      }
+
+      const phoneNumberMatch = messageContent.match(RegexExpressions.GET_FIRST_TEN_NUMBERS);
+      if (phoneNumberMatch) {
+        const phoneNumber = phoneNumberMatch[0];
+        let context = await this.assistant.getContextByChatId(phoneNumber);
+        if (context) {
+          context = await this.assistant.updateContext({
+            chatId: phoneNumber,
+            updateFields: { shouldRespond: false }
+          });
+        } else {
+          context = await this.assistant.addNewUserMessage(`${AuxiliarMessages.TempContext}${phoneNumber}`, phoneNumber, AppConstants.DEF_USER_NAME);
+          await this.assistant.updateContext({
+            chatId: phoneNumber,
+            updateFields: { shouldRespond: false, shouldDeleteAfterContact: true, timeOfLastMessage: new Date() }
+          });
+        }
+        const responseText = `${ResponseMessages.ManualDeactivation1}\n\n${phoneNumber}\n\n${ResponseMessages.ManualDeactivation2}\n\n${AppConstants.NOT_REPLY}`;
+        await message.reply(responseText);
+
+        return;
       }
     } catch (error) {
       console.error(ErrorMessages.DefaultMessage, error);
@@ -309,7 +352,7 @@ export class QuestlyAIssistant {
         case FunctionNames.UpdateUserName:
           await this.assistant.updateContext({
             chatId: senderId,
-            updateFields: {clientName: processed.args.name }
+            updateFields: { clientName: processed.args.name }
           });
           responseText = await this.assistant.processResponse(FunctionNames.UpdateUserName, `${ResponseMessages.YourNameIs} ${processed.args.name}`, senderId, ADD_APPOINTMENT_BEHAVIOR_DESCRIPTION);
           break;

@@ -238,6 +238,7 @@ export class GPTAssistant {
       timeOfLastMessage: new Date(),
       isFirstContact: true,
       shouldRespond: true,
+      shouldDeleteAfterContact: false,
       chatHistory: [
         {
           role: GptRoles.User,
@@ -298,4 +299,26 @@ export class GPTAssistant {
       throw error;
     }
   }
+
+  /**
+   * @description Deletes the chat context for the specified chat ID.
+   * @param {string} chatId - The chat ID for which the context should be deleted.
+   * @returns {Promise<void>} - Returns a promise that resolves when the context is deleted.
+   * @throws {Error} If the context for the given chat ID is not found.
+   */
+  public async deleteContextByChatId(chatId: string): Promise<void> {
+    try {
+      const context = await this.getContextByChatId(chatId);
+
+      if (!context) {
+        throw new Error(`${ErrorMessages.ContextNotFound} ${chatId}`);
+      }
+
+      await PersistentChatModel.deleteOne({ chatId });
+    } catch (error) {
+      console.error(`${ErrorMessages.FailedDeletingContext} ${chatId}`, error);
+      throw error;
+    }
+  }
+
 }

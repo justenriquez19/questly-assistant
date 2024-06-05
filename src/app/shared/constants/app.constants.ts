@@ -10,7 +10,9 @@ export class AppConstants {
   public static readonly DEF_USER_NAME: string = 'nobody';
   public static readonly ELLIPSES: string = '...';
   public static readonly EMPTY_STRING: string = '';
+  public static readonly MESSAGE_CREATE_KEY: string = 'message_create';
   public static readonly MESSAGE_KEY: string = 'message';
+  public static readonly NOT_REPLY: string = 'Mensaje automático. No responder';
   public static readonly OBJECT_KEY: string = 'object';
   public static readonly ONE_DOLLAR: string = '$1';
   public static readonly PUPPETEER_PATCH_NO_SANDBOX: string = '--no-sandbox';
@@ -29,7 +31,8 @@ export class AppConstants {
 export enum AuxiliarMessages {
   FunctionsToCall = 'Función a llamar: ',
   MessageReceivedFrom = 'Mensaje recibido de ',
-  MyNameIs = ', mi nombre es'
+  MyNameIs = ', mi nombre es',
+  TempContext = 'Contexto temporal creado para el número: '
 };
 
 export class AvailableGptModels {
@@ -61,6 +64,8 @@ export enum ResponseMessages {
   FirstContact2 = ', ¿es correcto? ¿O prefieres que te llame de otra forma? 😊',
   FirstContactWithNoName = `¡Hola! Parece que es la primera vez que te contactas con el asistente virtual de Ale's Place. Primero que nada ¿Cómo te gustaría que te llame? 😊`,
   GetCustomResponse = 'No te preocupes, quizás yo no tengo esa información, ¡pero Ale seguro que sí! 🌸 Si quieres hablar con ella, solo dime, "Quiero hablar con Ale". Si no, ¡puedo seguir ayudándote! 🙌',
+  ManualDeactivation1 = `¡Hola! 👋 Este es el asistente de notificaciones de Ale's Place 😊. Se ha desactivado manualmente el servicio de chatbot para el usuario con el número de teléfono:`,
+  ManualDeactivation2 = `Podrás contactarlo sin interrupciones durante las próximas 12 horas 🕒✨`,
   PendingMessage1 = `¡Hola! 👋 Este es el asistente de notificaciones de Ale's Place 😊, parece que el usuario "`,
   PendingMessage2 = `", con el número de teléfono 📞`,
   PendingMessage3 = `quiere contactar directamente contigo, por favor, respóndole lo antes posible. Gracias 😊✨`,
@@ -99,10 +104,11 @@ export enum ErrorMessages {
   CallingError = 'Error calling OpenAi endpoint',
   ContextNotFound = 'Context not found for chat ID:',
   DefaultMessage = 'Controlled error: ',
+  FailedDeletingContext = 'Failed trying to delete context for chat ID:',
   FailedUpdatingContext = 'Failed trying to update context for chat ID:',
   NotificationFailed = 'Failed to send notification to number:',
-  shouldRereshQrView = 'QR code is not generated yet. Please reload this page.',
   RateLimitError = 'The OpenAi account has exceded its available balance: ',
+  shouldRereshQrView = 'QR code is not generated yet. Please reload this page.',
   UnexpectedError = 'There has been an unexpected error: '
 };
 
@@ -112,9 +118,10 @@ export enum NotificationContacts {
 }
 
 export class RegexExpressions {
-  public static readonly GET_JUST_NUMBER = /^.*(\d{10})@c\.us$/
+  public static readonly GET_FIRST_TEN_NUMBERS = /\b\d{10}\b/;
+  public static readonly GET_PHONE_NUMBER = /^.*(\d{10})@c\.us$/;
 }
 
 export enum PropertiesDescription {
-  UserName = 'El nombre del usuario'
+  UserName = 'El primer nombre del usuario sin apellidos'
 }
