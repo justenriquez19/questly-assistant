@@ -101,7 +101,7 @@ export enum MediaTypes {
 }
 
 export enum TimeoutDurations {
-  TimeBetweenMessages = 4000
+  TimeBetweenMessages = 8000
 };
 
 export enum ErrorMessages {

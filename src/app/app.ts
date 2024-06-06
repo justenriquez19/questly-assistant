@@ -28,6 +28,7 @@ export class QuestlyAIssistant {
   private app!: Express;
   private assistant: GPTAssistant;
   private client: Client;
+  private currentNotificationUser: string;
   private isProcessingMessages: boolean;
   private mongoService: MongoService;
   private port: number;
@@ -49,6 +50,7 @@ export class QuestlyAIssistant {
     this.userMessageTimers = new Map();
     this.tempMessageQueue = new Map();
     this.isProcessingMessages = false;
+    this.currentNotificationUser = NotificationContacts.MainContact;
     this.utils = new CoreUtilFunctions();
     this.client = new Client({
       authStrategy: new LocalAuth(),
@@ -363,7 +365,7 @@ export class QuestlyAIssistant {
           notificationMessage = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.PendingMessage1} ${currentClientName}
             \n${ResponseMessages.PendingMessage2} ${senderId}\n\n${ResponseMessages.PendingMessage3}
             \n${ResponseMessages.NoInterruptionContact}\n\n${AppConstants.NOT_REPLY}`;
-          await this.sendNotification(NotificationContacts.TestContact, notificationMessage);
+          await this.sendNotification(this.currentNotificationUser, notificationMessage);
           break;
         case FunctionNames.GetCustomResponse:
           responseText = ResponseMessages.GetCustomResponse;
@@ -381,7 +383,7 @@ export class QuestlyAIssistant {
           currentClientName = (await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant)).clientName;
           notificationMessage = `${ResponseMessages.NotificationSystem}\n\n${currentClientName} ${ResponseMessages.OpenTheDoor}
             \n${AppConstants.NOT_REPLY}`;
-          await this.sendNotification(NotificationContacts.TestContact, notificationMessage);
+          await this.sendNotification(this.currentNotificationUser, notificationMessage);
           break;
         default:
           responseText = processed.message.content as string;
