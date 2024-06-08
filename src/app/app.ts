@@ -1,6 +1,7 @@
 import { Client, LocalAuth, Message } from 'whatsapp-web.js';
 import { toDataURL } from 'qrcode';
 import express, { Express, Response } from 'express';
+import Tesseract from 'tesseract.js';
 
 import { ADD_APPOINTMENT_BEHAVIOR_DESCRIPTION } from './shared/constants/ales-bible.constants';
 import {
@@ -237,15 +238,14 @@ export class QuestlyAIssistant {
     const messages = this.userMessages.get(senderId);
     if (!messages || messages.length === 0) return;
 
-    const combinedMessageContent = this.combineMessagesContent(messages);
     const firstMessage = messages[0];
     const userName = this.getUserName(firstMessage._data?.notifyName);
     const mediaType = this.getFirstMediaType(messages);
 
     if (this.isSingleEmptyMediaMessage(messages)) {
-      await this.handleSingleEmptyMediaMessage(senderId, userName, firstMessage);
+      await this.handleSingleEmptyMediaMessage(senderId, userName, firstMessage, mediaType);
     } else {
-      await this.handleTextMessage(combinedMessageContent, senderId, userName, firstMessage, mediaType);
+      await this.handleTextMessage(messages, senderId, userName, firstMessage, mediaType);
     }
 
     this.clearUserMessages(senderId);
@@ -289,7 +289,7 @@ export class QuestlyAIssistant {
    * @returns {boolean} - True if it contains a single empty media message, false otherwise.
    */
   private isSingleEmptyMediaMessage(messages: ExtendedMessage[]): boolean {
-    return messages.length === 1 && messages[0].hasMedia && messages[0].body === AppConstants.EMPTY_STRING;
+    return messages.length === 1 && messages[0].hasMedia;
   }
 
   /**
@@ -297,29 +297,31 @@ export class QuestlyAIssistant {
    * @param {string} senderId - The ID of the sender.
    * @param {string} userName - The user name of the sender.
    * @param {Message} message - The message object received from WhatsApp.
+   * @param {string} mediaType - Indicates the message main media type.
    */
-  private async handleSingleEmptyMediaMessage(senderId: string, userName: string, message: ExtendedMessage): Promise<void> {
+  private async handleSingleEmptyMediaMessage(senderId: string, userName: string, message: ExtendedMessage, mediaType: string): Promise<void> {
     let messageByMediaType: string;
     let responseText: string;
-    let context = await this.assistant.getContextByChatId(senderId);
+    const context = await this.assistant.getContextByChatId(senderId) || await this.assistant.addNewUserMessage(`*${mediaType}*`, senderId, userName);
     const messageType = message.type as string;
+    let isBankTransferImage = false;
 
-    if (!context) {
-      context = await this.assistant.addNewUserMessage(`*${MediaTypes.Sticker}*`, senderId, userName);
+    if (mediaType === MediaTypes.Image) {
+      isBankTransferImage = await this.detectBankTransfer(message, senderId);
     }
 
     if (context.isFirstContact) {
-      messageByMediaType = this.getErrorMessageByMediaType(messageType, false);
+      messageByMediaType = isBankTransferImage ? AppConstants.EMPTY_STRING : this.getErrorMessageByMediaType(messageType, false);
       const messageByUsername = userName !== AppConstants.DEF_USER_NAME
         ? `${ResponseMessages.FirstContact1}${userName}${ResponseMessages.FirstContact2}`
         : `${ResponseMessages.FirstContactWithNoName}`;
       responseText = messageByMediaType !== AppConstants.EMPTY_STRING ? `${messageByUsername}\n\n${messageByMediaType}` : messageByUsername;
 
       await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant);
-
       await message.reply(responseText);
     } else {
-      messageByMediaType = this.getErrorMessageByMediaType(messageType, true);
+      messageByMediaType = isBankTransferImage ? AppConstants.EMPTY_STRING : this.getErrorMessageByMediaType(messageType, true);
+
       await this.assistant.addNewMessage(`*${messageType}*`, senderId, GptRoles.User);
       await this.assistant.addNewMessage(messageByMediaType, senderId, GptRoles.Assistant);
       await message.reply(messageByMediaType);
@@ -330,14 +332,27 @@ export class QuestlyAIssistant {
 
   /**
    * @description Handles text messages received from WhatsApp.
-   * @param {string} messageContent - The content of the received message.
+   * @param {ExtendedMessage[]} messages - The array of received messages.
    * @param {string} senderId - The ID of the sender.
    * @param {string} senderUserName - The user name of the sender.
    * @param {Message} message - The message object received from WhatsApp.
-   * @param {boolean} mediaType - Indicates if any message contains media.
+   * @param {string} mediaType - Indicates the message main media type.
    */
-  private async handleTextMessage(messageContent: string, senderId: string, senderUserName: string, message: Message, mediaType: string): Promise<void> {
+  private async handleTextMessage(messages: ExtendedMessage[], senderId: string, senderUserName: string, message: Message, mediaType: string): Promise<void> {
     try {
+      const messagesToCombine = [];
+      let isBankTransferImage = false;
+      
+      for (const message of messages) {
+        const isBankTransfer = await this.detectBankTransfer(message, senderId);
+        if (isBankTransfer) {
+          isBankTransferImage = true;
+        } else {
+          messagesToCombine.push(message);
+        }
+      }
+
+      const messageContent = this.combineMessagesContent(messagesToCombine);
       const processed = await this.assistant.processFunctions(messageContent, senderId, senderUserName);
 
       let responseText: string;
@@ -363,7 +378,7 @@ export class QuestlyAIssistant {
           responseText = ResponseMessages.StopConversation;
           currentClientName = (await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant)).clientName;
           notificationMessage = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.PendingMessage1} ${currentClientName}
-            \n${ResponseMessages.PendingMessage2} ${senderId}\n\n${ResponseMessages.PendingMessage3}
+            \n${ResponseMessages.PendingMessage2} ${senderId}\n\n${ResponseMessages.AskTalkingToYou}
             \n${ResponseMessages.NoInterruptionContact}\n\n${AppConstants.NOT_REPLY}`;
           await this.sendNotification(this.currentNotificationUser, notificationMessage);
           break;
@@ -390,7 +405,7 @@ export class QuestlyAIssistant {
           break;
       }
 
-      if (mediaType !== MediaTypes.Chat) {
+      if ((mediaType !== MediaTypes.Chat && !isBankTransferImage) || mediaType === MediaTypes.Mixed) {
         const messageByMediaType = this.getErrorMessageByMediaType(mediaType, false);
         if (messageByMediaType !== AppConstants.EMPTY_STRING) {
           responseText += `\n\n${messageByMediaType}`;
@@ -507,5 +522,48 @@ export class QuestlyAIssistant {
     const processedName = this.utils.processString(notifyName);
 
     return processedName ? processedName : AppConstants.DEF_USER_NAME;
+  }
+
+  /**
+   * @description Detects a bank transfer in an image message using OCR and Tesseract. If a transfer is detected, sends notification messages.
+   * @param {ExtendedMessage} message - The extended message containing the received message data.
+   * @param {string} senderId - The identifier of the message sender.
+   * @returns {Promise<boolean>} - Returns `true` if a bank transfer is detected in the image message, otherwise returns `false`.
+   */
+  private async detectBankTransfer(message: ExtendedMessage, senderId: string): Promise<boolean> {
+    if (message.type as string !== MediaTypes.Image) {
+      return false;
+    }
+
+    const media = await message.downloadMedia();
+    if (!media.data) {
+      console.error(ErrorMessages.ImageDataNotFound);
+    }
+
+    try {
+      const buffer = Buffer.from(media.data, MediaTypes.Base64);
+      const { data: { text } } = await Tesseract.recognize(buffer, AppConstants.SPANISH_KEY);
+
+      if (text.includes(AppConstants.TRANSFER_KEY)) {
+        const responseText = ResponseMessages.ThanksForYourPayment;
+        await this.assistant.addNewMessage(`${MediaTypes.Image}: ${AuxiliarMessages.BankTransferPayment}`, senderId, GptRoles.User);
+        const currentClientName = (await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant)).clientName;
+        await this.client.sendMessage(message.from, responseText);
+
+        const notificationMessage = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.PendingMessage1} ${currentClientName}
+          \n${ResponseMessages.PendingMessage2} ${senderId}\n\n${ResponseMessages.BankTransferVoucherReceived}\n\n${AppConstants.NOT_REPLY}`;
+        await this.client.sendMessage(NotificationContacts.MainContact, notificationMessage);
+        await this.client.sendMessage(NotificationContacts.MainContact, media, { caption: message._data.caption });
+
+
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      console.error(ErrorMessages.TesseractProccesingError, error);
+
+      return false;
+    }
   }
 }

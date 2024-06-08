@@ -24,12 +24,15 @@ export class AppConstants {
   public static readonly READY_KEY: string = 'ready';
   public static readonly REMOTE_KEY: "remote" = 'remote';
   public static readonly SERVER_RUNNING_MESSAGE: string = 'Server running at port: 3000';
+  public static readonly SPANISH_KEY: string = 'spa';
   public static readonly TEL_KEY: string = 'TEL';
   public static readonly TITLE: string = 'questly-AIssistant';
+  public static readonly TRANSFER_KEY: string = 'Transferencia';
   public static readonly WEB_VERSION_PATCH: string = 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html';
 };
 
 export enum AuxiliarMessages {
+  BankTransferPayment = 'Pago por transferencia bancaria',
   FunctionsToCall = 'Función a llamar: ',
   MessageReceivedFrom = 'Mensaje recibido de ',
   MyNameIs = ', mi nombre es',
@@ -59,6 +62,8 @@ export enum FunctionNames {
 };
 
 export enum ResponseMessages {
+  AskTalkingToYou = `Pidió hablar directamente contigo, por favor, respóndole lo antes posible. Gracias 😊✨`,
+  BankTransferVoucherReceived = 'Te ha enviado este comprobante de su pago por transferencia. Por favor, revísalo y verifica la transacción. Gracias 😊✨',
   FirstContact1 = "¡Hola! 👋 Parece que es la primera vez que te contactas con el asistente virtual de Ale's Place ✨\n\nPrimero que nada, veo que te llamas ",
   FirstContact2 = ', ¿verdad? ¿O prefieres que te llame de otra forma? 😊',
   FirstContactWithNoName = `¡Hola! 👋 Parece que es la primera vez que te contactas con el asistente virtual de Ale's Place ✨\n\nPrimero que nada ¿Cómo te gustaría que te llame? 😊`,
@@ -69,10 +74,10 @@ export enum ResponseMessages {
   OpenTheDoor = 'acaba de avisar que está esperando afuera, ¡ábrele lo antes posible! 🕒✨',
   PendingMessage1 = `👤 El usuario:`,
   PendingMessage2 = `📞 Con número:`,
-  PendingMessage3 = `Pidió hablar directamente contigo, por favor, respóndole lo antes posible. Gracias 😊✨`,
   RedirectToWebsite = 'Entra a www.alesplace.com/catalogo-de-servicios para agendar una cita',
   StopConversation = `¡Entendido! \n\nA partir de este momento ya no podré responderte ❌\n\nSiéntete libre de enviar más detalles sobre lo que quieras platicarle 🌸
     \nAle te contactará pronto para atenderte personalmente 😊`,
+  ThanksForYourPayment = '¡Gracias por tu pago! 😊 He enviado el comprobante de tu transferencia a Ale para que la revise. 🔍📋',
   YourNameIs = 'Entiendo, te llamas',
   WelcomeCustomer = `¡Bienvenid@! 🌸\n\nLe acabo de notificar a Ale que llegaste, por favor, espera un momento 🕒✨
     \nNo olvides tocar el timbre para ser atendida lo antes posible 🔔\nEstá del lado derecho de la reja, un poco hacia arriba.`
@@ -92,6 +97,7 @@ export enum MediaNotSupportedResponses {
 
 export enum MediaTypes {
   Audio = 'audio',
+  Base64 = 'base64',
   Chat = 'chat',
   Image = 'image',
   Mixed = 'mixed',
@@ -110,9 +116,11 @@ export enum ErrorMessages {
   DefaultMessage = 'Controlled error: ',
   FailedDeletingContext = 'Failed trying to delete context for chat ID:',
   FailedUpdatingContext = 'Failed trying to update context for chat ID:',
+  ImageDataNotFound = 'No image data found',
   NotificationFailed = 'Failed to send notification to number:',
   RateLimitError = 'The OpenAi account has exceded its available balance: ',
   shouldRereshQrView = 'QR code is not generated yet. Please reload this page.',
+  TesseractProccesingError = 'Error processing image with Tesseract:',
   UnexpectedError = 'There has been an unexpected error: '
 };
 

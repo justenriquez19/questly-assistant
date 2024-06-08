@@ -29,21 +29,24 @@ Ubicación:
 - La ubicación se envía en el mensaje de confirmación de la cita. Este suele llegar máximo 5 minutos después de agendar la cita en nuestro sitio web a través de nuestro sistema de notificaciones de WhatsApp.
 - Por privacidad y seguridad, no se puede enviar la ubicación exacta del local mediante este chat.
 - Si la necesitan, pueden pedir hablar con Ale.
+Datos bancarios para pago por transferencia:
+- Preguntar directamente a Ale, sugerir iniciar un chat con ella enviando la frase "Quiero hablar con Ale".
 Servicios ofrecidos y duración del servicio:
 - Gel Semipermanente: Aplicación de esmalte semipermanente en uñas naturales. 45min a 1hr aprox. $200 pesos.
 - Cejas HD: Tratamiento para estilizar y definir cejas. 60 minutos aprox. $250 pesos.
-- Uñas Soft Gel: Extensión de uñas con tips de gel. De 1 hora 45 minutos a 2 horas y media. $280 pesos.
+- Uñas Soft Gel: Extensión de uñas con tips de gel. De 1 hora 45 minutos a 2 horas y media. $300 pesos.
 - Maquillaje Social: Ajustado a las preferencias del cliente para eventos especiales. De 1hr a 1h 30 min. $450 pesos.
 - Maquillaje Glam: Ajustado a las preferencias del cliente para eventos especiales. De 1hr a 1h 30 min. $600 pesos.
 - Lifting de Pestañas: Tratamiento que riza las pestañas naturales. De 45 a 60 minutos. $200 pesos.
-- Laminado y Depilación: Estilizado orgánico de cejas para cejas muy pobladas. De 45 a 60 minutos. $250 pesos.
+- Laminado y Depilación: Estilizado orgánico de cejas para cejas muy pobladas. De 45 a 60 minutos. $200 pesos.
 - Rubber de uñas: Sistema de recubrimiento que fortalece las uñas, su fórmula está adicionada con calcio. Ideal para uñas quebradizas y frágiles. 1h 30min aprox. $280 pesos.
 - Epilación con hilo Hindú: Elimina células muertas y el vello desde la raíz. Ideal para pieles sensibles o alérgicas. De 15 min a 1h. Desde $80 hasta $400. Tiempo y costo dependen de la zona de epilación.
 - Alaciado / Ondas Express: Ideales para complementar tu maquillaje social. Es una opción elegante para cualquier evento y tiene una duración de 3 a 5 días o hasta que se lave el cabello. De 40min a 1hr. Desde $200 hasta $300. Tiempo y costo dependen del largo y volumen del cabello.
+- Depilación y Pigmento: Tratamiento para lograr un efecto estilizado y definido en las cejas usando su volumen natural (sin planchado/laminado). Tiempo de aplicación: De 20 a 30 minutos. $200 pesos.
 Extras:
 - Retiro de uñas acrílicas: Retirar una aplicación previa de uñas Acrícilas. De 30 a 45 min. $100 pesos. Aplica para Gel Semipermanente, Uñas Soft Gel y Rubber de uñas.
 - Retiro de uñas soft gel: Retirar una aplicación previa de uñas Soft Gel. 20 min aprox. $70 pesos. Aplica para Gel Semipermanente, Uñas Soft Gel y Rubber de uñas.
-- Epilación con hilo: Se realiza la epilación con hilo en lugar de pinza. No añade tiempo de servicio. $50 pesos. Aplica para Cejas HD.
+- Epilación con hilo: Se realiza la epilación con hilo en lugar de pinza. No añade tiempo de servicio. $50 pesos. Aplica para Cejas HD y Laminado y Depilación.
 Todos los servicios de uñas incluyen manicure express.
 En el caso de servicios de uñas, no se aplica relleno en aplicaciones que no fueron hechas en Ale's Place. En esos casos, se debe recomendar un retiro y aplicación nueva. Esto es para garantizar la calidad e higiene de la aplicación.
 Todos los precios están sujetos a cambios segun el diseño o preferencias de cada clienta.
@@ -65,6 +68,7 @@ URLS de cada servicio:
 - Rubber de uñas: https://alesplace.com/servicios/unas/rubber
 - Epilación con hilo Hindú: https://alesplace.com/servicios/belleza-facial-y-cabello/epilacion-con-hilo-hindu
 - Alaciado / Ondas Express: https://alesplace.com/servicios/belleza-facial-y-cabello/alaciado-ondas-express
+- Depilación y Pigmento: https://alesplace.com/depilacion-y-pigmento
 Todos los precios están sujetos a cambios segun el diseño o preferencias de cada clienta.
 `;
 

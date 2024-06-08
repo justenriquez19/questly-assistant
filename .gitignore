@@ -53,3 +53,7 @@ typings/
 
 # WhatsApp Session
 .wwebjs_auth
+
+# Tesseract files
+spa.traineddata
+eng.traineddata

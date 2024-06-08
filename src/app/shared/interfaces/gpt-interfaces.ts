@@ -18,6 +18,7 @@ export interface HistoryStructure {
 export interface ExtendedMessage extends Message {
   _data: {
     notifyName: string;
+    caption: string;
   };
 }
 
