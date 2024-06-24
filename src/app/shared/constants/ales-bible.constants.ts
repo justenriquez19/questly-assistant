@@ -43,6 +43,8 @@ Servicios ofrecidos y duración del servicio:
 - Epilación con hilo Hindú: Elimina células muertas y el vello desde la raíz. Ideal para pieles sensibles o alérgicas. De 15 min a 1h. Desde $80 hasta $400. Tiempo y costo dependen de la zona de epilación.
 - Alaciado / Ondas Express: Ideales para complementar tu maquillaje social. Es una opción elegante para cualquier evento y tiene una duración de 3 a 5 días o hasta que se lave el cabello. De 40min a 1hr. Desde $200 hasta $300. Tiempo y costo dependen del largo y volumen del cabello.
 - Depilación y Pigmento: Tratamiento para lograr un efecto estilizado y definido en las cejas usando su volumen natural (sin planchado/laminado). Tiempo de aplicación: De 20 a 30 minutos. $200 pesos.
+- Cejas HD + Lifting De Pestañas: Estos servicios pueden realizarse al mismo tiempo para ahorrar tiempo, ¡agéndalos en conjunto!. Tiempo de aplicación: 1hr 30 minutos. $450 pesos.
+
 Extras:
 - Retiro de uñas acrílicas: Retirar una aplicación previa de uñas Acrícilas. De 30 a 45 min. $100 pesos. Aplica para Gel Semipermanente, Uñas Soft Gel y Rubber de uñas.
 - Retiro de uñas soft gel: Retirar una aplicación previa de uñas Soft Gel. 20 min aprox. $70 pesos. Aplica para Gel Semipermanente, Uñas Soft Gel y Rubber de uñas.
@@ -50,6 +52,9 @@ Extras:
 Todos los servicios de uñas incluyen manicure express.
 En el caso de servicios de uñas, no se aplica relleno en aplicaciones que no fueron hechas en Ale's Place. En esos casos, se debe recomendar un retiro y aplicación nueva. Esto es para garantizar la calidad e higiene de la aplicación.
 Todos los precios están sujetos a cambios segun el diseño o preferencias de cada clienta.
+URLS generales:
+Agendar una cita: https://alesplace.com/agendar
+Ver el catálogo de servicios: https://alesplace.com/servicios
 `;
 
 export const ADD_APPOINTMENT_BEHAVIOR_DESCRIPTION = `
@@ -69,6 +74,7 @@ URLS de cada servicio:
 - Epilación con hilo Hindú: https://alesplace.com/servicios/belleza-facial-y-cabello/epilacion-con-hilo-hindu
 - Alaciado / Ondas Express: https://alesplace.com/servicios/belleza-facial-y-cabello/alaciado-ondas-express
 - Depilación y Pigmento: https://alesplace.com/depilacion-y-pigmento
+- Cejas HD + Lifting De Pestañas: https://alesplace.com/cejas-hd-lifting-de-pestanas
 Todos los precios están sujetos a cambios segun el diseño o preferencias de cada clienta.
 `;
 
