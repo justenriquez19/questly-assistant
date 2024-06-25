@@ -114,26 +114,28 @@ export class QuestlyAIssistant {
   private async onMessageReceived(message: ExtendedMessage): Promise<void> {
     try {
       const currentSenderId = message.from.replace(RegexExpressions.GET_PHONE_NUMBER, AppConstants.ONE_DOLLAR);
-      const messageContent = message.body;
-      console.log(`${AuxiliarMessages.MessageReceivedFrom}${currentSenderId}: ${messageContent}`);
+      if (currentSenderId !== NotificationContacts.Broadcast) {
+        const messageContent = message.body;
+        console.log(`${AuxiliarMessages.MessageReceivedFrom}${currentSenderId}: ${messageContent}`);
 
-      let context = await this.assistant.getContextByChatId(currentSenderId);
+        let context = await this.assistant.getContextByChatId(currentSenderId);
 
-      if (context) {
-        if (context.shouldDeleteAfterContact && this.utils.isMoreThanDaysAgo(context.timeOfLastMessage, 0.5)) {
-          await this.assistant.deleteContextByChatId(currentSenderId);
-          context = await this.assistant.getContextByChatId(currentSenderId);
-        } else if (!context.shouldRespond && this.utils.isMoreThanDaysAgo(context.timeOfLastMessage, 0.5)) {
-          context.shouldRespond = true;
-          context = await this.assistant.updateContext({
-            chatId: currentSenderId,
-            updateFields: { shouldRespond: true }
-          });
+        if (context) {
+          if (context.shouldDeleteAfterContact && this.utils.isMoreThanDaysAgo(context.timeOfLastMessage, 0.5)) {
+            await this.assistant.deleteContextByChatId(currentSenderId);
+            context = await this.assistant.getContextByChatId(currentSenderId);
+          } else if (!context.shouldRespond && this.utils.isMoreThanDaysAgo(context.timeOfLastMessage, 0.5)) {
+            context.shouldRespond = true;
+            context = await this.assistant.updateContext({
+              chatId: currentSenderId,
+              updateFields: { shouldRespond: true }
+            });
+          }
         }
-      }
 
-      if (!context || context.shouldRespond) {
-        this.handleMessageStorage(currentSenderId, message);
+        if (!context || context.shouldRespond) {
+          this.handleMessageStorage(currentSenderId, message);
+        }
       }
     } catch (error) {
       console.error(ErrorMessages.DefaultMessage, error);

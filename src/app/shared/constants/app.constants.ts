@@ -107,7 +107,7 @@ export enum MediaTypes {
 }
 
 export enum TimeoutDurations {
-  TimeBetweenMessages = 10000
+  TimeBetweenMessages = 15000
 };
 
 export enum ErrorMessages {
@@ -125,6 +125,7 @@ export enum ErrorMessages {
 };
 
 export enum NotificationContacts {
+  Broadcast = 'status@broadcast',
   MainContact = '5219831844892@c.us',
   TestContact = '5219831381983@c.us'
 }
