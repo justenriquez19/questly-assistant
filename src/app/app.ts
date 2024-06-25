@@ -391,7 +391,7 @@ export class QuestlyAIssistant {
             chatId: senderId,
             updateFields: { clientName: processed.args.name }
           });
-          responseText = await this.assistant.processResponse(FunctionNames.UpdateUserName, `${ResponseMessages.YourNameIs} ${processed.args.name}`, senderId, ADD_APPOINTMENT_BEHAVIOR_DESCRIPTION);
+          responseText = await this.assistant.processResponse(FunctionNames.UpdateUserName, `${ResponseMessages.YourNameIs} ${processed.args.name}`, senderId);
           break;
         case FunctionNames.OpenTheDoor:
           responseText = ResponseMessages.WelcomeCustomer;

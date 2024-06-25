@@ -31,7 +31,8 @@ export class GPTAssistant {
     const context = await this.addNewUserMessage(text, currentChatId, currentClientName);
 
     if (!context.isFirstContact) {
-      chatGptResponse = await this.getChatGptResponse(context.chatHistory, this.currentFunctions, BOT_GENERAL_BEHAVIOR);
+      chatGptResponse = await this.getChatGptResponse(context.chatHistory, this.currentFunctions,
+        BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_3_5_TURBO_16K_0613);
     } else {
       return {
         functionName: FunctionNames.FirstConcact,
@@ -39,7 +40,7 @@ export class GPTAssistant {
         message: { content: AppConstants.MESSAGE_KEY }
       };
     }
-    const message = chatGptResponse.choices[0].message;
+    let message = chatGptResponse.choices[0].message;
 
     if (message.function_call) {
       const functionName = message.function_call.name;
@@ -48,6 +49,8 @@ export class GPTAssistant {
 
       return { functionName, args, message };
     } else {
+      message = (await this.getChatGptResponse(context.chatHistory, [],
+        BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_4_O)).choices[0].message;
       if (message.content) {
         context.chatHistory.push({
           role: message.role,
@@ -95,24 +98,41 @@ export class GPTAssistant {
    * @param {ChatGptHistoryBody[]} chatHistory - The chat history.
    * @param {CreateChatCompletionFunction[]} functionsList - The list of functions.
    * @param {string} expectedBehavior - The expected behavior for the GPT model.
+   * @param {string} targetGptModel - The GPT model version to target.
    * @returns {Promise<ChatCompletion>} - The GPT model's response.
    */
-  private async getChatGptResponse(chatHistory: ChatGptHistoryBody[], functionsList: CreateChatCompletionFunction[], expectedBehavior: string): Promise<ChatCompletion> {
+  private async getChatGptResponse(chatHistory: ChatGptHistoryBody[], functionsList: CreateChatCompletionFunction[],
+    expectedBehavior: string, targetGptModel: string): Promise<ChatCompletion> {
     try {
-      const chatResponse = await this.chatGpt.chat.completions.create({
-        model: AvailableGptModels.GPT_4_O,
-        messages: [
-          {
-            role: GptRoles.System,
-            content: expectedBehavior
-          },
-          ...chatHistory as []
-        ],
-        functions: functionsList,
-        function_call: AppConstants.AUTO_KEY,
-      });
+      if (functionsList.length) {
+        const chatResponse = await this.chatGpt.chat.completions.create({
+          model: targetGptModel,
+          messages: [
+            {
+              role: GptRoles.System,
+              content: expectedBehavior
+            },
+            ...chatHistory as []
+          ],
+          functions: functionsList,
+          function_call: AppConstants.AUTO_KEY,
+        });
 
-      return chatResponse;
+        return chatResponse;
+      } else {
+        const chatResponse = await this.chatGpt.chat.completions.create({
+          model: targetGptModel,
+          messages: [
+            {
+              role: GptRoles.System,
+              content: expectedBehavior
+            },
+            ...chatHistory as []
+          ]
+        });
+
+        return chatResponse;
+      }
     } catch (error: unknown) {
       if (this.isGptApiError(error)) {
         this.handleError(error);

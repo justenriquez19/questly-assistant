@@ -29,6 +29,10 @@ Ubicación:
 - La ubicación se envía en el mensaje de confirmación de la cita. Este suele llegar máximo 5 minutos después de agendar la cita en nuestro sitio web a través de nuestro sistema de notificaciones de WhatsApp.
 - Por privacidad y seguridad, no se puede enviar la ubicación exacta del local mediante este chat.
 - Si la necesitan, pueden pedir hablar con Ale.
+Sobre el sitio web:
+- URL para agendar una cita: https://alesplace.com/agendar
+- URL para ver el catálogo de servicios: https://alesplace.com/servicios
+- El registro en el sitio web se realiza automáticamente al agendar tu primera cita.
 Datos bancarios para pago por transferencia:
 - Preguntar directamente a Ale, sugerir iniciar un chat con ella enviando la frase "Quiero hablar con Ale".
 Servicios ofrecidos y duración del servicio:
@@ -52,15 +56,9 @@ Extras:
 Todos los servicios de uñas incluyen manicure express.
 En el caso de servicios de uñas, no se aplica relleno en aplicaciones que no fueron hechas en Ale's Place. En esos casos, se debe recomendar un retiro y aplicación nueva. Esto es para garantizar la calidad e higiene de la aplicación.
 Todos los precios están sujetos a cambios segun el diseño o preferencias de cada clienta.
-URLS generales:
-Agendar una cita: https://alesplace.com/agendar
-Ver el catálogo de servicios: https://alesplace.com/servicios
 `;
 
 export const ADD_APPOINTMENT_BEHAVIOR_DESCRIPTION = `
-URLS generales:
-Agendar una cita: https://alesplace.com/agendar
-Ver el catálogo de servicios: https://alesplace.com/servicios
 Si te especifican que servicio quieren, debes darle la URL específica de ese servicio en lugar de la URL para agendar. Las URL para agendar por servicio son:
 URLS de cada servicio:
 - Gel Semipermanente: https://alesplace.com/servicios/unas/gel-semipermanente
@@ -81,7 +79,7 @@ Todos los precios están sujetos a cambios segun el diseño o preferencias de ca
 export const ADD_APPOINTMENT_DESCRIPTION = `
 Agendar una cita.
 Se considera que se quiere agendar una cita siempre que la clienta pida agendar una cita dando día u horario, pregunte sobre citas u horarios, o muestre interés en saber si hay citas disponibles.
-La frase más común para detectar esta función es: "Quiero agendar una cita".
+Las frases más comunes para detectar esta función son: "Quiero agendar una cita", "¿Tienes espacio esta semana? o "¿Tienes cita disponible?".
 `;
 
 export const TALK_TO_ALE_DESCRIPTION = `
