@@ -148,7 +148,7 @@ export class QuestlyAIssistant {
    */
   private async onMessageCreated(message: ExtendedMessage): Promise<void> {
     try {
-      if (message.fromMe) {
+      if (message.fromMe && message.from === message.to) {
         const messageContent = message.body;
         console.log(`${AuxiliarMessages.MessageReceivedFrom}${GptRoles.System}: ${messageContent}`);
 
