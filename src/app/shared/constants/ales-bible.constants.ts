@@ -103,7 +103,7 @@ Se considera que se quiere actualizar el nombre de usuario cuando la clienta pid
 Las frases más comunes para detectar esta función son: "Mi nombre es" o "Me llamo"
 `;
 
-export const OPEN_THE_DOOR_DESCRIPTION = `
-Abrir la puerta.
+export const IM_HERE_DESCRIPTION = `
+Ya estoy aquí.
 Se considera que la clienta quiere que se le abra la puerta cuando menciona que llegó al local (casa) donde está el negocio de Ale's Place.
 Las frases más comunes para detectar esta función son: "Ya llegué", "Ya estoy afuera" o "Ya aquí"`;

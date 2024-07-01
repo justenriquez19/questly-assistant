@@ -3,7 +3,7 @@ import {
   ADD_APPOINTMENT_DESCRIPTION,
   GET_CUSTOM_RESPONSE_DESCRIPTION,
   GET_PERSONAL_ASSISTANCE_DESCRIPTION,
-  OPEN_THE_DOOR_DESCRIPTION,
+  IM_HERE_DESCRIPTION,
   TALK_TO_ALE_DESCRIPTION,
   UPDATE_USER_NAME_DESCRIPTION
 } from "./ales-bible.constants";
@@ -45,7 +45,7 @@ export const ALES_PLACE_MAIN_FUNCTIONS: FunctionsListInterface = {
     },
     {
       name: FunctionNames.OpenTheDoor,
-        description: OPEN_THE_DOOR_DESCRIPTION,
+        description: IM_HERE_DESCRIPTION,
           parameters: {
           type: AppConstants.OBJECT_KEY,
           properties: {}
