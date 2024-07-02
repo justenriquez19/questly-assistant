@@ -24,6 +24,7 @@ Detalles del negocio:
 - Giro del negocio: Servicios de belleza.
 - Horario: Sujeto a disponibilidad. Consultar citas disponibles en nuestro sitio web.
 - Dueña: Alejandrina Ortiz.
+Curiosidades:
 - Mascota: Reina, perrita Cocker Spaniel de un año de edad.
 Ubicación:
 - La ubicación se envía en el mensaje de confirmación de la cita. Este suele llegar máximo 5 minutos después de agendar la cita en nuestro sitio web a través de nuestro sistema de notificaciones de WhatsApp.
@@ -100,10 +101,17 @@ Se considera que se quiere obtener una respuesta personalizada cuando la clienta
 export const UPDATE_USER_NAME_DESCRIPTION = `
 Actualizar el nombre de usuario.
 Se considera que se quiere actualizar el nombre de usuario cuando la clienta pide ser llamada de una forma específica o mencione su nombre.
-Las frases más comunes para detectar esta función son: "Mi nombre es" o "Me llamo"
+Las frases más comunes para detectar esta función son: "Mi nombre es" o "Me llamo", "Dime *nombre*"
 `;
 
-export const IM_HERE_DESCRIPTION = `
-Ya estoy aquí.
-Se considera que la clienta quiere que se le abra la puerta cuando menciona que llegó al local (casa) donde está el negocio de Ale's Place.
-Las frases más comunes para detectar esta función son: "Ya llegué", "Ya estoy afuera" o "Ya aquí"`;
+export const NOTIFY_I_HAVE_ARRIVED_DESCRIPTION = `
+La función "notify_i_have_arrived" se debe llamar cuando una clienta ha llegado al local de Ale's Place y menciona que está afuera.
+Se considera que una clienta quiere notificar que ha llegado cuando diga que ha llegado o que está afuera.
+Las frases más comunes para detectar esta función incluyen: 
+- "Hola, ya llegué"
+- "Ya estoy afuera"
+- "Ya estoy aquí"
+- "Estoy en la puerta"
+- "Estoy afuera"
+- "Ya afuera"
+Estas frases indican que la clienta ha llegado al local y quiere notificar su llegada.`;

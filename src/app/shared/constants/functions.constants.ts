@@ -3,7 +3,7 @@ import {
   ADD_APPOINTMENT_DESCRIPTION,
   GET_CUSTOM_RESPONSE_DESCRIPTION,
   GET_PERSONAL_ASSISTANCE_DESCRIPTION,
-  IM_HERE_DESCRIPTION,
+  NOTIFY_I_HAVE_ARRIVED_DESCRIPTION,
   TALK_TO_ALE_DESCRIPTION,
   UPDATE_USER_NAME_DESCRIPTION
 } from "./ales-bible.constants";
@@ -11,6 +11,14 @@ import { AppConstants, FunctionNames, PropertiesDescription } from "./app.consta
 
 export const ALES_PLACE_MAIN_FUNCTIONS: FunctionsListInterface = {
   list: [
+    {
+      name: FunctionNames.NotifyIHaveArrived,
+        description: NOTIFY_I_HAVE_ARRIVED_DESCRIPTION,
+          parameters: {
+          type: AppConstants.OBJECT_KEY,
+          properties: {}
+      }
+    },
     {
       name: FunctionNames.AddApointment,
         description: ADD_APPOINTMENT_DESCRIPTION,
@@ -38,14 +46,6 @@ export const ALES_PLACE_MAIN_FUNCTIONS: FunctionsListInterface = {
     {
       name: FunctionNames.GetCustomResponse,
         description: GET_CUSTOM_RESPONSE_DESCRIPTION,
-          parameters: {
-          type: AppConstants.OBJECT_KEY,
-          properties: {}
-      }
-    },
-    {
-      name: FunctionNames.OpenTheDoor,
-        description: IM_HERE_DESCRIPTION,
           parameters: {
           type: AppConstants.OBJECT_KEY,
           properties: {}

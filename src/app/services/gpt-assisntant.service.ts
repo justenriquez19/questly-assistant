@@ -2,7 +2,15 @@ import OpenAI from 'openai';
 import { Document } from 'mongoose';
 
 import { ALES_PLACE_MAIN_FUNCTIONS } from '../shared/constants/functions.constants';
-import { AppConstants, AuxiliarMessages, AvailableGptModels, ErrorMessages, FunctionNames, GptRoles, ResponseMessages } from '../shared/constants/app.constants';
+import {
+  AppConstants,
+  AuxiliarMessages,
+  AvailableGptModels,
+  ErrorMessages,
+  FunctionNames,
+  FunctionWithProperties,
+  GptRoles
+} from '../shared/constants/app.constants';
 import { BOT_GENERAL_BEHAVIOR } from '../shared/constants/ales-bible.constants';
 import { ChatCompletion, ChatCompletionMessageParam } from 'openai/resources';
 import { ChatGptHistoryBody, CreateChatCompletionFunction, ExecuteFunctionBody, IChatGptApiError, UpdateContextParams } from '../shared/interfaces/gpt-interfaces';
@@ -43,8 +51,11 @@ export class GPTAssistant {
     let message = chatGptResponse.choices[0].message;
 
     if (message.function_call) {
+      let args;
       const functionName = message.function_call.name;
-      const args = JSON.parse(message.function_call.arguments);
+      if (FunctionWithProperties.includes(functionName)) {
+        args = JSON.parse(message.function_call.arguments);
+      }
       message.content = AuxiliarMessages.FunctionsToCall + functionName;
 
       return { functionName, args, message };

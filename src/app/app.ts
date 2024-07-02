@@ -1,12 +1,14 @@
-import { Client, LocalAuth, Message } from 'whatsapp-web.js';
+import { Client, LocalAuth, Message, MessageMedia} from 'whatsapp-web.js';
 import { toDataURL } from 'qrcode';
 import express, { Express, Response } from 'express';
+import path from 'path';
 import Tesseract from 'tesseract.js';
 
 import { ADD_APPOINTMENT_BEHAVIOR_DESCRIPTION } from './shared/constants/ales-bible.constants';
 import {
   AppConstants,
   AuxiliarMessages,
+  DefinedPaths,
   ErrorMessages,
   FunctionNames,
   GptRoles,
@@ -322,11 +324,13 @@ export class QuestlyAIssistant {
       await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant);
       await message.reply(responseText);
     } else {
-      messageByMediaType = isBankTransferImage ? AppConstants.EMPTY_STRING : this.getErrorMessageByMediaType(messageType, true);
+      if (!isBankTransferImage) {
+        messageByMediaType = this.getErrorMessageByMediaType(messageType, true);
 
-      await this.assistant.addNewMessage(`*${messageType}*`, senderId, GptRoles.User);
-      await this.assistant.addNewMessage(messageByMediaType, senderId, GptRoles.Assistant);
-      await message.reply(messageByMediaType);
+        await this.assistant.addNewMessage(`*${messageType}*`, senderId, GptRoles.User);
+        await this.assistant.addNewMessage(messageByMediaType, senderId, GptRoles.Assistant);
+        await message.reply(messageByMediaType);
+      }
     }
 
     this.clearUserMessages(senderId);
@@ -395,9 +399,13 @@ export class QuestlyAIssistant {
           });
           responseText = await this.assistant.processResponse(FunctionNames.UpdateUserName, `${ResponseMessages.YourNameIs} ${processed.args.name}`, senderId);
           break;
-        case FunctionNames.OpenTheDoor:
+        case FunctionNames.NotifyIHaveArrived:
           responseText = ResponseMessages.WelcomeCustomer;
           currentClientName = (await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant)).clientName;
+          const imagePath = path.join(__dirname, DefinedPaths.BellLocation);
+          const media = MessageMedia.fromFilePath(imagePath);
+          const number = `${AppConstants.MX_PREFIX}${senderId}${AppConstants.WHATSAPP_USER_KEY}`;
+          this.client.sendMessage(number, media)
           notificationMessage = `${ResponseMessages.NotificationSystem}\n\n${currentClientName} ${ResponseMessages.OpenTheDoor}
             \n${AppConstants.NOT_REPLY}`;
           await this.sendNotification(this.currentNotificationUser, notificationMessage);
@@ -554,8 +562,8 @@ export class QuestlyAIssistant {
 
         const notificationMessage = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.PendingMessage1} ${currentClientName}
           \n${ResponseMessages.PendingMessage2} ${senderId}\n\n${ResponseMessages.BankTransferVoucherReceived}\n\n${AppConstants.NOT_REPLY}`;
-        await this.client.sendMessage(NotificationContacts.MainContact, notificationMessage);
-        await this.client.sendMessage(NotificationContacts.MainContact, media, { caption: message._data.caption });
+        await this.client.sendMessage(this.currentNotificationUser, notificationMessage);
+        await this.client.sendMessage(this.currentNotificationUser, media, { caption: message._data.caption });
 
 
         return true;

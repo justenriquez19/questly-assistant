@@ -12,6 +12,7 @@ export class AppConstants {
   public static readonly EMPTY_STRING: string = '';
   public static readonly MESSAGE_CREATE_KEY: string = 'message_create';
   public static readonly MESSAGE_KEY: string = 'message';
+  public static readonly MX_PREFIX: string = '521';
   public static readonly NOT_REPLY: string = 'Mensaje automático. No responder.';
   public static readonly OBJECT_KEY: string = 'object';
   public static readonly ONE_DOLLAR: string = '$1';
@@ -29,6 +30,7 @@ export class AppConstants {
   public static readonly TITLE: string = 'questly-AIssistant';
   public static readonly TRANSFER_KEY: string = 'Transferencia';
   public static readonly WEB_VERSION_PATCH: string = 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html';
+  public static readonly WHATSAPP_USER_KEY: string = '@c.us';
 };
 
 export enum AuxiliarMessages {
@@ -56,10 +58,14 @@ export enum FunctionNames {
   FirstConcact = 'first_contact',
   GetCustomResponse = 'get_custom_response',
   GetPersonalAssistance = 'get_personal_assistance',
-  OpenTheDoor = 'open_the_door',
+  NotifyIHaveArrived = 'notify_i_have_arrived',
   TalkToAle = 'talk_to_ale',
   UpdateUserName = 'update_user_name'
 };
+
+export const FunctionWithProperties: Array<string> = [
+  FunctionNames.UpdateUserName
+];
 
 export enum ResponseMessages {
   AskTalkingToYou = `Pidió hablar directamente contigo, por favor, respóndole lo antes posible. Gracias 😊✨`,
@@ -80,8 +86,8 @@ export enum ResponseMessages {
   ThanksForYourPayment = '¡Gracias por tu pago! 😊 He enviado el comprobante de tu transferencia a Ale para que la revise. 🔍📋',
   YourNameIs = 'Entiendo, te llamas',
   WelcomeCustomer = `¡Bienvenid@! 🌸\n\nLe acabo de notificar a Ale que llegaste, por favor, espera un momento 🕒✨
-    \nNo olvides tocar el timbre para ser atendida lo antes posible 🔔\nEstá del lado derecho de la reja, un poco hacia arriba.`
-}
+    \nNo olvides tocar el timbre para ser atendida lo antes posible 🔔\n\nEstá del lado derecho de la reja, un poco hacia arriba.`
+};
 
 export enum MediaNotSupportedResponses {
   Audio = 'Disculpa, actualmente no puedo escuchar mensajes de voz 🔊❌ ¿Podrías escribirme? O en caso de que necesites que Ale lo escuche, solo pídeme hablar con ella 😊👉',
@@ -93,7 +99,7 @@ export enum MediaNotSupportedResponses {
   Sticker = '¡Ups! 😕 Disculpa, no puedo ver los stickers que me envías 🚫, pero estoy seguro de que este es genial 👌',
   Video = 'Disculpa, actualmente no ver lo que hay en los vídeos que me envías 📽️❌ ¿Podrías describirlo? O en caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
   VideoComplement = 'Por cierto, actualmente no ver lo que hay en los vídeos que me envías 📽️❌ ¿Podrías describirlo? O en caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
-}
+};
 
 export enum MediaTypes {
   Audio = 'audio',
@@ -104,7 +110,7 @@ export enum MediaTypes {
   Sticker = 'sticker',
   Video = 'video',
   VoiceMessage = 'ptt'
-}
+};
 
 export enum TimeoutDurations {
   TimeBetweenMessages = 15000
@@ -128,7 +134,7 @@ export enum NotificationContacts {
   Broadcast = 'status@broadcast',
   MainContact = '5219831844892@c.us',
   TestContact = '5219831381983@c.us'
-}
+};
 
 export class RegexExpressions {
   public static readonly REMOVE_NON_DIGIT_CHAR = /\D/g;
@@ -136,8 +142,12 @@ export class RegexExpressions {
   public static readonly GET_PHONE_NUMBER = /^.*(\d{10})@c\.us$/;
   public static readonly REMOVE_NON_ALPHABETIC_CHAR = /[^a-zA-Z]/g;
   public static readonly V_CARD_PHONE_EXTRACTOR = /(\+?\d{1,4}?\s?\(?\d{1,4}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9})/;
-}
+};
 
 export enum PropertiesDescription {
   UserName = 'El primer nombre del usuario sin apellidos'
-}
+};
+
+export enum DefinedPaths {
+  BellLocation = 'media/images/bell_location.jpg'
+};
