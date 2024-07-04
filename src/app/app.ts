@@ -169,7 +169,11 @@ export class QuestlyAIssistant {
             const vCardPhoneMatch = vCardLine.match(RegexExpressions.V_CARD_PHONE_EXTRACTOR);
             if (vCardPhoneMatch) {
               phoneNumber = vCardPhoneMatch[0].replace(RegexExpressions.REMOVE_NON_DIGIT_CHAR, AppConstants.EMPTY_STRING);
-              phoneNumber = phoneNumber.substring(3);
+              if (phoneNumber.startsWith(AppConstants.MX_PREFIX)) {
+                phoneNumber = phoneNumber.substring(3);
+              } else if (phoneNumber.startsWith(AppConstants.MX_SIMPLE_PREFIX)) {
+                phoneNumber = phoneNumber.substring(2);
+              }
             }
           }
         }

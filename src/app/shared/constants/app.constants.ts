@@ -13,6 +13,7 @@ export class AppConstants {
   public static readonly MESSAGE_CREATE_KEY: string = 'message_create';
   public static readonly MESSAGE_KEY: string = 'message';
   public static readonly MX_PREFIX: string = '521';
+  public static readonly MX_SIMPLE_PREFIX: string = '52';
   public static readonly NOT_REPLY: string = 'Mensaje automático. No responder.';
   public static readonly OBJECT_KEY: string = 'object';
   public static readonly ONE_DOLLAR: string = '$1';
