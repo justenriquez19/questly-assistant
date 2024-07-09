@@ -179,6 +179,7 @@ export class QuestlyAIssistant {
 
         if (phoneNumber) {
           let context = await this.assistant.getContextByChatId(phoneNumber);
+          let responseText = AppConstants.EMPTY_STRING;
           if (context) {
             context = await this.assistant.updateContext({
               chatId: phoneNumber,
@@ -191,8 +192,13 @@ export class QuestlyAIssistant {
               updateFields: { shouldRespond: false, shouldDeleteAfterContact: true, timeOfLastMessage: new Date() }
             });
           }
-          const responseText = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.ManualDeactivation}\n\n${phoneNumber}
+          if (context.shouldRespond === false) {
+            responseText = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.ManualDeactivation}\n\n${phoneNumber}
             \n${ResponseMessages.NoInterruptionContact}\n\n${AppConstants.NOT_REPLY}`;
+          } else {
+            responseText = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.ManualDeactivationFailed}\n\n${phoneNumber}\n
+            \n${ResponseMessages.ManualDeactivationTryAgain}\n\n${AppConstants.NOT_REPLY}`;
+          }
 
           await message.reply(responseText);
 

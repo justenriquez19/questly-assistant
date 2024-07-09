@@ -75,6 +75,8 @@ export enum ResponseMessages {
   FirstContactWithNoName = `¡Hola! 👋 Parece que es la primera vez que te contactas con el asistente virtual de Ale's Place ✨\n\nPrimero que nada ¿Cómo te gustaría que te llame? 😊`,
   GetCustomResponse = 'No te preocupes, quizás yo no tengo esa información, ¡pero Ale seguro que sí! 🌸 Si quieres hablar con ella, solo dime, "Quiero hablar con Ale". Si no, ¡puedo seguir ayudándote! 🙌',
   ManualDeactivation = `Se ha desactivado manualmente el servicio de chatbot para el usuario con el número de teléfono:`,
+  ManualDeactivationFailed = `La desactivación manual del servicio de chatbot falló para el usuario con el número de teléfono:`,
+  ManualDeactivationTryAgain = 'Por favor, inténtalo de nuevo. Si no puedes desactivar un chat tras varios intentos, contacta con soporte 💬🔧',
   NoInterruptionContact = `Podrás contactarlo sin interrupciones durante las próximas 12 horas 🕒✨`,
   NotificationSystem = `¡Hola! 👋 Este es el asistente de notificaciones de Ale's Place 😊`,
   OpenTheDoor = 'acaba de avisar que está esperando afuera, ¡ábrele lo antes posible! 🕒✨',
