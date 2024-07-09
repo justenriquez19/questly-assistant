@@ -95,8 +95,8 @@ export enum MediaNotSupportedResponses {
   AudioComplement = 'Por cierto, actualmente no puedo escuchar mensajes de voz 🔊❌ ¿Podrías escribirme? O en caso de que necesites que Ale lo escuche, solo pídeme hablar con ella 😊👉',
   Default = 'Disculpa, actualmente no puedo responder mensajes de voz 🔊, fotos 📸, stickers 🖼️ o vídeos 🎥. En caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
   DefaultComplement = 'Por cierto, actualmente no puedo responder mensajes de voz 🔊, fotos 📸, stickers 🖼️ o vídeos 🎥. En caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
-  Image = 'Disculpa, actualmente no ver lo que hay en las imágnes que me envías 🖼️❌ ¿Podrías describirlo? O en caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
-  ImageComplement = 'Por cierto, actualmente no ver lo que hay en las imágnes que me envías 🖼️❌ ¿Podrías describirlo? O en caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
+  Image = 'Disculpa, actualmente no ver lo que hay en las imágenes que me envías 🖼️❌ ¿Podrías describirlo? O en caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
+  ImageComplement = 'Por cierto, actualmente no ver lo que hay en las imágenes que me envías 🖼️❌ ¿Podrías describirlo? O en caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
   Sticker = '¡Ups! 😕 Disculpa, no puedo ver los stickers que me envías 🚫, pero estoy seguro de que este es genial 👌',
   Video = 'Disculpa, actualmente no ver lo que hay en los vídeos que me envías 📽️❌ ¿Podrías describirlo? O en caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
   VideoComplement = 'Por cierto, actualmente no ver lo que hay en los vídeos que me envías 📽️❌ ¿Podrías describirlo? O en caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
@@ -115,7 +115,7 @@ export enum MediaTypes {
 };
 
 export enum TimeoutDurations {
-  TimeBetweenMessages = 15000
+  TimeBetweenMessages = 16000
 };
 
 export enum ErrorMessages {

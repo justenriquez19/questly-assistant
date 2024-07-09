@@ -379,6 +379,10 @@ export class QuestlyAIssistant {
           : `${ResponseMessages.FirstContactWithNoName}`;
         const number = `${AppConstants.MX_PREFIX}${senderId}${AppConstants.WHATSAPP_USER_KEY}`;
         await this.client.sendMessage(number, responseText)
+        await this.assistant.updateContext({
+          chatId: senderId,
+          updateFields: { isFirstContact: false }
+        });
       }
       switch (processed.functionName) {
         case FunctionNames.TalkToAle:
