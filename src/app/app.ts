@@ -4,7 +4,6 @@ import express, { Express, Response } from 'express';
 import path from 'path';
 import Tesseract from 'tesseract.js';
 
-import { ADD_APPOINTMENT_BEHAVIOR_DESCRIPTION } from './shared/constants/ales-bible.constants';
 import {
   AppConstants,
   AuxiliarMessages,
@@ -368,17 +367,14 @@ export class QuestlyAIssistant {
       let responseText: string;
       let currentClientName: string;
       let notificationMessage: string;
+      if (processed.context.isFirstContact) {
+        responseText = senderUserName !== AppConstants.DEF_USER_NAME
+          ? `${ResponseMessages.FirstContact1}${senderUserName}${ResponseMessages.FirstContact2}`
+          : `${ResponseMessages.FirstContactWithNoName}`;
+        const number = `${AppConstants.MX_PREFIX}${senderId}${AppConstants.WHATSAPP_USER_KEY}`;
+        await this.client.sendMessage(number, responseText)
+      }
       switch (processed.functionName) {
-        case FunctionNames.AddApointment:
-          responseText = await this.assistant.processResponse(FunctionNames.AddApointment, ResponseMessages.RedirectToWebsite, senderId, ADD_APPOINTMENT_BEHAVIOR_DESCRIPTION);
-          break;
-        case FunctionNames.FirstConcact:
-          responseText = senderUserName !== AppConstants.DEF_USER_NAME
-            ? `${ResponseMessages.FirstContact1}${senderUserName}${ResponseMessages.FirstContact2}`
-            : `${ResponseMessages.FirstContactWithNoName}`;
-
-          await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant);
-          break;
         case FunctionNames.TalkToAle:
         case FunctionNames.GetPersonalAssistance:
           await this.assistant.updateContext({
@@ -396,12 +392,12 @@ export class QuestlyAIssistant {
           responseText = ResponseMessages.GetCustomResponse;
           await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant);
           break;
-        case FunctionNames.UpdateUserName:
+        case FunctionNames.DetectClientName:
           await this.assistant.updateContext({
             chatId: senderId,
             updateFields: { clientName: processed.args.name }
           });
-          responseText = await this.assistant.processResponse(FunctionNames.UpdateUserName, `${ResponseMessages.YourNameIs} ${processed.args.name}`, senderId);
+          responseText = await this.assistant.processResponse(FunctionNames.DetectClientName, `${ResponseMessages.YourNameIs} ${processed.args.name}`, senderId);
           break;
         case FunctionNames.NotifyIHaveArrived:
           responseText = ResponseMessages.WelcomeCustomer;
@@ -410,7 +406,7 @@ export class QuestlyAIssistant {
           const media = MessageMedia.fromFilePath(imagePath);
           const number = `${AppConstants.MX_PREFIX}${senderId}${AppConstants.WHATSAPP_USER_KEY}`;
           this.client.sendMessage(number, media)
-          notificationMessage = `${ResponseMessages.NotificationSystem}\n\n${currentClientName} ${ResponseMessages.OpenTheDoor}
+          notificationMessage = `${ResponseMessages.NotificationSystem}\n\n*${currentClientName}* ${ResponseMessages.OpenTheDoor}
             \n${AppConstants.NOT_REPLY}`;
           await this.sendNotification(this.currentNotificationUser, notificationMessage);
           break;

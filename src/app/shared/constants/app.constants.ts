@@ -55,17 +55,16 @@ export enum GptRoles {
 };
 
 export enum FunctionNames {
-  AddApointment = 'add_apointment',
   FirstConcact = 'first_contact',
   GetCustomResponse = 'get_custom_response',
   GetPersonalAssistance = 'get_personal_assistance',
   NotifyIHaveArrived = 'notify_i_have_arrived',
   TalkToAle = 'talk_to_ale',
-  UpdateUserName = 'update_user_name'
+  DetectClientName = 'detect_client_name'
 };
 
 export const FunctionWithProperties: Array<string> = [
-  FunctionNames.UpdateUserName
+  FunctionNames.DetectClientName
 ];
 
 export enum ResponseMessages {
@@ -81,7 +80,6 @@ export enum ResponseMessages {
   OpenTheDoor = 'acaba de avisar que está esperando afuera, ¡ábrele lo antes posible! 🕒✨',
   PendingMessage1 = `👤 El usuario:`,
   PendingMessage2 = `📞 Con número:`,
-  RedirectToWebsite = 'Entra a www.alesplace.com/catalogo-de-servicios para agendar una cita',
   StopConversation = `¡Entendido! \n\nA partir de este momento ya no podré responderte ❌\n\nSiéntete libre de enviar más detalles sobre lo que quieras platicarle 🌸
     \nAle te contactará pronto para atenderte personalmente 😊`,
   ThanksForYourPayment = '¡Gracias por tu pago! 😊 He enviado el comprobante de tu transferencia a Ale para que la revise. 🔍📋',

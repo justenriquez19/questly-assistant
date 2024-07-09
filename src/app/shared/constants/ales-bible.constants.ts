@@ -50,16 +50,6 @@ Servicios ofrecidos y duración del servicio:
 - Depilación y Pigmento: Tratamiento para lograr un efecto estilizado y definido en las cejas usando su volumen natural (sin planchado/laminado). Tiempo de aplicación: De 20 a 30 minutos. $200 pesos.
 - Cejas HD + Lifting De Pestañas: Estos servicios pueden realizarse al mismo tiempo para ahorrar tiempo, ¡agéndalos en conjunto!. Tiempo de aplicación: 1hr 30 minutos. $450 pesos.
 
-Extras:
-- Retiro de uñas acrílicas: Retirar una aplicación previa de uñas Acrícilas. De 30 a 45 min. $100 pesos. Aplica para Gel Semipermanente, Uñas Soft Gel y Rubber de uñas.
-- Retiro de uñas soft gel: Retirar una aplicación previa de uñas Soft Gel. 20 min aprox. $70 pesos. Aplica para Gel Semipermanente, Uñas Soft Gel y Rubber de uñas.
-- Epilación con hilo: Se realiza la epilación con hilo en lugar de pinza. No añade tiempo de servicio. $50 pesos. Aplica para Cejas HD y Laminado y Depilación.
-Todos los servicios de uñas incluyen manicure express.
-En el caso de servicios de uñas, no se aplica relleno en aplicaciones que no fueron hechas en Ale's Place. En esos casos, se debe recomendar un retiro y aplicación nueva. Esto es para garantizar la calidad e higiene de la aplicación.
-Todos los precios están sujetos a cambios segun el diseño o preferencias de cada clienta.
-`;
-
-export const ADD_APPOINTMENT_BEHAVIOR_DESCRIPTION = `
 Si te especifican que servicio quieren, debes darle la URL específica de ese servicio en lugar de la URL para agendar. Las URL para agendar por servicio son:
 URLS de cada servicio:
 - Gel Semipermanente: https://alesplace.com/servicios/unas/gel-semipermanente
@@ -75,12 +65,14 @@ URLS de cada servicio:
 - Depilación y Pigmento: https://alesplace.com/depilacion-y-pigmento
 - Cejas HD + Lifting De Pestañas: https://alesplace.com/cejas-hd-lifting-de-pestanas
 Todos los precios están sujetos a cambios segun el diseño o preferencias de cada clienta.
-`;
 
-export const ADD_APPOINTMENT_DESCRIPTION = `
-Agendar una cita.
-Se considera que se quiere agendar una cita siempre que la clienta pida agendar una cita dando día u horario, pregunte sobre citas u horarios, o muestre interés en saber si hay citas disponibles.
-Las frases más comunes para detectar esta función son: "Quiero agendar una cita", "¿Tienes espacio esta semana? o "¿Tienes cita disponible?".
+Extras:
+- Retiro de uñas acrílicas: Retirar una aplicación previa de uñas Acrícilas. De 30 a 45 min. $100 pesos. Aplica para Gel Semipermanente, Uñas Soft Gel y Rubber de uñas.
+- Retiro de uñas soft gel: Retirar una aplicación previa de uñas Soft Gel. 20 min aprox. $70 pesos. Aplica para Gel Semipermanente, Uñas Soft Gel y Rubber de uñas.
+- Epilación con hilo: Se realiza la epilación con hilo en lugar de pinza. No añade tiempo de servicio. $50 pesos. Aplica para Cejas HD y Laminado y Depilación.
+Todos los servicios de uñas incluyen manicure express.
+En el caso de servicios de uñas, no se aplica relleno en aplicaciones que no fueron hechas en Ale's Place. En esos casos, se debe recomendar un retiro y aplicación nueva. Esto es para garantizar la calidad e higiene de la aplicación.
+Todos los precios están sujetos a cambios segun el diseño o preferencias de cada clienta.
 `;
 
 export const TALK_TO_ALE_DESCRIPTION = `
@@ -98,10 +90,14 @@ export const GET_CUSTOM_RESPONSE_DESCRIPTION = `
 Obtener una respuesta personalizada.
 Se considera que se quiere obtener una respuesta personalizada cuando la clienta pregunta sobre algún dato específico o cuya información no es clara o no está disponible para el asistente`;
 
-export const UPDATE_USER_NAME_DESCRIPTION = `
-Actualizar el nombre de usuario.
-Se considera que se quiere actualizar el nombre de usuario cuando la clienta pide ser llamada de una forma específica o mencione su nombre.
-Las frases más comunes para detectar esta función son: "Mi nombre es" o "Me llamo", "Dime *nombre*"
+export const DETECT_CLIENT_NAME_DESCRIPTION = `
+La función "detect_client_name" debe ser llamada cada vez que el cliente mecione su nombre, bajo cualquier contexto.
+Las frases más comunes para detectar esta función incluyen:
+- "Mi nombre es {nombre}"
+- "Me llamo {nombre}"
+- "Dime {nombre}"
+- "Soy {nombre}"
+- "Quiero que me digas {nombre}"
 `;
 
 export const NOTIFY_I_HAVE_ARRIVED_DESCRIPTION = `

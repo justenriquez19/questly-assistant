@@ -7,9 +7,9 @@ import {
   AuxiliarMessages,
   AvailableGptModels,
   ErrorMessages,
-  FunctionNames,
   FunctionWithProperties,
-  GptRoles
+  GptRoles,
+  ResponseMessages
 } from '../shared/constants/app.constants';
 import { BOT_GENERAL_BEHAVIOR } from '../shared/constants/ales-bible.constants';
 import { ChatCompletion, ChatCompletionMessageParam } from 'openai/resources';
@@ -35,19 +35,9 @@ export class GPTAssistant {
    * @returns {Promise<any>} - The function name and arguments if a function call is required, otherwise null.
    */
   public async processFunctions(text: string, currentChatId: string, currentClientName: string) {
-    let chatGptResponse: ChatCompletion;
     const context = await this.addNewUserMessage(text, currentChatId, currentClientName);
-
-    if (!context.isFirstContact) {
-      chatGptResponse = await this.getChatGptResponse(context.chatHistory, this.currentFunctions,
-        BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_3_5_TURBO_16K_0613);
-    } else {
-      return {
-        functionName: FunctionNames.FirstConcact,
-        args: null,
-        message: { content: AppConstants.MESSAGE_KEY }
-      };
-    }
+    const chatGptResponse = await this.getChatGptResponse(context.chatHistory, this.currentFunctions,
+      BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_3_5_TURBO_16K_0613);
     let message = chatGptResponse.choices[0].message;
 
     if (message.function_call) {
@@ -58,8 +48,18 @@ export class GPTAssistant {
       }
       message.content = AuxiliarMessages.FunctionsToCall + functionName;
 
-      return { functionName, args, message };
+      return { functionName, args, message, context };
     } else {
+      if (context.isFirstContact) {
+        const responseText = currentClientName !== AppConstants.DEF_USER_NAME
+          ? `${ResponseMessages.FirstContact1}${currentClientName}${ResponseMessages.FirstContact2}`
+          : `${ResponseMessages.FirstContactWithNoName}`;
+        context.chatHistory.push({
+          role: GptRoles.Assistant,
+          content: responseText,
+          messageDate: new Date()
+        });
+      }
       message = (await this.getChatGptResponse(context.chatHistory, [],
         BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_4_O)).choices[0].message;
       if (message.content) {
@@ -72,7 +72,7 @@ export class GPTAssistant {
       await context.save();
     }
 
-    return { functionName: null, args: null, message };
+    return { functionName: null, args: null, message, context };
   }
 
   /**
@@ -273,7 +273,7 @@ export class GPTAssistant {
       chatHistory: [
         {
           role: GptRoles.User,
-          content: `${text}${AuxiliarMessages.MyNameIs} ${currentClientName}`,
+          content: currentClientName !== AppConstants.DEF_USER_NAME ? `${text}${AuxiliarMessages.MyNameIs} ${currentClientName}` : text,
           messageDate: new Date()
         }
       ]
