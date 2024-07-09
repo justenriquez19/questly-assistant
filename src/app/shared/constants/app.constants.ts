@@ -108,9 +108,10 @@ export enum MediaTypes {
   Chat = 'chat',
   Image = 'image',
   Mixed = 'mixed',
+  NotificationTemplate = 'notification_template',
   Sticker = 'sticker',
   Video = 'video',
-  VoiceMessage = 'ptt'
+  VoiceMessage = 'ptt',
 };
 
 export enum TimeoutDurations {

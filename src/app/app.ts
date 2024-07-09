@@ -505,6 +505,8 @@ export class QuestlyAIssistant {
         return isSingleEmptyMediaMessage ? MediaNotSupportedResponses.Audio : MediaNotSupportedResponses.AudioComplement;
       case MediaTypes.VoiceMessage:
         return isSingleEmptyMediaMessage ? MediaNotSupportedResponses.Audio : MediaNotSupportedResponses.AudioComplement;
+      case MediaTypes.NotificationTemplate:
+        return AppConstants.EMPTY_STRING;
       default:
         return isSingleEmptyMediaMessage ? MediaNotSupportedResponses.Default : MediaNotSupportedResponses.DefaultComplement;
     }
