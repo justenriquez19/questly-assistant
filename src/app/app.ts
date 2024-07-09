@@ -554,7 +554,7 @@ export class QuestlyAIssistant {
       const buffer = Buffer.from(media.data, MediaTypes.Base64);
       const { data: { text } } = await Tesseract.recognize(buffer, AppConstants.SPANISH_KEY);
 
-      if (text.includes(AppConstants.TRANSFER_KEY)) {
+      if (text.toLowerCase().includes(AppConstants.TRANSFER_KEY)) {
         const responseText = ResponseMessages.ThanksForYourPayment;
         await this.assistant.addNewMessage(`${MediaTypes.Image}: ${AuxiliarMessages.BankTransferPayment}`, senderId, GptRoles.User);
         const currentClientName = (await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant)).clientName;

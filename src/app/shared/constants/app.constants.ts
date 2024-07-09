@@ -29,7 +29,7 @@ export class AppConstants {
   public static readonly SPANISH_KEY: string = 'spa';
   public static readonly TEL_KEY: string = 'TEL';
   public static readonly TITLE: string = 'questly-AIssistant';
-  public static readonly TRANSFER_KEY: string = 'Transferencia';
+  public static readonly TRANSFER_KEY: string = 'transferencia';
   public static readonly WEB_VERSION_PATCH: string = 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html';
   public static readonly WHATSAPP_USER_KEY: string = '@c.us';
 };
