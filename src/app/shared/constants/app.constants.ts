@@ -56,16 +56,11 @@ export enum GptRoles {
 
 export enum FunctionNames {
   FirstConcact = 'first_contact',
-  GetCustomResponse = 'get_custom_response',
   GetPersonalAssistance = 'get_personal_assistance',
   NotifyIHaveArrived = 'notify_i_have_arrived',
   TalkToAle = 'talk_to_ale',
-  DetectClientName = 'detect_client_name'
+  GetUsersName = 'get_users_name'
 };
-
-export const FunctionWithProperties: Array<string> = [
-  FunctionNames.DetectClientName
-];
 
 export enum ResponseMessages {
   AskTalkingToYou = `Pidió hablar directamente contigo, por favor, respóndole lo antes posible. Gracias 😊✨`,
@@ -73,7 +68,6 @@ export enum ResponseMessages {
   FirstContact1 = "¡Hola! 👋 Parece que es la primera vez que te contactas con el asistente virtual de Ale's Place ✨\n\nPrimero que nada, veo que te llamas ",
   FirstContact2 = ', ¿verdad? ¿O prefieres que te llame de otra forma? 😊',
   FirstContactWithNoName = `¡Hola! 👋 Parece que es la primera vez que te contactas con el asistente virtual de Ale's Place ✨\n\nPrimero que nada ¿Cómo te gustaría que te llame? 😊`,
-  GetCustomResponse = 'No te preocupes, quizás yo no tengo esa información, ¡pero Ale seguro que sí! 🌸 Si quieres hablar con ella, solo dime, "Quiero hablar con Ale". Si no, ¡puedo seguir ayudándote! 🙌',
   ManualDeactivation = `Se ha desactivado manualmente el servicio de chatbot para el usuario con el número de teléfono:`,
   ManualDeactivationFailed = `La desactivación manual del servicio de chatbot falló para el usuario con el número de teléfono:`,
   ManualDeactivationTryAgain = 'Por favor, inténtalo de nuevo. Si no puedes desactivar un chat tras varios intentos, contacta con soporte 💬🔧',
@@ -115,7 +109,7 @@ export enum MediaTypes {
 };
 
 export enum TimeoutDurations {
-  TimeBetweenMessages = 16000
+  TimeBetweenMessages = 100
 };
 
 export enum ErrorMessages {
@@ -144,10 +138,6 @@ export class RegexExpressions {
   public static readonly GET_PHONE_NUMBER = /^.*(\d{10})@c\.us$/;
   public static readonly REMOVE_NON_ALPHABETIC_CHAR = /[^a-zA-Z]/g;
   public static readonly V_CARD_PHONE_EXTRACTOR = /(\+?\d{1,4}?\s?\(?\d{1,4}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9})/;
-};
-
-export enum PropertiesDescription {
-  UserName = 'El primer nombre del usuario sin apellidos'
 };
 
 export enum DefinedPaths {

@@ -252,7 +252,7 @@ export class QuestlyAIssistant {
     if (!messages || messages.length === 0) return;
 
     const firstMessage = messages[0];
-    const userName = this.getUserName(firstMessage._data?.notifyName);
+    const userName = firstMessage._data?.notifyName;
     const mediaType = this.getFirstMediaType(messages);
 
     if (this.isSingleEmptyMediaMessage(messages)) {
@@ -374,8 +374,8 @@ export class QuestlyAIssistant {
       let currentClientName: string;
       let notificationMessage: string;
       if (processed.context.isFirstContact) {
-        responseText = senderUserName !== AppConstants.DEF_USER_NAME
-          ? `${ResponseMessages.FirstContact1}${senderUserName}${ResponseMessages.FirstContact2}`
+        responseText = processed.context.clientName !== AppConstants.DEF_USER_NAME
+          ? `${ResponseMessages.FirstContact1}${processed.context.clientName}${ResponseMessages.FirstContact2}`
           : `${ResponseMessages.FirstContactWithNoName}`;
         const number = `${AppConstants.MX_PREFIX}${senderId}${AppConstants.WHATSAPP_USER_KEY}`;
         await this.client.sendMessage(number, responseText)
@@ -398,16 +398,13 @@ export class QuestlyAIssistant {
             \n${ResponseMessages.NoInterruptionContact}\n\n${AppConstants.NOT_REPLY}`;
           await this.sendNotification(this.currentNotificationUser, notificationMessage);
           break;
-        case FunctionNames.GetCustomResponse:
-          responseText = ResponseMessages.GetCustomResponse;
-          await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant);
-          break;
-        case FunctionNames.DetectClientName:
+        case FunctionNames.GetUsersName:
+          currentClientName = processed.args?.name as string;
           await this.assistant.updateContext({
             chatId: senderId,
-            updateFields: { clientName: processed.args.name }
+            updateFields: { clientName: currentClientName}
           });
-          responseText = await this.assistant.processResponse(FunctionNames.DetectClientName, `${ResponseMessages.YourNameIs} ${processed.args.name}`, senderId);
+          responseText = await this.assistant.processResponse(FunctionNames.GetUsersName, `${ResponseMessages.YourNameIs} ${currentClientName}`, senderId);
           break;
         case FunctionNames.NotifyIHaveArrived:
           responseText = ResponseMessages.WelcomeCustomer;
@@ -528,22 +525,6 @@ export class QuestlyAIssistant {
         this.handleMessageStorage(senderId, message);
       }
     }
-  }
-
-  /**
-   * @description Processes the user's name, ensuring it is not empty and falls back to a default name if necessary.
-   * @param {string} notifyName - The name to be processed.
-   * @param {string} defaultName - The default name to use if the processed name is empty.
-   * @returns {string} The processed user name or the default name if the processed name is empty.
-   */
-  private getUserName(notifyName: string | undefined): string {
-    if (!notifyName) {
-      return AppConstants.DEF_USER_NAME;
-    }
-
-    const processedName = this.utils.processString(notifyName);
-
-    return processedName ? processedName : AppConstants.DEF_USER_NAME;
   }
 
   /**

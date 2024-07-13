@@ -55,3 +55,8 @@ export interface UpdateContextParams {
   chatId: string;
   updateFields: Partial<IHistoryStructure>;
 }
+
+export interface ValidNameStructure {
+  isValidName: boolean;
+  firstName: string;
+}

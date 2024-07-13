@@ -66,7 +66,7 @@ URLS de cada servicio:
 - Cejas HD + Lifting De Pestañas: https://alesplace.com/cejas-hd-lifting-de-pestanas
 Todos los precios están sujetos a cambios segun el diseño o preferencias de cada clienta.
 
-Extras:
+Extras (Los extras son una sección disponible mientras se está haciendo la reserva de los servicios a los que aplican):
 - Retiro de uñas acrílicas: Retirar una aplicación previa de uñas Acrícilas. De 30 a 45 min. $100 pesos. Aplica para Gel Semipermanente, Uñas Soft Gel y Rubber de uñas.
 - Retiro de uñas soft gel: Retirar una aplicación previa de uñas Soft Gel. 20 min aprox. $70 pesos. Aplica para Gel Semipermanente, Uñas Soft Gel y Rubber de uñas.
 - Epilación con hilo: Se realiza la epilación con hilo en lugar de pinza. No añade tiempo de servicio. $50 pesos. Aplica para Cejas HD y Laminado y Depilación.
@@ -76,38 +76,45 @@ Todos los precios están sujetos a cambios segun el diseño o preferencias de ca
 `;
 
 export const TALK_TO_ALE_DESCRIPTION = `
-Hablar con Ale. Se considera que se quiere hablar con Ale siempre que la clienta pida hablar con Ale, no quiera hablar con el asistente o pida hablar con una persona.
-La frase más común para detectar esta función es: "Quiero hablar con Ale".
+Talk to Ale. It is considered that the client wants to talk to Ale whenever she requests to speak with Ale, does not want to talk to the assistant, or asks to speak with a person.
+Clients speak in Spanish, so the phrases should be detected in Spanish.
+The most common phrase to detect this function is: "Quiero hablar con Ale"
 `;
 
 export const GET_PERSONAL_ASSISTANCE_DESCRIPTION = `
-Obtener asistencia personalizada. Se considera que se quiere obtener asistencia personalizada siempre que la clienta esté experimentando un problema complejo,
-confuso o dificil de resolver por si mismo. También si el usuario presenta dificultades o es incapaz de agendar su cita en el sitio Web.
-La frase más común para detectar esta función es: "No puedo agendar mi cita".
-`;
-
-export const GET_CUSTOM_RESPONSE_DESCRIPTION = `
-Obtener una respuesta personalizada.
-Se considera que se quiere obtener una respuesta personalizada cuando la clienta pregunta sobre algún dato específico o cuya información no es clara o no está disponible para el asistente`;
-
-export const DETECT_CLIENT_NAME_DESCRIPTION = `
-La función "detect_client_name" debe ser llamada cada vez que el cliente mecione su nombre, bajo cualquier contexto.
-Las frases más comunes para detectar esta función incluyen:
-- "Mi nombre es {nombre}"
-- "Me llamo {nombre}"
-- "Dime {nombre}"
-- "Soy {nombre}"
-- "Quiero que me digas {nombre}"
+Obtain personalized assistance. It is considered that personalized assistance is desired whenever the client is experiencing a complex,
+confusing, or difficult problem to solve on their own. Also, if the user has difficulties or is unable to schedule their appointment on the website.
+Clients speak in Spanish, so the phrases should be detected in Spanish.
+The most common phrase to detect this function is: "No puedo agendar mi cita".
 `;
 
 export const NOTIFY_I_HAVE_ARRIVED_DESCRIPTION = `
-La función "notify_i_have_arrived" se debe llamar cuando una clienta ha llegado al local de Ale's Place y menciona que está afuera.
-Se considera que una clienta quiere notificar que ha llegado cuando diga que ha llegado o que está afuera.
-Las frases más comunes para detectar esta función incluyen: 
+The "notify_i_have_arrived" function should be called when an user has arrived at Ale's Place and mentions that she is outside.
+User speak in Spanish, so the phrases should be detected in Spanish.
+An user is considered to want to notify that she has arrived when she says that she has arrived or is outside. The most common phrases to detect this function include:
 - "Hola, ya llegué"
 - "Ya estoy afuera"
 - "Ya estoy aquí"
 - "Estoy en la puerta"
 - "Estoy afuera"
 - "Ya afuera"
-Estas frases indican que la clienta ha llegado al local y quiere notificar su llegada.`;
+These phrases indicate that the user has arrived at the location and wants to notify her arrival..`;
+
+export const WHATSAPP_NAME_DETECTION_DESCRIPTION = `
+You are a name detection tool. Your job is to distinguish names from regular phrases.
+The names or phrases to evaluate are taken from the WhatsApp username of our clients.
+Most people put their name, others put phrases or other texts that are not their name.
+Your job is to be able to detect the difference. When evaluating a text, consider: Is an existing and real human name?
+Respond with a JSON in this structure:
+{ "isValidName": boolean, "firstName": string }
+"firstName" should contain only the first name of the user (if isValidName is true).`;
+
+export const MESSAGE_NAME_DETECTION_DESCRIPTION = `
+You are a name detection tool. Your job is to distinguish names from regular phrases.
+The names or phrases to evaluate are taken from the WhatsApp messages of our clients.
+When evaluating a text, consider: Is an existing and real human name?
+Respond with a JSON in this structure:
+{ "isValidName": boolean, "firstName": string }
+"firstName" should contain only the first name of the user (if isValidName is true).`;
+
+export const AVOID_GREETINGS = 'Very important: Omit any kind of greeting, do not greet for any reason. Respond in Spanish. Do not say "Hello". Do not apologize.';

@@ -37,17 +37,6 @@ export class CoreUtilFunctions {
   }
 
   /**
-   * @description Cuts the input string at the first space and returns the first segment with only alphabetic characters.
-   * @param {string} input - The string to be processed.
-   * @returns {string} The cleaned substring before the first space with only alphabetic characters.
-   */
-  public processString(input: string): string {
-    const segment = this.cutUntilSpace(input);
-
-    return this.removeNonAlphabetic(segment);
-  }
-
-  /**
    * @description Checks if the input string contains any non-whitespace characters.
    * @param {string} input - The string to be validated.
    * @returns {boolean} True if the string contains non-whitespace characters, false otherwise.
@@ -69,5 +58,49 @@ export class CoreUtilFunctions {
     const daysInMillis = days * millisecondsInADay;
 
     return timeDifference > daysInMillis;
+  }
+
+  /**
+   * @description Checks if a text includes phrases that indicate the sender wants to reveal their name.
+   * @param {string} text - The text to analyze.
+   * @returns {boolean} True if the text includes any phrase indicating the name, false otherwise.
+   */
+  public includesNameIntroduction(text: string): boolean {
+    const lowerCaseText = text.toLowerCase();
+    const namePatterns = [
+      /\bmi nombre es\b/,
+      /\bme llamo\b/,
+      /\bsoy\b/,
+      /\bmi nombre completo es\b/,
+      /\bpuedes llamarme\b/,
+      /\bme puedes llamar\b/,
+      /\bme dicen\b/,
+      /\bme digas\b/,
+      /\bllámame\b/,
+      /\bte presento a\b/,
+      /\bquiero presentarme\b/,
+      /\bmi apodo es\b/,
+      /\bme conocen como\b/,
+      /\bmis amigos me llaman\b/,
+      /\bpuedes decirme\b/,
+      /\bque me llames\b/,
+      /\bpermíteme presentarme\b/,
+      /\bte digo mi nombre\b/,
+      /\bmi nombre de pila es\b/,
+      /\bpara los amigos soy\b/,
+      /\bme llamaban\b/,
+      /\bse me conoce como\b/,
+      /\bbuenos días, soy\b/,
+      /\bhola, soy\b/,
+      /\bte cuento que soy\b/,
+      /\bme presento, soy\b/
+    ];
+    for (const pattern of namePatterns) {
+      if (pattern.test(lowerCaseText)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

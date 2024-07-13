@@ -7,23 +7,33 @@ import {
   AuxiliarMessages,
   AvailableGptModels,
   ErrorMessages,
-  FunctionWithProperties,
+  FunctionNames,
   GptRoles,
   ResponseMessages
 } from '../shared/constants/app.constants';
-import { BOT_GENERAL_BEHAVIOR } from '../shared/constants/ales-bible.constants';
+import { AVOID_GREETINGS, BOT_GENERAL_BEHAVIOR, MESSAGE_NAME_DETECTION_DESCRIPTION, WHATSAPP_NAME_DETECTION_DESCRIPTION } from '../shared/constants/ales-bible.constants';
 import { ChatCompletion, ChatCompletionMessageParam } from 'openai/resources';
-import { ChatGptHistoryBody, CreateChatCompletionFunction, ExecuteFunctionBody, IChatGptApiError, UpdateContextParams } from '../shared/interfaces/gpt-interfaces';
+import {
+  ChatGptHistoryBody,
+  CreateChatCompletionFunction,
+  ExecuteFunctionBody,
+  IChatGptApiError,
+  UpdateContextParams,
+  ValidNameStructure
+} from '../shared/interfaces/gpt-interfaces';
+import { CoreUtilFunctions } from './core-utils.service';
 import { IHistoryStructure, PersistentChatModel } from '../shared/models/persistent-chats';
 
 export class GPTAssistant {
   public chatGpt: OpenAI;
   public currentFunctions: CreateChatCompletionFunction[];
+  public utils: CoreUtilFunctions;
 
   constructor() {
     this.chatGpt = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
+    this.utils = new CoreUtilFunctions;
     this.currentFunctions = ALES_PLACE_MAIN_FUNCTIONS.list;
   }
 
@@ -40,28 +50,43 @@ export class GPTAssistant {
       BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_3_5_TURBO_16K_0613);
     let message = chatGptResponse.choices[0].message;
 
+    if (context.isFirstContact) {
+      const responseText = context.clientName !== AppConstants.DEF_USER_NAME
+        ? `${ResponseMessages.FirstContact1}${context.clientName}${ResponseMessages.FirstContact2}`
+        : `${ResponseMessages.FirstContactWithNoName}`;
+      context.chatHistory.push({
+        role: GptRoles.Assistant,
+        content: responseText,
+        messageDate: new Date()
+      });
+    }
+    await context.save();
+
     if (message.function_call) {
       let args;
       const functionName = message.function_call.name;
-      if (FunctionWithProperties.includes(functionName)) {
-        args = JSON.parse(message.function_call.arguments);
-      }
       message.content = AuxiliarMessages.FunctionsToCall + functionName;
 
       return { functionName, args, message, context };
     } else {
-      if (context.isFirstContact) {
-        const responseText = currentClientName !== AppConstants.DEF_USER_NAME
-          ? `${ResponseMessages.FirstContact1}${currentClientName}${ResponseMessages.FirstContact2}`
-          : `${ResponseMessages.FirstContactWithNoName}`;
-        context.chatHistory.push({
-          role: GptRoles.Assistant,
-          content: responseText,
-          messageDate: new Date()
-        });
+      if (this.utils.includesNameIntroduction(text)) {
+        const nameReponse = await this.isNameValid(text, true);
+        if (nameReponse.isValidName) {
+          const functionName = FunctionNames.GetUsersName;
+          const args = {name: nameReponse.firstName};
+          message.content = AuxiliarMessages.FunctionsToCall + functionName;
+
+          return { functionName, args, message, context };
+        }
       }
-      message = (await this.getChatGptResponse(context.chatHistory, [],
-        BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_4_O)).choices[0].message;
+      if (context.isFirstContact) {
+        const expectedBehavior = `${AVOID_GREETINGS}\n${BOT_GENERAL_BEHAVIOR}`
+        message = (await this.getChatGptResponse(context.chatHistory, [],
+          expectedBehavior, AvailableGptModels.GPT_4_O)).choices[0].message;
+      } else {
+        message = (await this.getChatGptResponse(context.chatHistory, [],
+          BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_4_O)).choices[0].message;
+      }
       if (message.content) {
         context.chatHistory.push({
           role: message.role,
@@ -263,9 +288,10 @@ export class GPTAssistant {
    * @returns {Promise<Document & IHistoryStructure>} - The new chat context.
    */
   private async createInitialContext(text: string, currentChatId: string, currentClientName: string): Promise<Document & IHistoryStructure> {
+    const processedName = (await this.isNameValid(currentClientName)).firstName;
     const newContext = new PersistentChatModel({
       chatId: currentChatId,
-      clientName: currentClientName,
+      clientName: processedName,
       timeOfLastMessage: new Date(),
       isFirstContact: true,
       shouldRespond: true,
@@ -273,7 +299,7 @@ export class GPTAssistant {
       chatHistory: [
         {
           role: GptRoles.User,
-          content: currentClientName !== AppConstants.DEF_USER_NAME ? `${text}${AuxiliarMessages.MyNameIs} ${currentClientName}` : text,
+          content: processedName !== AppConstants.DEF_USER_NAME ? `${text}${AuxiliarMessages.MyNameIs} ${processedName}` : text,
           messageDate: new Date()
         }
       ]
@@ -352,4 +378,36 @@ export class GPTAssistant {
     }
   }
 
+  /**
+   * @description Check if a given name is common or valid using the GPT model.
+   * @param {string} name - The name to check.
+   * @returns {Promise<ValidNameStructure>} - Object indicating if the name is valid and the name itself.
+   */
+  public async isNameValid(name: string, isMessageDetection?: boolean): Promise<ValidNameStructure> {
+    const chatHistory: ChatGptHistoryBody[] = [
+      {
+        content: name,
+        role: GptRoles.User
+      }
+    ];
+    const expectedBehavior = isMessageDetection ? MESSAGE_NAME_DETECTION_DESCRIPTION : WHATSAPP_NAME_DETECTION_DESCRIPTION;
+    const targetGptModel = AvailableGptModels.GPT_3_5_TURBO_16K_0613;
+
+    const chatResponse = await this.getChatGptResponse(chatHistory, [], expectedBehavior, targetGptModel);
+    const responseContent = chatResponse.choices[0].message.content;
+
+    if (responseContent) {
+      const parsedResponse = JSON.parse(responseContent.trim());
+
+      return {
+        isValidName: parsedResponse.isValidName,
+        firstName: parsedResponse.isValidName ? parsedResponse.firstName : AppConstants.DEF_USER_NAME
+      };
+    } else {
+      return {
+        isValidName: false,
+        firstName: AppConstants.DEF_USER_NAME
+      };
+    }
+  }
 }
