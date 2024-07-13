@@ -1,4 +1,4 @@
-import { AppConstants, RegexExpressions } from "../shared/constants/app.constants";
+import { AppConstants, AppPatterns, RegexExpressions } from "../shared/constants/app.constants";
 
 export class CoreUtilFunctions {
   /**
@@ -67,35 +67,7 @@ export class CoreUtilFunctions {
    */
   public includesNameIntroduction(text: string): boolean {
     const lowerCaseText = text.toLowerCase();
-    const namePatterns = [
-      /\bmi nombre es\b/,
-      /\bme llamo\b/,
-      /\bsoy\b/,
-      /\bmi nombre completo es\b/,
-      /\bpuedes llamarme\b/,
-      /\bme puedes llamar\b/,
-      /\bme dicen\b/,
-      /\bme digas\b/,
-      /\bllámame\b/,
-      /\bte presento a\b/,
-      /\bquiero presentarme\b/,
-      /\bmi apodo es\b/,
-      /\bme conocen como\b/,
-      /\bmis amigos me llaman\b/,
-      /\bpuedes decirme\b/,
-      /\bque me llames\b/,
-      /\bpermíteme presentarme\b/,
-      /\bte digo mi nombre\b/,
-      /\bmi nombre de pila es\b/,
-      /\bpara los amigos soy\b/,
-      /\bme llamaban\b/,
-      /\bse me conoce como\b/,
-      /\bbuenos días, soy\b/,
-      /\bhola, soy\b/,
-      /\bte cuento que soy\b/,
-      /\bme presento, soy\b/
-    ];
-    for (const pattern of namePatterns) {
+    for (const pattern of AppPatterns.namePatterns) {
       if (pattern.test(lowerCaseText)) {
         return true;
       }

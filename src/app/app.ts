@@ -6,7 +6,9 @@ import Tesseract from 'tesseract.js';
 
 import {
   AppConstants,
+  AppPatterns,
   AuxiliarMessages,
+  ContactsToIgnore,
   DefinedPaths,
   ErrorMessages,
   FunctionNames,
@@ -115,7 +117,7 @@ export class QuestlyAIssistant {
   private async onMessageReceived(message: ExtendedMessage): Promise<void> {
     try {
       const currentSenderId = message.from.replace(RegexExpressions.GET_PHONE_NUMBER, AppConstants.ONE_DOLLAR);
-      if (currentSenderId !== NotificationContacts.Broadcast) {
+      if (!ContactsToIgnore.includes(currentSenderId)) {
         const messageContent = message.body;
         console.log(`${AuxiliarMessages.MessageReceivedFrom}${currentSenderId}: ${messageContent}`);
 
@@ -322,6 +324,7 @@ export class QuestlyAIssistant {
     if (mediaType === MediaTypes.Image) {
       isBankTransferImage = await this.detectBankTransfer(message, senderId);
     }
+    userName = (await this.assistant.isNameValid(userName)).firstName;
 
     if (context.isFirstContact) {
       messageByMediaType = isBankTransferImage ? AppConstants.EMPTY_STRING : this.getErrorMessageByMediaType(messageType, false);
@@ -546,8 +549,17 @@ export class QuestlyAIssistant {
     try {
       const buffer = Buffer.from(media.data, MediaTypes.Base64);
       const { data: { text } } = await Tesseract.recognize(buffer, AppConstants.SPANISH_KEY);
+      const textToAnalyze = text.toLocaleLowerCase();
+      let detectedBankPattern = false;
 
-      if (text.toLowerCase().includes(AppConstants.TRANSFER_KEY)) {
+      for (const pattern of AppPatterns.bankPatterns) {
+        if (pattern.test(textToAnalyze)) {
+          detectedBankPattern = true;
+          break;
+        }
+      }
+
+      if (detectedBankPattern) {
         const responseText = ResponseMessages.ThanksForYourPayment;
         await this.assistant.addNewMessage(`${MediaTypes.Image}: ${AuxiliarMessages.BankTransferPayment}`, senderId, GptRoles.User);
         const currentClientName = (await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant)).clientName;

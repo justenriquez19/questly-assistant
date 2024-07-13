@@ -29,7 +29,6 @@ export class AppConstants {
   public static readonly SPANISH_KEY: string = 'spa';
   public static readonly TEL_KEY: string = 'TEL';
   public static readonly TITLE: string = 'questly-AIssistant';
-  public static readonly TRANSFER_KEY: string = 'transferencia';
   public static readonly WEB_VERSION_PATCH: string = 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html';
   public static readonly WHATSAPP_USER_KEY: string = '@c.us';
 };
@@ -109,7 +108,7 @@ export enum MediaTypes {
 };
 
 export enum TimeoutDurations {
-  TimeBetweenMessages = 100
+  TimeBetweenMessages = 16000
 };
 
 export enum ErrorMessages {
@@ -129,8 +128,14 @@ export enum ErrorMessages {
 export enum NotificationContacts {
   Broadcast = 'status@broadcast',
   MainContact = '5219831844892@c.us',
-  TestContact = '5219831381983@c.us'
+  TestContact = '5219831381983@c.us',
+  WhatsApp = '0@c.us'
 };
+
+export const ContactsToIgnore: Array<string> = [
+  NotificationContacts.Broadcast,
+  NotificationContacts.WhatsApp
+];
 
 export class RegexExpressions {
   public static readonly REMOVE_NON_DIGIT_CHAR = /\D/g;
@@ -142,4 +147,41 @@ export class RegexExpressions {
 
 export enum DefinedPaths {
   BellLocation = 'media/images/bell_location.jpg'
+};
+
+export const AppPatterns = {
+  bankPatterns: [
+    /\btransferencia\b/,
+    /\bspei\b/,
+    /\bclabe\b/,
+    /\bcomprobante\b/
+  ],
+  namePatterns: [
+    /\bmi nombre es\b/,
+    /\bme llamo\b/,
+    /\bsoy\b/,
+    /\bmi nombre completo es\b/,
+    /\bpuedes llamarme\b/,
+    /\bme puedes llamar\b/,
+    /\bme dicen\b/,
+    /\bme digas\b/,
+    /\bllámame\b/,
+    /\bte presento a\b/,
+    /\bquiero presentarme\b/,
+    /\bmi apodo es\b/,
+    /\bme conocen como\b/,
+    /\bmis amigos me llaman\b/,
+    /\bpuedes decirme\b/,
+    /\bque me llames\b/,
+    /\bpermíteme presentarme\b/,
+    /\bte digo mi nombre\b/,
+    /\bmi nombre de pila es\b/,
+    /\bpara los amigos soy\b/,
+    /\bme llamaban\b/,
+    /\bse me conoce como\b/,
+    /\bbuenos días, soy\b/,
+    /\bhola, soy\b/,
+    /\bte cuento que soy\b/,
+    /\bme presento, soy\b/
+  ]
 };
