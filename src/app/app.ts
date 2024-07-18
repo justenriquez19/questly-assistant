@@ -185,7 +185,7 @@ export class QuestlyAIssistant {
           if (context) {
             context = await this.assistant.updateContext({
               chatId: phoneNumber,
-              updateFields: { shouldRespond: false }
+              updateFields: { shouldRespond: false, timeOfLastMessage: new Date() }
             });
           } else {
             context = await this.assistant.addNewUserMessage(`${AuxiliarMessages.TempContext}${phoneNumber}`, phoneNumber, AppConstants.DEF_USER_NAME);
