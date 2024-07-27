@@ -8,10 +8,9 @@ import {
   AvailableGptModels,
   ErrorMessages,
   FunctionNames,
-  GptRoles,
-  ResponseMessages
+  GptRoles
 } from '../shared/constants/app.constants';
-import { AVOID_GREETINGS, BOT_GENERAL_BEHAVIOR, MESSAGE_NAME_DETECTION_DESCRIPTION, WHATSAPP_NAME_DETECTION_DESCRIPTION } from '../shared/constants/ales-bible.constants';
+import { BOT_GENERAL_BEHAVIOR, MESSAGE_NAME_DETECTION_DESCRIPTION, WHATSAPP_NAME_DETECTION_DESCRIPTION } from '../shared/constants/ales-bible.constants';
 import { ChatCompletion, ChatCompletionMessageParam } from 'openai/resources';
 import {
   ChatGptHistoryBody,
@@ -50,18 +49,6 @@ export class GPTAssistant {
       BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_3_5_TURBO_16K_0613);
     let message = chatGptResponse.choices[0].message;
 
-    if (context.isFirstContact) {
-      const responseText = context.clientName !== AppConstants.DEF_USER_NAME
-        ? `${ResponseMessages.FirstContact1}${context.clientName}${ResponseMessages.FirstContact2}`
-        : `${ResponseMessages.FirstContactWithNoName}`;
-      context.chatHistory.push({
-        role: GptRoles.Assistant,
-        content: responseText,
-        messageDate: new Date()
-      });
-    }
-    await context.save();
-
     if (message.function_call) {
       let args;
       const functionName = message.function_call.name;
@@ -79,14 +66,9 @@ export class GPTAssistant {
           return { functionName, args, message, context };
         }
       }
-      if (context.isFirstContact) {
-        const expectedBehavior = `${AVOID_GREETINGS}\n${BOT_GENERAL_BEHAVIOR}`
-        message = (await this.getChatGptResponse(context.chatHistory, [],
-          expectedBehavior, AvailableGptModels.GPT_4_O)).choices[0].message;
-      } else {
-        message = (await this.getChatGptResponse(context.chatHistory, [],
-          BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_4_O)).choices[0].message;
-      }
+      message = (await this.getChatGptResponse(context.chatHistory, [],
+        BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_4_O)).choices[0].message;
+
       if (message.content) {
         context.chatHistory.push({
           role: message.role,
@@ -384,30 +366,32 @@ export class GPTAssistant {
    * @returns {Promise<ValidNameStructure>} - Object indicating if the name is valid and the name itself.
    */
   public async isNameValid(name: string, isMessageDetection?: boolean): Promise<ValidNameStructure> {
-    const chatHistory: ChatGptHistoryBody[] = [
-      {
-        content: name,
-        role: GptRoles.User
-      }
-    ];
+    const defaultResponse = {
+      isValidName: false,
+      firstName: AppConstants.DEF_USER_NAME
+    };
+
+    if (!name.length) return defaultResponse;
+
+    const chatHistory: ChatGptHistoryBody[] = [{ content: name, role: GptRoles.User }];
     const expectedBehavior = isMessageDetection ? MESSAGE_NAME_DETECTION_DESCRIPTION : WHATSAPP_NAME_DETECTION_DESCRIPTION;
-    const targetGptModel = AvailableGptModels.GPT_3_5_TURBO_16K_0613;
+    const targetGptModel = AvailableGptModels.GPT_4_O;
 
-    const chatResponse = await this.getChatGptResponse(chatHistory, [], expectedBehavior, targetGptModel);
-    const responseContent = chatResponse.choices[0].message.content;
+    try {
+      const chatResponse = await this.getChatGptResponse(chatHistory, [], expectedBehavior, targetGptModel);
+      const responseContent = chatResponse.choices[0].message.content;
 
-    if (responseContent) {
+      if (!responseContent) return defaultResponse;
+
       const parsedResponse = JSON.parse(responseContent.trim());
 
       return {
         isValidName: parsedResponse.isValidName,
         firstName: parsedResponse.isValidName ? parsedResponse.firstName : AppConstants.DEF_USER_NAME
       };
-    } else {
-      return {
-        isValidName: false,
-        firstName: AppConstants.DEF_USER_NAME
-      };
+    } catch (error) {
+      console.error(`${ErrorMessages.NameObtentionFailed} ${name}`, error);
+      return defaultResponse;
     }
   }
 }

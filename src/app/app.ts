@@ -329,8 +329,8 @@ export class QuestlyAIssistant {
     if (context.isFirstContact) {
       messageByMediaType = isBankTransferImage ? AppConstants.EMPTY_STRING : this.getErrorMessageByMediaType(messageType, false);
       const messageByUsername = userName !== AppConstants.DEF_USER_NAME
-        ? `${ResponseMessages.FirstContact1}${userName}${ResponseMessages.FirstContact2}`
-        : `${ResponseMessages.FirstContactWithNoName}`;
+        ? `${ResponseMessages.Hello} ${ResponseMessages.FirstContact1}${userName}${ResponseMessages.FirstContact2}`
+        : `${ResponseMessages.Hello} ${ResponseMessages.FirstContactWithNoName}`;
       responseText = messageByMediaType !== AppConstants.EMPTY_STRING ? `${messageByUsername}\n\n${messageByMediaType}` : messageByUsername;
 
       await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant);
@@ -376,17 +376,6 @@ export class QuestlyAIssistant {
       let responseText: string;
       let currentClientName: string;
       let notificationMessage: string;
-      if (processed.context.isFirstContact) {
-        responseText = processed.context.clientName !== AppConstants.DEF_USER_NAME
-          ? `${ResponseMessages.FirstContact1}${processed.context.clientName}${ResponseMessages.FirstContact2}`
-          : `${ResponseMessages.FirstContactWithNoName}`;
-        const number = `${AppConstants.MX_PREFIX}${senderId}${AppConstants.WHATSAPP_USER_KEY}`;
-        await this.client.sendMessage(number, responseText)
-        await this.assistant.updateContext({
-          chatId: senderId,
-          updateFields: { isFirstContact: false }
-        });
-      }
       switch (processed.functionName) {
         case FunctionNames.TalkToAle:
         case FunctionNames.GetPersonalAssistance:
@@ -433,6 +422,19 @@ export class QuestlyAIssistant {
       }
 
       await message.reply(responseText);
+
+      if (processed.context.isFirstContact) {
+        responseText = processed.context.clientName !== AppConstants.DEF_USER_NAME
+          ? `${ResponseMessages.ByTheWay} ${ResponseMessages.FirstContact1}${processed.context.clientName}${ResponseMessages.FirstContact2}`
+          : `${ResponseMessages.ByTheWay} ${ResponseMessages.FirstContactWithNoName}`;
+        const number = `${AppConstants.MX_PREFIX}${senderId}${AppConstants.WHATSAPP_USER_KEY}`;
+        await this.client.sendMessage(number, responseText)
+        await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant)
+        await this.assistant.updateContext({
+          chatId: senderId,
+          updateFields: { isFirstContact: false }
+        });
+      }
     } catch (error) {
       console.error(ErrorMessages.DefaultMessage, error);
     }

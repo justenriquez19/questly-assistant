@@ -107,7 +107,8 @@ Most people put their name, others put phrases or other texts that are not their
 Your job is to be able to detect the difference. When evaluating a text, consider: Is an existing and real human name?
 Respond with a JSON in this structure:
 { "isValidName": boolean, "firstName": string }
-"firstName" should contain only the first name of the user (if isValidName is true).`;
+"firstName" should contain only the first name of the user (if isValidName is true).
+Respond only with valid JSON, starting with "{" and ending with "}". Do not use Markdown.`;
 
 export const MESSAGE_NAME_DETECTION_DESCRIPTION = `
 You are a name detection tool. Your job is to distinguish names from regular phrases.
@@ -115,6 +116,7 @@ The names or phrases to evaluate are taken from the WhatsApp messages of our cli
 When evaluating a text, consider: Is an existing and real human name?
 Respond with a JSON in this structure:
 { "isValidName": boolean, "firstName": string }
-"firstName" should contain only the first name of the user (if isValidName is true).`;
+"firstName" should contain only the first name of the user (if isValidName is true).
+Respond only with valid JSON, starting with "{" and ending with "}". Do not use Markdown.`;
 
 export const AVOID_GREETINGS = 'Very important: Omit any kind of greeting, do not greet for any reason. Respond in Spanish. Do not say "Hello". Do not apologize.';
