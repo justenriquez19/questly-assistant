@@ -371,7 +371,7 @@ export class GPTAssistant {
       firstName: AppConstants.DEF_USER_NAME
     };
 
-    if (!name.length) return defaultResponse;
+    if (!name?.length) return defaultResponse;
 
     const chatHistory: ChatGptHistoryBody[] = [{ content: name, role: GptRoles.User }];
     const expectedBehavior = isMessageDetection ? MESSAGE_NAME_DETECTION_DESCRIPTION : WHATSAPP_NAME_DETECTION_DESCRIPTION;
