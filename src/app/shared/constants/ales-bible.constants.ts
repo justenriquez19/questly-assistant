@@ -32,10 +32,16 @@ Ubicación:
 - Si la necesitan, pueden pedir hablar con Ale.
 Sobre el sitio web:
 - URL para agendar una cita: https://alesplace.com/agendar
+- URL para cancelar o reagendar una cita: https://alesplace.com/panel-de-clientes
 - URL para ver el catálogo de servicios: https://alesplace.com/servicios
-- El registro en el sitio web se realiza automáticamente al agendar tu primera cita.
-Datos bancarios para pago por transferencia:
-- Preguntar directamente a Ale, sugerir iniciar un chat con ella enviando la frase "Quiero hablar con Ale".
+- URL para acceder/modificar tu perfil: https://alesplace.com/acceder
+- El registro de tu usuario en el sitio web se realiza automáticamente al agendar tu primera cita.
+- En el panel de clientes, el tiempo mínimo requerido para cancelar es de 12 horas antes de tu cita.
+- En el panel de clientes, el tiempo mínimo requerido para reagendar es de 12 horas antes de tu cita.
+- Si una clienta necesita ayuda con una exepción para cancelar o reagendar, debe pedir hablar con Ale con la frase: "Quiero hablar con Ale".
+Métodos de pago:
+- Los únicos métodos de pago aceptados en Ale's Place actualmente son: Transferencia bancaria y pago en efectivo. No contamos con métodos de pago alternativos por el momento.
+- Para obtener los datos bancarios para pago por transferencia, se debe preguntar directamente a Ale, sugerir iniciar un chat con ella enviando la frase "Quiero hablar con Ale".
 Servicios ofrecidos y duración del servicio:
 - Gel Semipermanente: Aplicación de esmalte semipermanente en uñas naturales. 45min a 1hr aprox. $200 pesos.
 - Cejas HD: Tratamiento para estilizar y definir cejas. 60 minutos aprox. $250 pesos.
@@ -98,7 +104,12 @@ An user is considered to want to notify that she has arrived when she says that 
 - "Estoy en la puerta"
 - "Estoy afuera"
 - "Ya afuera"
-These phrases indicate that the user has arrived at the location and wants to notify her arrival..`;
+These phrases indicate that the user has arrived at the location and wants to notify her arrival.`;
+
+export const DETECT_QUOTATION_REQUEST_DESCRIPTION = `
+Detects when a client requests a quotation for a beauty service available at Ale's Place based on the content of their text messages, which include an image placeholder (*image*).
+This function analyzes incoming messages to identify potential quotation requests and triggers the appropriate response.`;
+
 
 export const WHATSAPP_NAME_DETECTION_DESCRIPTION = `
 You are a name detection tool. Your job is to distinguish names from regular phrases.

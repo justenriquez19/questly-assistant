@@ -54,15 +54,17 @@ export enum GptRoles {
 };
 
 export enum FunctionNames {
+  DetectQuotationRequest = 'detect_quotation_request',
   FirstConcact = 'first_contact',
   GetPersonalAssistance = 'get_personal_assistance',
+  GetUsersName = 'get_users_name',
   NotifyIHaveArrived = 'notify_i_have_arrived',
-  TalkToAle = 'talk_to_ale',
-  GetUsersName = 'get_users_name'
+  TalkToAle = 'talk_to_ale'
 };
 
 export enum ResponseMessages {
   AskTalkingToYou = `Pidió hablar directamente contigo, por favor, respóndole lo antes posible. Gracias 😊✨`,
+  AttachMedia = 'También te adjunto las imágenes que nos compartió  📸',
   BankTransferVoucherReceived = 'Te ha enviado este comprobante de su pago por transferencia. Por favor, revísalo y verifica la transacción. Gracias 😊✨',
   ByTheWay = 'Por cierto...',
   FirstContact1 = "Parece que es la primera vez que te contactas con el asistente virtual de Ale's Place ✨\n\n¿Prefieres que te llame ",
@@ -74,6 +76,8 @@ export enum ResponseMessages {
   ManualDeactivationTryAgain = 'Por favor, inténtalo de nuevo. Si no puedes desactivar un chat tras varios intentos, contacta con soporte 💬🔧',
   NoInterruptionContact = `Podrás contactarlo sin interrupciones durante las próximas 12 horas 🕒✨`,
   NotificationSystem = `¡Hola! 👋 Este es el asistente de notificaciones de Ale's Place 😊`,
+  NotifyQuotationRequest = 'Solicitó una cotización 💰\nPor favor, revisa su chat para poder brindarle un estimado. Aquí está su mensaje:',
+  QuotationResponse = `¡Lindo diseño! 😊 Vamos a realizar la cotización para ti.\n\nAle te contactará pronto con un estimado. Si tienes alguna otra pregunta o necesitas más información, no dudes en decírnoslo.\n\n¡Estamos aquí para ayudarte! ✨💅`,
   OpenTheDoor = 'acaba de avisar que está esperando afuera, ¡ábrele lo antes posible! 🕒✨',
   PendingMessage1 = `👤 El usuario:`,
   PendingMessage2 = `📞 Con número:`,

@@ -21,7 +21,7 @@ import {
   ValidNameStructure
 } from '../shared/interfaces/gpt-interfaces';
 import { CoreUtilFunctions } from './core-utils.service';
-import { IHistoryStructure, PersistentChatModel } from '../shared/models/persistent-chats';
+import { IChatGptHistoryBody, IHistoryStructure, PersistentChatModel } from '../shared/models/persistent-chats';
 
 export class GPTAssistant {
   public chatGpt: OpenAI;
@@ -45,7 +45,8 @@ export class GPTAssistant {
    */
   public async processFunctions(text: string, currentChatId: string, currentClientName: string) {
     const context = await this.addNewUserMessage(text, currentChatId, currentClientName);
-    const chatGptResponse = await this.getChatGptResponse(context.chatHistory, this.currentFunctions,
+    const currentMessage = [context.chatHistory.at(-1) as IChatGptHistoryBody];
+    const chatGptResponse = await this.getChatGptResponse(currentMessage, this.currentFunctions,
       BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_3_5_TURBO_16K_0613);
     let message = chatGptResponse.choices[0].message;
 

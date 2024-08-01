@@ -1,4 +1,4 @@
-import { Client, LocalAuth, Message, MessageMedia} from 'whatsapp-web.js';
+import WAWebJS, { Client, LocalAuth, Message, MessageMedia} from 'whatsapp-web.js';
 import { toDataURL } from 'qrcode';
 import express, { Express, Response } from 'express';
 import path from 'path';
@@ -409,6 +409,26 @@ export class QuestlyAIssistant {
             \n${AppConstants.NOT_REPLY}`;
           await this.sendNotification(this.currentNotificationUser, notificationMessage);
           break;
+        case FunctionNames.DetectQuotationRequest:
+          await this.assistant.updateContext({
+            chatId: senderId,
+            updateFields: { shouldRespond: false }
+          });
+          responseText = ResponseMessages.QuotationResponse;
+          currentClientName = (await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant)).clientName;
+          notificationMessage = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.PendingMessage1} *${currentClientName}*
+          \n${ResponseMessages.PendingMessage2} ${senderId}\n\n${ResponseMessages.NotifyQuotationRequest}\n\n"${messageContent}"
+          \n${ResponseMessages.AttachMedia}\n\n${AppConstants.NOT_REPLY}`;
+          await this.sendNotification(this.currentNotificationUser, notificationMessage);
+
+          for (const message of messages) {
+            if (message.hasMedia) {
+              const media = await message.downloadMedia();
+              await this.sendNotification(this.currentNotificationUser, media);
+            }
+          }
+          mediaType = MediaTypes.Chat;
+          break;
         default:
           responseText = processed.message.content as string;
           break;
@@ -485,7 +505,7 @@ export class QuestlyAIssistant {
    * @param {string} phoneNumber - The phone number to send the notification to.
    * @param {string} message - The message to send.
    */
-  private async sendNotification(phoneNumber: string, message: string): Promise<void> {
+  private async sendNotification(phoneNumber: string, message: WAWebJS.MessageContent): Promise<void> {
     try {
       await this.client.sendMessage(phoneNumber, message);
     } catch (error) {
