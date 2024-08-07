@@ -38,6 +38,8 @@ export enum AuxiliarMessages {
   FunctionsToCall = 'Función a llamar: ',
   MessageReceivedFrom = 'Mensaje recibido de ',
   MyNameIs = ', mi nombre es',
+  OrderQuantity = 'Cantidad:',
+  OrderRequest = 'Me gustaría este producto de su catálogo:',
   TempContext = 'Contexto temporal creado para el número: '
 };
 
@@ -105,12 +107,14 @@ export enum MediaTypes {
   Audio = 'audio',
   Base64 = 'base64',
   Chat = 'chat',
+  E2ENotification = 'e2e_notification',
   Image = 'image',
   Mixed = 'mixed',
   NotificationTemplate = 'notification_template',
+  Order = 'order',
   Sticker = 'sticker',
   Video = 'video',
-  VoiceMessage = 'ptt',
+  VoiceMessage = 'ptt'
 };
 
 export enum TimeoutDurations {

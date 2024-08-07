@@ -152,7 +152,7 @@ export class QuestlyAIssistant {
   private async onMessageCreated(message: ExtendedMessage): Promise<void> {
     try {
       if (message.fromMe && message.from === message.to) {
-        const messageContent = message.body;
+        const messageContent = message.type as string !== MediaTypes.Order ? message.body : message._data.orderTitle;
         console.log(`${AuxiliarMessages.MessageReceivedFrom}${GptRoles.System}: ${messageContent}`);
 
         if (messageContent.includes(AppConstants.NOT_REPLY)) {
@@ -274,6 +274,10 @@ export class QuestlyAIssistant {
   private combineMessagesContent(messages: ExtendedMessage[]): string {
     return messages.map(msg => {
       if (!msg.body) {
+        if (msg.type as string === MediaTypes.Order) {
+          return `${AuxiliarMessages.OrderRequest} ${msg._data.orderTitle} (${AuxiliarMessages.OrderQuantity} ${msg._data.itemCount})`
+        }
+
         return msg.type as string === MediaTypes.VoiceMessage ? `*${MediaTypes.Audio}*` : `*${msg.type}*`;
       }
       return msg.body;
@@ -532,6 +536,8 @@ export class QuestlyAIssistant {
       case MediaTypes.VoiceMessage:
         return isSingleEmptyMediaMessage ? MediaNotSupportedResponses.Audio : MediaNotSupportedResponses.AudioComplement;
       case MediaTypes.NotificationTemplate:
+      case MediaTypes.E2ENotification:
+      case MediaTypes.Order:
         return AppConstants.EMPTY_STRING;
       default:
         return isSingleEmptyMediaMessage ? MediaNotSupportedResponses.Default : MediaNotSupportedResponses.DefaultComplement;
