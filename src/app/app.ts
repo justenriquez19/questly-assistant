@@ -308,7 +308,7 @@ export class QuestlyAIssistant {
    * @returns {boolean} - True if it contains a single empty media message, false otherwise.
    */
   private isSingleEmptyMediaMessage(messages: ExtendedMessage[]): boolean {
-    return messages.length === 1 && messages[0].hasMedia;
+    return messages.length === 1 && messages[0].hasMedia && messages[0].body === AppConstants.EMPTY_STRING;
   }
 
   /**
