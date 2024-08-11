@@ -58,7 +58,6 @@ export enum GptRoles {
 export enum FunctionNames {
   DetectQuotationRequest = 'detect_quotation_request',
   FirstConcact = 'first_contact',
-  GetPersonalAssistance = 'get_personal_assistance',
   GetUsersName = 'get_users_name',
   NotifyIHaveArrived = 'notify_i_have_arrived',
   TalkToAle = 'talk_to_ale'

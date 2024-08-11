@@ -382,7 +382,6 @@ export class QuestlyAIssistant {
       let notificationMessage: string;
       switch (processed.functionName) {
         case FunctionNames.TalkToAle:
-        case FunctionNames.GetPersonalAssistance:
           await this.assistant.updateContext({
             chatId: senderId,
             updateFields: { shouldRespond: false }
