@@ -22,6 +22,29 @@ export class CoreUtilFunctions {
   }
 
   /**
+   * @description Converts a date string to "DD/MM/YYYY HH:MM AM/PM" format.
+   * @param {Date} dateString - The ISO date to convert.
+   * @returns {string} The formatted date string.
+   */
+  public formatDate(dateString: Date): string {
+    const date = new Date(dateString);
+    const localTime = new Date(date.getTime() - 5 * 60 * 60 * 1000);
+
+    const options: Intl.DateTimeFormatOptions = {
+      day: AppConstants.TWO_DIGIT_KEY,
+      month: AppConstants.TWO_DIGIT_KEY,
+      year: AppConstants.NUMERIC_KEY,
+      hour: AppConstants.NUMERIC_KEY,
+      minute: AppConstants.TWO_DIGIT_KEY,
+      hour12: true,
+      timeZone: AppConstants.UTC_KEY
+    };
+
+    return new Intl.DateTimeFormat(AppConstants.MX_REGION_KEY,
+      options).format(localTime).replace(AppConstants.COMMA_KEY, AppConstants.EMPTY_STRING);
+  }
+
+  /**
    * @description Removes any non-alphabetic characters from the input string.
    * @param {string} input - The string to be processed.
    * @returns {string} The cleaned string with only alphabetic characters.

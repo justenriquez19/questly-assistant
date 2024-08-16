@@ -5,6 +5,7 @@ export class AppConstants {
   public static readonly AUTO_KEY: "auto" = 'auto';
   public static readonly BLANK_SPACE: string = ' ';
   public static readonly CLIENT_IS_READY: string = 'The client is up!';
+  public static readonly COMMA_KEY: string = ',';
   public static readonly CURRENT_PORT: number = 3000;
   public static readonly DEF_PUBLIC_IP: string = '0.0.0.0';
   public static readonly DEF_USER_NAME: string = 'Nobody';
@@ -13,8 +14,10 @@ export class AppConstants {
   public static readonly MESSAGE_CREATE_KEY: string = 'message_create';
   public static readonly MESSAGE_KEY: string = 'message';
   public static readonly MX_PREFIX: string = '521';
+  public static readonly MX_REGION_KEY: string = 'es-MX';
   public static readonly MX_SIMPLE_PREFIX: string = '52';
   public static readonly NOT_REPLY: string = 'Mensaje automático. No responder.';
+  public static readonly NUMERIC_KEY = 'numeric';
   public static readonly OBJECT_KEY: string = 'object';
   public static readonly ONE_DOLLAR: string = '$1';
   public static readonly PUPPETEER_PATCH_NO_SANDBOX: string = '--no-sandbox';
@@ -29,15 +32,20 @@ export class AppConstants {
   public static readonly SPANISH_KEY: string = 'spa';
   public static readonly TEL_KEY: string = 'TEL';
   public static readonly TITLE: string = 'questly-AIssistant';
+  public static readonly TWO_DIGIT_KEY = '2-digit';
+  public static readonly UTC_KEY: string = 'UTC';
   public static readonly WEB_VERSION_PATCH: string = 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html';
   public static readonly WHATSAPP_USER_KEY: string = '@c.us';
 };
 
 export enum AuxiliarMessages {
   BankTransferPayment = 'Pago por transferencia bancaria',
+  CurrentDateTime = 'Fecha y hora actual:',
   FunctionsToCall = 'Función a llamar: ',
+  MessageDateTime = 'Fecha y hora del mensaje:',
   MessageReceivedFrom = 'Mensaje recibido de ',
   MyNameIs = ', mi nombre es',
+  NewConversationStarted = 'Nueva conversación iniciada.',
   OrderQuantity = 'Cantidad:',
   OrderRequest = 'Me gustaría este producto de su catálogo:',
   TempContext = 'Contexto temporal creado para el número: '

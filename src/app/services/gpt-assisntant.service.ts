@@ -70,14 +70,7 @@ export class GPTAssistant {
       message = (await this.getChatGptResponse(context.chatHistory, [],
         BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_4_O)).choices[0].message;
 
-      if (message.content) {
-        context.chatHistory.push({
-          role: message.role,
-          content: message.content as string,
-          messageDate: new Date()
-        });
-      }
-      await context.save();
+      await this.addNewMessage(message.content as string, context.chatId, GptRoles.Assistant);
     }
 
     return { functionName: null, args: null, message, context };
@@ -98,18 +91,10 @@ export class GPTAssistant {
       functionResponse
     };
     const chatGptResponse = await this.sendFunctionToChatGpt(context.chatHistory, functionToExecute, expectedBehavior);
+    const content = chatGptResponse.choices[0].message.content as string;
+    await this.addNewMessage(content, context.chatId, GptRoles.Assistant);
 
-    // Add system message to chat history
-    context.timeOfLastMessage = new Date();
-    context.chatHistory.push({
-      role: chatGptResponse.choices[0].message.role,
-      content: chatGptResponse.choices[0].message.content as string,
-      messageDate: new Date()
-    });
-
-    await context.save();
-
-    return chatGptResponse.choices[0].message.content as string;
+    return content;
   }
 
   /**
@@ -123,6 +108,8 @@ export class GPTAssistant {
   private async getChatGptResponse(chatHistory: ChatGptHistoryBody[], functionsList: CreateChatCompletionFunction[],
     expectedBehavior: string, targetGptModel: string): Promise<ChatCompletion> {
     try {
+      const currentDateTime = this.utils.formatDate(new Date());
+      expectedBehavior = `${expectedBehavior}\n\n[${AuxiliarMessages.CurrentDateTime} ${currentDateTime}]`;
       if (functionsList.length) {
         const chatResponse = await this.chatGpt.chat.completions.create({
           model: targetGptModel,
@@ -172,12 +159,14 @@ export class GPTAssistant {
   private async sendFunctionToChatGpt(chatHistory: ChatGptHistoryBody[], functionToExecute: ExecuteFunctionBody, expectedBehavior?: string): Promise<ChatCompletion> {
     try {
       const behavior = expectedBehavior ? BOT_GENERAL_BEHAVIOR + expectedBehavior : BOT_GENERAL_BEHAVIOR;
+      const currentDateTime = this.utils.formatDate(new Date());
+      const currentBehavior = `${behavior}\n\n[${AuxiliarMessages.CurrentDateTime} ${currentDateTime}]`;
       const chatResponse = await this.chatGpt.chat.completions.create({
         model: AvailableGptModels.GPT_4_O,
         messages: [
           {
             role: GptRoles.System,
-            content: behavior
+            content: currentBehavior
           },
           ...chatHistory as ChatCompletionMessageParam[],
           {
@@ -210,20 +199,12 @@ export class GPTAssistant {
     let context = await this.getContextByChatId(currentChatId);
 
     if (!context) {
-      context = await this.createInitialContext(text, currentChatId, currentClientName);
+      context = await this.generateInitialContext(text, currentChatId, currentClientName);
     } else {
       if (text !== AppConstants.EMPTY_STRING) {
-        context.chatHistory.push({
-          role: GptRoles.User,
-          content: text,
-          messageDate: new Date()
-        });
-        context.timeOfLastMessage = new Date();
+        context = await this.addNewMessage(text, currentChatId, GptRoles.User);
       }
-      context.isFirstContact = false;
     }
-
-    await context.save();
 
     return context;
   }
@@ -237,10 +218,11 @@ export class GPTAssistant {
    */
   public async addNewMessage(text: string, currentChatId: string, roleProvided: string): Promise<Document & IHistoryStructure> {
     let context = await this.getContextByChatId(currentChatId);
+    const currentDateTime = this.utils.formatDate(new Date());
 
     context.chatHistory.push({
       role: roleProvided,
-      content: text,
+      content: roleProvided === GptRoles.User ? `${text}'\n\n[${AuxiliarMessages.MessageDateTime} ${currentDateTime}]` : text,
       messageDate: new Date()
     });
     context.isFirstContact = false;
@@ -270,8 +252,9 @@ export class GPTAssistant {
    * @param {string} currentClientName - The current client's name.
    * @returns {Promise<Document & IHistoryStructure>} - The new chat context.
    */
-  private async createInitialContext(text: string, currentChatId: string, currentClientName: string): Promise<Document & IHistoryStructure> {
+  private async generateInitialContext(text: string, currentChatId: string, currentClientName: string): Promise<Document & IHistoryStructure> {
     const processedName = (await this.isNameValid(currentClientName)).firstName;
+    const currentDateTimeTime = this.utils.formatDate(new Date());
     const newContext = new PersistentChatModel({
       chatId: currentChatId,
       clientName: processedName,
@@ -281,12 +264,21 @@ export class GPTAssistant {
       shouldDeleteAfterContact: false,
       chatHistory: [
         {
+          role: GptRoles.System,
+          content: `${AuxiliarMessages.NewConversationStarted}\n\n[${AuxiliarMessages.CurrentDateTime} ${currentDateTimeTime}]`,
+          messageDate: new Date()
+        },
+        {
           role: GptRoles.User,
-          content: processedName !== AppConstants.DEF_USER_NAME ? `${text}${AuxiliarMessages.MyNameIs} ${processedName}` : text,
+          content: processedName !== AppConstants.DEF_USER_NAME ?
+            `${text}${AuxiliarMessages.MyNameIs} ${processedName}\n\n[${AuxiliarMessages.MessageDateTime} ${currentDateTimeTime}]` :
+            `${text}\n\n[${AuxiliarMessages.MessageDateTime} ${currentDateTimeTime}]`,
           messageDate: new Date()
         }
       ]
     });
+
+    await newContext.save();
 
     return newContext;
   }

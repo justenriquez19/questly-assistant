@@ -127,12 +127,16 @@ export class QuestlyAIssistant {
           if (context.shouldDeleteAfterContact && this.utils.isMoreThanDaysAgo(context.timeOfLastMessage, 0.5)) {
             await this.assistant.deleteContextByChatId(currentSenderId);
             context = await this.assistant.getContextByChatId(currentSenderId);
-          } else if (!context.shouldRespond && this.utils.isMoreThanDaysAgo(context.timeOfLastMessage, 0.5)) {
-            context.shouldRespond = true;
-            context = await this.assistant.updateContext({
-              chatId: currentSenderId,
-              updateFields: { shouldRespond: true }
-            });
+          } else if (this.utils.isMoreThanDaysAgo(context.timeOfLastMessage, 0.5)) {
+            if (!context.shouldRespond) {
+              context.shouldRespond = true;
+              context = await this.assistant.updateContext({
+                chatId: currentSenderId,
+                updateFields: { shouldRespond: true }
+              });
+            } else {
+              await this.assistant.addNewMessage(AuxiliarMessages.NewConversationStarted, currentSenderId, GptRoles.System);
+            }
           }
         }
 
@@ -273,14 +277,16 @@ export class QuestlyAIssistant {
    */
   private combineMessagesContent(messages: ExtendedMessage[]): string {
     return messages.map(msg => {
-      if (!msg.body) {
-        if (msg.type as string === MediaTypes.Order) {
-          return `${AuxiliarMessages.OrderRequest} ${msg._data.orderTitle} (${AuxiliarMessages.OrderQuantity} ${msg._data.itemCount})`
+      const { body, type, _data } = msg;
+  
+      if (!body) {
+        if (type as string === MediaTypes.Order) {
+          return `${AuxiliarMessages.OrderRequest} ${_data.orderTitle} (${AuxiliarMessages.OrderQuantity} ${_data.itemCount})`;
         }
-
-        return msg.type as string === MediaTypes.VoiceMessage ? `*${MediaTypes.Audio}*` : `*${msg.type}*`;
+        return type as string === MediaTypes.VoiceMessage ? `*${MediaTypes.Audio}*` : `*${type}*`;
       }
-      return msg.body;
+  
+      return type as string === MediaTypes.Chat ? body : `*${type}* ${body}`;
     }).join(AppConstants.BLANK_SPACE);
   }
 
