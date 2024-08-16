@@ -285,6 +285,10 @@ export class QuestlyAIssistant {
         }
         return type as string === MediaTypes.VoiceMessage ? `*${MediaTypes.Audio}*` : `*${type}*`;
       }
+
+      if (type as string === MediaTypes.E2ENotification || type as string === MediaTypes.NotificationTemplate) {
+        return AppConstants.EMPTY_STRING;
+      }
   
       return type as string === MediaTypes.Chat ? body : `*${type}* ${body}`;
     }).join(AppConstants.BLANK_SPACE);
@@ -296,14 +300,20 @@ export class QuestlyAIssistant {
    * @returns {string} - The type of the non-chat messages if they are all the same, otherwise 'chat'.
    */
   private getFirstMediaType(messages: ExtendedMessage[]): string {
-    const nonChatMessages = messages.filter(msg => msg.type as string !== MediaTypes.Chat);
+    const relevantMessages = messages.filter((msg: ExtendedMessage) => {
+      return msg.type as string !== MediaTypes.Chat &&
+        msg.type as string !== MediaTypes.E2ENotification &&
+        msg.type as string !== MediaTypes.NotificationTemplate;
+    });
 
-    if (nonChatMessages.length === 0) {
+    if (relevantMessages?.length === 0) {
       return MediaTypes.Chat;
     }
 
-    const firstType = nonChatMessages[0].type;
-    const allSameType = nonChatMessages.every(msg => msg.type === firstType);
+    const firstType = relevantMessages[0].type;
+    const allSameType = relevantMessages.every((msg: ExtendedMessage) => {
+      return msg.type === firstType;
+    });
 
     return allSameType ? firstType : MediaTypes.Mixed;
   }
