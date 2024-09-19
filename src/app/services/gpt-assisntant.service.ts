@@ -47,7 +47,7 @@ export class GPTAssistant {
     const context = await this.addNewUserMessage(text, currentChatId, currentClientName);
     const currentMessage = [context.chatHistory.at(-1) as IChatGptHistoryBody];
     const chatGptResponse = await this.getChatGptResponse(currentMessage, this.currentFunctions,
-      BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_3_5_TURBO_16K_0613);
+      BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_4_O);
     let message = chatGptResponse.choices[0].message;
 
     if (message.function_call) {
