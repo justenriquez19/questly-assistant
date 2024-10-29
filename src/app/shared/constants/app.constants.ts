@@ -145,7 +145,7 @@ export enum ErrorMessages {
 
 export enum NotificationContacts {
   Broadcast = 'status@broadcast',
-  Business = '5219831079486@c.us',
+  Business = '5219831079501@c.us',
   MainContact = '5219831844892@c.us',
   TestContact = '5219831381983@c.us',
   WhatsApp = '0@c.us'
