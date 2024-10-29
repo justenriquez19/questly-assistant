@@ -155,58 +155,63 @@ export class QuestlyAIssistant {
    */
   private async onMessageCreated(message: ExtendedMessage): Promise<void> {
     try {
-      if (message.fromMe && message.from === message.to) {
-        const messageContent = message.type as string !== MediaTypes.Order ? message.body : message._data.orderTitle;
-        console.log(`${AuxiliarMessages.MessageReceivedFrom}${GptRoles.System}: ${messageContent}`);
+      const messageContent = message.type as string !== MediaTypes.Order ? message.body : message._data.orderTitle;
 
-        if (messageContent.includes(AppConstants.NOT_REPLY)) {
-          return;
-        }
+      if (messageContent.includes(AppConstants.NOT_REPLY)) {
+        return;
+      }
+      let recipientPhoneNumber: string | null = null;
 
-        let phoneNumber: string | null = null;
+      if (message.fromMe && message.author === NotificationContacts.Business) {
+        if (message.from === message.to) {
+          console.log(`${AuxiliarMessages.MessageReceivedFrom}${GptRoles.System}: ${messageContent}`);
+          const phoneNumberMatch = messageContent.match(RegexExpressions.GET_FIRST_TEN_NUMBERS);
 
-        const phoneNumberMatch = messageContent.match(RegexExpressions.GET_FIRST_TEN_NUMBERS);
-        if (phoneNumberMatch) {
-          phoneNumber = phoneNumberMatch[0];
-        } else {
-          const vCardLine = messageContent.split('\n').find(line => line.includes(AppConstants.TEL_KEY));
-          if (vCardLine) {
-            const vCardPhoneMatch = vCardLine.match(RegexExpressions.V_CARD_PHONE_EXTRACTOR);
-            if (vCardPhoneMatch) {
-              phoneNumber = vCardPhoneMatch[0].replace(RegexExpressions.REMOVE_NON_DIGIT_CHAR, AppConstants.EMPTY_STRING);
-              if (phoneNumber.startsWith(AppConstants.MX_PREFIX)) {
-                phoneNumber = phoneNumber.substring(3);
-              } else if (phoneNumber.startsWith(AppConstants.MX_SIMPLE_PREFIX)) {
-                phoneNumber = phoneNumber.substring(2);
+          if (phoneNumberMatch) {
+            recipientPhoneNumber = phoneNumberMatch[0];
+          } else {
+            const vCardLine = messageContent.split('\n').find(line => line.includes(AppConstants.TEL_KEY));
+            if (vCardLine) {
+              const vCardPhoneMatch = vCardLine.match(RegexExpressions.V_CARD_PHONE_EXTRACTOR);
+              if (vCardPhoneMatch) {
+                recipientPhoneNumber = vCardPhoneMatch[0].replace(RegexExpressions.REMOVE_NON_DIGIT_CHAR, AppConstants.EMPTY_STRING);
+                if (recipientPhoneNumber.startsWith(AppConstants.MX_PREFIX)) {
+                  recipientPhoneNumber = recipientPhoneNumber.substring(3);
+                } else if (recipientPhoneNumber.startsWith(AppConstants.MX_SIMPLE_PREFIX)) {
+                  recipientPhoneNumber = recipientPhoneNumber.substring(2);
+                }
               }
             }
           }
+        } else {
+          recipientPhoneNumber = message.to.replace(RegexExpressions.GET_PHONE_NUMBER, AppConstants.ONE_DOLLAR);
         }
-
-        if (phoneNumber) {
-          let context = await this.assistant.getContextByChatId(phoneNumber);
-          let responseText = AppConstants.EMPTY_STRING;
-          if (context) {
+        if (recipientPhoneNumber) {
+          let context = await this.assistant.getContextByChatId(recipientPhoneNumber);
+          let hasChatBeenDisabled = false;
+          if (context && context.shouldRespond) {
             context = await this.assistant.updateContext({
-              chatId: phoneNumber,
+              chatId: recipientPhoneNumber,
               updateFields: { shouldRespond: false, timeOfLastMessage: new Date() }
             });
-          } else {
-            context = await this.assistant.addNewUserMessage(`${AuxiliarMessages.TempContext}${phoneNumber}`, phoneNumber, AppConstants.DEF_USER_NAME);
-            await this.assistant.updateContext({
-              chatId: phoneNumber,
+            hasChatBeenDisabled = true;
+          } else if (!context) {
+            await this.assistant.addNewUserMessage(`${AuxiliarMessages.TempContext}${recipientPhoneNumber}`, recipientPhoneNumber, AppConstants.DEF_USER_NAME);
+            context = await this.assistant.updateContext({
+              chatId: recipientPhoneNumber,
               updateFields: { shouldRespond: false, shouldDeleteAfterContact: true, timeOfLastMessage: new Date() }
             });
+            hasChatBeenDisabled = true;
           }
-          if (context.shouldRespond === false) {
-            responseText = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.ManualDeactivation}\n\n${phoneNumber}
-            \n${ResponseMessages.NoInterruptionContact}\n\n${AppConstants.NOT_REPLY}`;
-          } else {
-            responseText = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.ManualDeactivationFailed}\n\n${phoneNumber}\n
-            \n${ResponseMessages.ManualDeactivationTryAgain}\n\n${AppConstants.NOT_REPLY}`;
-          }
+          if (hasChatBeenDisabled) {
+            const correctlyDisabled = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.ManualDeactivation}\n\n${recipientPhoneNumber}
+          \n${ResponseMessages.NoInterruptionContact}\n\n${AppConstants.NOT_REPLY}`;
+            const errorDuringDisablingChat = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.ManualDeactivationFailed}\n\n${recipientPhoneNumber}\n
+          \n${ResponseMessages.ManualDeactivationTryAgain}\n\n${AppConstants.NOT_REPLY}`;
+            const notificationMessage = context.shouldRespond === false ? correctlyDisabled : errorDuringDisablingChat;
 
-          await message.reply(responseText);
+            await this.sendNotification(this.currentNotificationUser, notificationMessage);
+          }
 
           return;
         }
@@ -433,11 +438,16 @@ export class QuestlyAIssistant {
             chatId: senderId,
             updateFields: { shouldRespond: false }
           });
-          responseText = ResponseMessages.QuotationResponse;
+          responseText = mediaType !== MediaTypes.Chat ? ResponseMessages.QuotationWithImageResponse : ResponseMessages.QuotationResponse;
           currentClientName = (await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant)).clientName;
           notificationMessage = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.PendingMessage1} *${currentClientName}*
-          \n${ResponseMessages.PendingMessage2} ${senderId}\n\n${ResponseMessages.NotifyQuotationRequest}\n\n"${messageContent}"
-          \n${ResponseMessages.AttachMedia}\n\n${AppConstants.NOT_REPLY}`;
+          \n${ResponseMessages.PendingMessage2} ${senderId}\n\n${ResponseMessages.NotifyQuotationRequest}\n\n"${messageContent}"`
+
+          if (mediaType !== MediaTypes.Chat) {
+            notificationMessage = notificationMessage + `\n${ResponseMessages.AttachMedia}\n\n${AppConstants.NOT_REPLY}`;
+          } else {
+            notificationMessage = notificationMessage + `\n\n${AppConstants.NOT_REPLY}`;
+          }
           await this.sendNotification(this.currentNotificationUser, notificationMessage);
 
           for (const message of messages) {

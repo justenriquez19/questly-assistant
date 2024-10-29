@@ -85,7 +85,8 @@ export enum ResponseMessages {
   NoInterruptionContact = `Podrás contactarlo sin interrupciones durante las próximas 12 horas 🕒✨`,
   NotificationSystem = `¡Hola! 👋 Este es el asistente de notificaciones de Ale's Place 😊`,
   NotifyQuotationRequest = 'Solicitó una cotización 💰\nPor favor, revisa su chat para poder brindarle un estimado. Aquí está su mensaje:',
-  QuotationResponse = `¡Lindo diseño! 😊 Vamos a realizar la cotización para ti.\n\nAle te contactará pronto con un estimado. Si tienes alguna otra pregunta o necesitas más información, no dudes en decírnoslo.\n\n¡Estamos aquí para ayudarte! ✨💅`,
+  QuotationResponse = `¡Claro! 😊 Vamos a realizar la cotización para ti. Si tienes algún ejemplo del diseño, por favor envíalo por aquí.\n\nAle te contactará pronto con un estimado. Si tienes alguna otra pregunta o necesitas más información, no dudes en decírnoslo.\n\n¡Estamos aquí para ayudarte! ✨💅`,
+  QuotationWithImageResponse = `¡Lindo diseño! 😊 Vamos a realizar la cotización para ti.\n\nAle te contactará pronto con un estimado. Si tienes alguna otra pregunta o necesitas más información, no dudes en decírnoslo.\n\n¡Estamos aquí para ayudarte! ✨💅`,
   OpenTheDoor = 'acaba de avisar que está esperando afuera, ¡ábrele lo antes posible! 🕒✨',
   PendingMessage1 = `👤 El usuario:`,
   PendingMessage2 = `📞 Con número:`,
@@ -144,6 +145,7 @@ export enum ErrorMessages {
 
 export enum NotificationContacts {
   Broadcast = 'status@broadcast',
+  Business = '5219831079486@c.us',
   MainContact = '5219831844892@c.us',
   TestContact = '5219831381983@c.us',
   WhatsApp = '0@c.us'
