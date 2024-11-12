@@ -119,7 +119,7 @@ export class QuestlyAIssistant {
       const currentSenderId = message.from.replace(RegexExpressions.GET_PHONE_NUMBER, AppConstants.ONE_DOLLAR);
       if (!ContactsToIgnore.includes(currentSenderId)) {
         const messageContent = message.body;
-        console.log(`${AuxiliarMessages.MessageReceivedFrom}${currentSenderId}: ${messageContent}`);
+        // console.log(`${AuxiliarMessages.MessageReceivedFrom}${currentSenderId}: ${messageContent}`);
 
         let context = await this.assistant.getContextByChatId(currentSenderId);
 
@@ -164,7 +164,7 @@ export class QuestlyAIssistant {
 
       if (message.fromMe && message.author === NotificationContacts.Business) {
         if (message.from === message.to) {
-          console.log(`${AuxiliarMessages.MessageReceivedFrom}${GptRoles.System}: ${messageContent}`);
+          // console.log(`${AuxiliarMessages.MessageReceivedFrom}${GptRoles.System}: ${messageContent}`);
           const phoneNumberMatch = messageContent.match(RegexExpressions.GET_FIRST_TEN_NUMBERS);
 
           if (phoneNumberMatch) {
