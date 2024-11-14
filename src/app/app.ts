@@ -1,4 +1,4 @@
-import WAWebJS, { Client, LocalAuth, Message, MessageMedia} from 'whatsapp-web.js';
+import WAWebJS, { Client, LocalAuth, Message, MessageMedia } from 'whatsapp-web.js';
 import { toDataURL } from 'qrcode';
 import express, { Express, Response } from 'express';
 import path from 'path';
@@ -119,7 +119,7 @@ export class QuestlyAIssistant {
       const currentSenderId = message.from.replace(RegexExpressions.GET_PHONE_NUMBER, AppConstants.ONE_DOLLAR);
       if (!ContactsToIgnore.includes(currentSenderId)) {
         const messageContent = message.body;
-        // console.log(`${AuxiliarMessages.MessageReceivedFrom}${currentSenderId}: ${messageContent}`);
+        console.log(`${AuxiliarMessages.MessageReceivedFrom}${currentSenderId}: ${messageContent}`);
 
         let context = await this.assistant.getContextByChatId(currentSenderId);
 
@@ -156,6 +156,7 @@ export class QuestlyAIssistant {
   private async onMessageCreated(message: ExtendedMessage): Promise<void> {
     try {
       const messageContent = message.type as string !== MediaTypes.Order ? message.body : message._data.orderTitle;
+      console.log(`${AuxiliarMessages.MessageReceivedFrom}${GptRoles.System}: ${messageContent}`);
 
       if (messageContent.includes(AppConstants.NOT_REPLY)) {
         return;
@@ -163,8 +164,9 @@ export class QuestlyAIssistant {
       let recipientPhoneNumber: string | null = null;
 
       if (message.fromMe && message.author === NotificationContacts.Business) {
+        let isAdminChat = false;
         if (message.from === message.to) {
-          // console.log(`${AuxiliarMessages.MessageReceivedFrom}${GptRoles.System}: ${messageContent}`);
+          isAdminChat = true;
           const phoneNumberMatch = messageContent.match(RegexExpressions.GET_FIRST_TEN_NUMBERS);
 
           if (phoneNumberMatch) {
@@ -188,28 +190,27 @@ export class QuestlyAIssistant {
         }
         if (recipientPhoneNumber) {
           let context = await this.assistant.getContextByChatId(recipientPhoneNumber);
-          let hasChatBeenDisabled = false;
           if (context && context.shouldRespond) {
             context = await this.assistant.updateContext({
               chatId: recipientPhoneNumber,
               updateFields: { shouldRespond: false, timeOfLastMessage: new Date() }
             });
-            hasChatBeenDisabled = true;
           } else if (!context) {
             await this.assistant.addNewUserMessage(`${AuxiliarMessages.TempContext}${recipientPhoneNumber}`, recipientPhoneNumber, AppConstants.DEF_USER_NAME);
             context = await this.assistant.updateContext({
               chatId: recipientPhoneNumber,
               updateFields: { shouldRespond: false, shouldDeleteAfterContact: true, timeOfLastMessage: new Date() }
             });
-            hasChatBeenDisabled = true;
           }
-          if (hasChatBeenDisabled) {
-            const correctlyDisabled = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.ManualDeactivation}\n\n${recipientPhoneNumber}
+          const correctlyDisabled = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.ManualDeactivation}\n\n${recipientPhoneNumber}
           \n${ResponseMessages.NoInterruptionContact}\n\n${AppConstants.NOT_REPLY}`;
-            const errorDuringDisablingChat = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.ManualDeactivationFailed}\n\n${recipientPhoneNumber}\n
+          const errorDuringDisablingChat = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.ManualDeactivationFailed}\n\n${recipientPhoneNumber}\n
           \n${ResponseMessages.ManualDeactivationTryAgain}\n\n${AppConstants.NOT_REPLY}`;
-            const notificationMessage = context.shouldRespond === false ? correctlyDisabled : errorDuringDisablingChat;
+          const notificationMessage = context.shouldRespond === false ? correctlyDisabled : errorDuringDisablingChat;
 
+          if (isAdminChat) {
+            message.reply(notificationMessage);
+          } else {
             await this.sendNotification(this.currentNotificationUser, notificationMessage);
           }
 
@@ -283,7 +284,7 @@ export class QuestlyAIssistant {
   private combineMessagesContent(messages: ExtendedMessage[]): string {
     return messages.map(msg => {
       const { body, type, _data } = msg;
-  
+
       if (!body) {
         if (type as string === MediaTypes.Order) {
           return `${AuxiliarMessages.OrderRequest} ${_data.orderTitle} (${AuxiliarMessages.OrderQuantity} ${_data.itemCount})`;
@@ -294,7 +295,7 @@ export class QuestlyAIssistant {
       if (type as string === MediaTypes.E2ENotification || type as string === MediaTypes.NotificationTemplate) {
         return AppConstants.EMPTY_STRING;
       }
-  
+
       return type as string === MediaTypes.Chat ? body : `*${type}* ${body}`;
     }).join(AppConstants.BLANK_SPACE);
   }
@@ -385,7 +386,7 @@ export class QuestlyAIssistant {
     try {
       const messagesToCombine = [];
       let isBankTransferImage = false;
-      
+
       for (const message of messages) {
         const isBankTransfer = await this.detectBankTransfer(message, senderId);
         if (isBankTransfer) {
@@ -418,7 +419,7 @@ export class QuestlyAIssistant {
           currentClientName = processed.args?.name as string;
           await this.assistant.updateContext({
             chatId: senderId,
-            updateFields: { clientName: currentClientName}
+            updateFields: { clientName: currentClientName }
           });
           responseText = await this.assistant.processResponse(FunctionNames.GetUsersName, `${ResponseMessages.YourNameIs} ${currentClientName}`, senderId);
           break;

@@ -314,18 +314,17 @@ export class GPTAssistant {
     const { chatId, updateFields } = params;
 
     try {
-      const context = await this.getContextByChatId(chatId);
+      const updatedContext = await PersistentChatModel.findOneAndUpdate(
+        { chatId },
+        { $set: { ...updateFields, isFirstContact: false } },
+        { new: true, runValidators: true }
+      );
 
-      if (!context) {
+      if (!updatedContext) {
         throw new Error(`${ErrorMessages.ContextNotFound} ${chatId}`);
       }
 
-      Object.assign(context, updateFields);
-      context.isFirstContact = false;
-
-      await context.save();
-
-      return context;
+      return updatedContext;
     } catch (error) {
       console.error(`${ErrorMessages.FailedUpdatingContext} ${chatId}`, error);
       throw error;
