@@ -52,7 +52,7 @@ typings/
 .DS_Store
 
 # WhatsApp Session
-.wwebjs_auth
+session
 
 # Tesseract files
 spa.traineddata

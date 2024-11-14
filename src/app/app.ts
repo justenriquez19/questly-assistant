@@ -59,7 +59,9 @@ export class QuestlyAIssistant {
     this.currentNotificationUser = NotificationContacts.MainContact;
     this.utils = new CoreUtilFunctions();
     this.client = new Client({
-      authStrategy: new LocalAuth(),
+      authStrategy: new LocalAuth({
+        dataPath: AppConstants.SESSION_KEY
+      }),
       puppeteer: {
         args: [
           AppConstants.PUPPETEER_PATCH_NO_SANDBOX,
@@ -163,6 +165,9 @@ export class QuestlyAIssistant {
    */
   private async onMessageCreated(message: ExtendedMessage): Promise<void> {
     try {
+      if (!message.fromMe) {
+        return;
+      }
       const messageContent = message.type as string !== MediaTypes.Order ? message.body : message._data.orderTitle;
       console.log(`${AuxiliarMessages.MessageReceivedFrom}${GptRoles.System}: ${messageContent}`);
 
