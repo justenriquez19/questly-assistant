@@ -22,5 +22,5 @@ primary_region = 'gdl'
   cpus = 1
 
 [mounts]
-  source = "persistent_session"
+  source = "wwebjs_auth_data"
   destination = "/wwebjs_auth_data"
