@@ -31,7 +31,7 @@ export class AppConstants {
   public static readonly READY_KEY: string = 'ready';
   public static readonly REMOTE_KEY: "remote" = 'remote';
   public static readonly SERVER_RUNNING_MESSAGE: string = 'Server running at port: 3000';
-  public static readonly SESSION_KEY: string = 'session';
+  public static readonly SESSION_KEY: string = 'wwebjs_auth_data';
   public static readonly SPANISH_KEY: string = 'spa';
   public static readonly TEL_KEY: string = 'TEL';
   public static readonly TITLE: string = 'questly-AIssistant';
