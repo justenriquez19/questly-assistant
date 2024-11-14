@@ -4,7 +4,7 @@
 export class AppConstants {
   public static readonly AUTO_KEY: "auto" = 'auto';
   public static readonly BLANK_SPACE: string = ' ';
-  public static readonly CLIENT_IS_READY: string = 'The client is up!';
+  public static readonly CLIENT_IS_READY: string = 'The client is up! Ready at';
   public static readonly COMMA_KEY: string = ',';
   public static readonly CURRENT_PORT: number = 3000;
   public static readonly DEF_PUBLIC_IP: string = '0.0.0.0';
@@ -16,6 +16,7 @@ export class AppConstants {
   public static readonly MX_PREFIX: string = '521';
   public static readonly MX_REGION_KEY: string = 'es-MX';
   public static readonly MX_SIMPLE_PREFIX: string = '52';
+  public static readonly NO_QR_NEEDED: string = 'Client is already authenticated. No QR code is needed.';
   public static readonly NOT_REPLY: string = 'Mensaje automático. No responder.';
   public static readonly NUMERIC_KEY = 'numeric';
   public static readonly OBJECT_KEY: string = 'object';
@@ -24,6 +25,7 @@ export class AppConstants {
   public static readonly PUPPETEER_PATCH_NO_UID: string = '--disable-setuid-sandbox';
   public static readonly QR_CODE_GEN_01: string = '<img src="';
   public static readonly QR_CODE_GEN_02: string = '" alt="QR Code" />';
+  public static readonly QR_GENERATED: string = 'QR code generated at';
   public static readonly QR_KEY: string = 'qr';
   public static readonly QR_ROUTE: string = '/qr';
   public static readonly READY_KEY: string = 'ready';

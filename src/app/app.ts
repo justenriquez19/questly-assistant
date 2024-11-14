@@ -33,6 +33,7 @@ export class QuestlyAIssistant {
   private assistant: GPTAssistant;
   private client: Client;
   private currentNotificationUser: string;
+  private isClientReady: boolean;
   private isProcessingMessages: boolean;
   private mongoService: MongoService;
   private port: number;
@@ -54,6 +55,7 @@ export class QuestlyAIssistant {
     this.userMessageTimers = new Map();
     this.tempMessageQueue = new Map();
     this.isProcessingMessages = false;
+    this.isClientReady = false;
     this.currentNotificationUser = NotificationContacts.MainContact;
     this.utils = new CoreUtilFunctions();
     this.client = new Client({
@@ -100,14 +102,20 @@ export class QuestlyAIssistant {
    * @param {string} qr - The QR code string to be generated and displayed.
    */
   private async onQrCode(qr: string): Promise<void> {
+    if (this.isClientReady) {
+      return;
+    }
+
     this.qrCode = await toDataURL(qr);
+    console.log(AppConstants.QR_GENERATED, new Date());
   }
 
   /**
    * @description Logs a message when the WhatsApp client is ready.
    */
   private onClientReady(): void {
-    console.log(AppConstants.CLIENT_IS_READY);
+    this.isClientReady = true;
+    console.log(AppConstants.CLIENT_IS_READY, new Date());
   }
 
   /**
@@ -523,7 +531,9 @@ export class QuestlyAIssistant {
    * @param {Response} res - The response object.
    */
   private async getQrCode(res: Response): Promise<void> {
-    if (this.qrCode) {
+    if (this.isClientReady) {
+      res.send(AppConstants.NO_QR_NEEDED);
+    } else if (this.qrCode) {
       res.send(`${AppConstants.QR_CODE_GEN_01}${this.qrCode} ${AppConstants.QR_CODE_GEN_02}`);
     } else {
       res.send(ErrorMessages.shouldRereshQrView);
