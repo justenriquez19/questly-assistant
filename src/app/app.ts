@@ -165,7 +165,7 @@ export class QuestlyAIssistant {
    */
   private async onMessageCreated(message: ExtendedMessage): Promise<void> {
     try {
-      if (!message.fromMe) {
+      if (!(message.fromMe && message.author === NotificationContacts.Business)) {
         return;
       }
       const messageContent = message.type as string !== MediaTypes.Order ? message.body : message._data.orderTitle;
