@@ -17,6 +17,10 @@ primary_region = 'gdl'
   processes = ['app']
 
 [[vm]]
-  memory = '2gb'
+  memory = '1536'
   cpu_kind = 'shared'
   cpus = 1
+
+[mounts]
+  source = "wwebjs_auth_data"
+  destination = "/app/.wwebjs_auth"
