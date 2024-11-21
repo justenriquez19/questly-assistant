@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import { Document } from 'mongoose';
 
-import { ALES_PLACE_MAIN_FUNCTIONS } from '../shared/constants/functions.constants';
+import { APP_MAIN_FUNCTIONS } from '../shared/constants/functions.constants';
 import {
   AppConstants,
   AuxiliarMessages,
@@ -10,7 +10,7 @@ import {
   FunctionNames,
   GptRoles
 } from '../shared/constants/app.constants';
-import { BOT_GENERAL_BEHAVIOR, MESSAGE_NAME_DETECTION_DESCRIPTION, WHATSAPP_NAME_DETECTION_DESCRIPTION } from '../shared/constants/ales-bible.constants';
+import { BOT_GENERAL_BEHAVIOR, MESSAGE_NAME_DETECTION_DESCRIPTION, WHATSAPP_NAME_DETECTION_DESCRIPTION } from '../shared/constants/app.main.constants';
 import { ChatCompletion, ChatCompletionMessageParam } from 'openai/resources';
 import {
   ChatGptHistoryBody,
@@ -33,7 +33,7 @@ export class GPTAssistant {
       apiKey: process.env.OPENAI_API_KEY,
     });
     this.utils = new CoreUtilFunctions;
-    this.currentFunctions = ALES_PLACE_MAIN_FUNCTIONS.list;
+    this.currentFunctions = APP_MAIN_FUNCTIONS.list;
   }
 
   /**
