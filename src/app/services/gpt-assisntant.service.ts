@@ -10,7 +10,7 @@ import {
   FunctionNames,
   GptRoles
 } from '../shared/constants/app.constants';
-import { BOT_GENERAL_BEHAVIOR, MESSAGE_NAME_DETECTION_DESCRIPTION, WHATSAPP_NAME_DETECTION_DESCRIPTION } from '../shared/constants/app.main.constants';
+import { BOT_GENERAL_BEHAVIOR, MESSAGE_CURP_CONSISTENCY_DESCRIPTION, MESSAGE_NAME_DETECTION_DESCRIPTION, WHATSAPP_NAME_DETECTION_DESCRIPTION } from '../shared/constants/app.main.constants';
 import { ChatCompletion, ChatCompletionMessageParam } from 'openai/resources';
 import {
   ChatGptHistoryBody,
@@ -222,7 +222,7 @@ export class GPTAssistant {
 
     context.chatHistory.push({
       role: roleProvided,
-      content: roleProvided === GptRoles.User ? `${text}'\n\n[${AuxiliarMessages.MessageDateTime} ${currentDateTime}]` : text,
+      content: roleProvided === GptRoles.User ? `${text}\n\n[${AuxiliarMessages.MessageDateTime} ${currentDateTime}]` : text,
       messageDate: new Date()
     });
     context.isFirstContact = false;
@@ -380,6 +380,35 @@ export class GPTAssistant {
       return {
         isValidName: parsedResponse.isValidName,
         firstName: parsedResponse.isValidName ? parsedResponse.firstName : AppConstants.DEF_USER_NAME
+      };
+    } catch (error) {
+      console.error(`${ErrorMessages.NameObtentionFailed} ${name}`, error);
+      return defaultResponse;
+    }
+  }
+
+  public async isCurpConsistent(data: string, context: Document<unknown, any, any> & IHistoryStructure) {
+    const defaultResponse = {
+      isCurpConsistent: false,
+      message: 'Lo siento, el CURP que proporcionaste es válido, pero no corresponde con los datos que nos diste previamente'
+    };
+
+    context.chatHistory.push({ content: data, role: GptRoles.User, messageDate: new Date()});
+    const expectedBehavior = MESSAGE_CURP_CONSISTENCY_DESCRIPTION;
+    const targetGptModel = AvailableGptModels.GPT_4_O;
+
+    try {
+      const chatResponse = await this.getChatGptResponse(context.chatHistory, [], expectedBehavior, targetGptModel);
+      const responseContent = chatResponse.choices[0].message.content;
+      console.log(responseContent, 'responseContent');
+
+      if (!responseContent) return defaultResponse;
+
+      const parsedResponse = JSON.parse(responseContent.trim());
+
+      return {
+        isCurpConsistent: parsedResponse.isCurpConsistent,
+        message: parsedResponse.message
       };
     } catch (error) {
       console.error(`${ErrorMessages.NameObtentionFailed} ${name}`, error);

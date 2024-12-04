@@ -24,6 +24,7 @@ import { CoreUtilFunctions } from './services/core-utils.service';
 import { ExtendedMessage } from './shared/interfaces/gpt-interfaces';
 import { GPTAssistant } from './services/gpt-assisntant.service';
 import { MongoService } from './services/mongodb.service';
+import { RenapoCURPService } from './services/renapo.service';
 
 /**
  * @description Handles WhatsApp bot interactions and server initialization.
@@ -31,6 +32,7 @@ import { MongoService } from './services/mongodb.service';
 export class QuestlyAIssistant {
   private app!: Express;
   private assistant: GPTAssistant;
+  private renapo: RenapoCURPService;
   private client: Client;
   private currentNotificationUser: string;
   private isClientReady: boolean;
@@ -48,6 +50,7 @@ export class QuestlyAIssistant {
    */
   constructor() {
     this.assistant = new GPTAssistant();
+    this.renapo = new RenapoCURPService();
     this.mongoService = MongoService.getInstance();
     this.port = Number(process.env.PORT) || AppConstants.CURRENT_PORT;
     this.qrCode = AppConstants.EMPTY_STRING;
@@ -435,6 +438,22 @@ export class QuestlyAIssistant {
             updateFields: { clientName: currentClientName }
           });
           responseText = await this.assistant.processResponse(FunctionNames.GetUsersName, `${ResponseMessages.YourNameIs} ${currentClientName}`, senderId);
+          break;
+        case 'validate_curp':
+          console.log('well, it worked');
+          const userData = JSON.parse(processed.message.function_call?.arguments as string);
+          const data = await this.renapo.fetchCurpData(userData.curp);
+          const context = await this.assistant.getContextByChatId(senderId);
+          let consistentCurp;
+          if (data !== undefined) {
+            consistentCurp = await this.assistant.isCurpConsistent(JSON.stringify(data), context);
+          }
+          console.log(data, 'Curp data');
+          console.log(consistentCurp, 'consistentCurp');
+          let validCurp = consistentCurp?.isCurpConsistent;
+          const validOrNot = validCurp ? consistentCurp?.message : 'El CURP proporcionado tiene un formato válido, pero no fue encontrado como un CURP existente, por favor revisalo';
+          await this.assistant.addNewMessage(validOrNot, senderId, GptRoles.System);
+          responseText = ((await this.assistant.processFunctions('Continuemos con el proceso', senderId, context.clientName)).message.content as string);
           break;
         default:
           responseText = processed.message.content as string;

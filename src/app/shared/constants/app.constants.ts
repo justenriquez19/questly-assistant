@@ -72,31 +72,30 @@ export enum FunctionNames {
 };
 
 export enum ResponseMessages {
-  AskTalkingToYou = `Pidió hablar directamente contigo, por favor, respóndole lo antes posible. Gracias 😊✨`,
-  AttachMedia = 'También te adjunto las imágenes que nos compartió  📸',
+  AskTalkingToYou = `Un usuario pidió hablar directamente contigo sobre su solicitud de apoyo. Por favor, respóndele lo antes posible. Gracias 😊✨`,
+  AttachMedia = 'También te adjunto los documentos o imágenes que el usuario compartió 📄📸',
   BankTransferVoucherReceived = 'Te ha enviado este comprobante de su pago por transferencia. Por favor, revísalo y verifica la transacción. Gracias 😊✨',
   ByTheWay = 'Por cierto...',
-  FirstContact1 = "Parece que es la primera vez que te contactas con el asistente virtual de Hotel Bacalar Paradise ✨\n\n¿Prefieres que te llame ",
+  FirstContact1 = "Parece que es la primera vez que te contactas con el asistente virtual de SEDARPE ✨\n\n¿Prefieres que te llame ",
   FirstContact2 = '? ¿O te gustaría que te llame de otra forma? 😊',
-  FirstContactWithNoName = `Parece que es la primera vez que te contactas con el asistente virtual de Hotel Bacalar Paradise ✨\n\nPrimero que nada ¿Cómo te gustaría que te llame? 😊\n\nPara poder guardar tu nombre correctamente, por favor escribe:\n\n"Me llamo *[tu nombre]*"`,
+  FirstContactWithNoName = `Parece que es la primera vez que te contactas con el asistente virtual de SEDARPE ✨\n\nPrimero que nada, ¿cómo te gustaría que te llame? 😊\n\nPara poder guardar tu nombre correctamente, por favor escribe:\n\n"Me llamo *[tu nombre]*"`,
   Hello = `¡Hola! 👋`,
   ManualDeactivation = `Se ha desactivado manualmente el servicio de chatbot para el usuario con el número de teléfono:`,
   ManualDeactivationFailed = `La desactivación manual del servicio de chatbot falló para el usuario con el número de teléfono:`,
   ManualDeactivationTryAgain = 'Por favor, inténtalo de nuevo. Si no puedes desactivar un chat tras varios intentos, contacta con soporte 💬🔧',
   NoInterruptionContact = `Podrás contactarlo sin interrupciones durante las próximas 12 horas 🕒✨`,
-  NotificationSystem = `¡Hola! 👋 Este es el asistente de notificaciones de Hotel Bacalar Paradise 😊`,
-  NotifyQuotationRequest = 'Solicitó una cotización 💰\nPor favor, revisa su chat para poder brindarle un estimado. Aquí está su mensaje:',
-  QuotationResponse = `¡Claro! 😊 Vamos a realizar la cotización para ti. Si tienes algún ejemplo del diseño, por favor envíalo por aquí.\n\nAlguien te contactará pronto con un estimado. Si tienes alguna otra pregunta o necesitas más información, no dudes en decírnoslo.\n\n¡Estamos aquí para ayudarte! ✨💅`,
-  QuotationWithImageResponse = `¡Lindo diseño! 😊 Vamos a realizar la cotización para ti.\n\nAlguien te contactará pronto con un estimado. Si tienes alguna otra pregunta o necesitas más información, no dudes en decírnoslo.\n\n¡Estamos aquí para ayudarte! ✨💅`,
-  OpenTheDoor = 'acaba de avisar que está esperando afuera, ¡ábrele lo antes posible! 🕒✨',
+  NotificationSystem = `¡Hola! 👋 Este es el asistente de notificaciones de SEDARPE 😊`,
+  NotifyQuotationRequest = 'Solicitó información sobre los apoyos disponibles 📝\nPor favor, revisa su chat para brindarle más detalles. Aquí está su mensaje:',
+  QuotationResponse = `¡Claro! 😊 Vamos a registrar tu solicitud. Si necesitas apoyo adicional o tienes preguntas, por favor envíalas por este medio.\n\nAlguien de nuestro equipo revisará los detalles y te contactará pronto. ¡Gracias por confiar en SEDARPE! ✨🌾`,
+  QuotationWithImageResponse = `Gracias por compartir los detalles 😊 Vamos a procesar tu solicitud.\n\nAlguien del equipo revisará la información y te contactará pronto. Si necesitas algo más, no dudes en decírnoslo. ¡Estamos aquí para ayudarte! ✨🌾`,
+  OpenTheDoor = 'acaba de avisar que está esperando atención en el centro de apoyo. Por favor, recíbelo lo antes posible 🕒✨',
   PendingMessage1 = `👤 El usuario:`,
   PendingMessage2 = `📞 Con número:`,
-  StopConversation = `¡Entendido! \n\nA partir de este momento ya no podré responderte ❌\n\nSiéntete libre de enviar más detalles sobre lo que quieras platicarle 🌸
-    \nAlguien te contactará pronto para atenderte personalmente 😊`,
-  ThanksForYourPayment = '¡Gracias por tu pago! 😊 He enviado el comprobante de tu transferencia al equipo para su revisión. 🔍📋',
-  YourNameIs = 'Entiendo, te llamas',
-  WelcomeCustomer = `¡Bienvenid@! 🌸\n\nLe acabo de notificar a alguien del equipo que llegaste, por favor, espera un momento 🕒✨
-    \nNo olvides tocar el timbre para ser atendida lo antes posible 🔔\n\nEstá del lado derecho de la reja, un poco hacia arriba.`
+  StopConversation = `¡Entendido! \n\nA partir de este momento, ya no responderé más mensajes ❌\n\nSiéntete libre de enviar más detalles o preguntas. Alguien de nuestro equipo te atenderá personalmente pronto 😊`,
+  ThanksForYourPayment = '¡Gracias por tu pago! 😊 He enviado el comprobante al equipo correspondiente para su revisión. 🔍📋',
+  YourNameIs = 'Entendido, te llamas',
+  WelcomeCustomer = `¡Bienvenid@! 🌾\n\nLe acabo de notificar a alguien del equipo que llegaste, por favor, espera un momento 🕒✨
+    \nSi necesitas asistencia adicional, no dudes en mencionarlo. ¡Gracias por confiar en SEDARPE! 🌟`
 };
 
 export enum MediaNotSupportedResponses {

@@ -31,6 +31,7 @@ export interface CreateChatCompletionFunction {
     type: string;
     properties: object;
   };
+  required?: Array<string>;
 }
 
 export interface FunctionsListInterface {
