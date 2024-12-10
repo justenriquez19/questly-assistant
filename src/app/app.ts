@@ -443,6 +443,7 @@ export class QuestlyAIssistant {
           console.log('well, it worked');
           const userData = JSON.parse(processed.message.function_call?.arguments as string);
           const data = await this.renapo.fetchCurpData(userData.curp);
+          console.log(data, 'data');
           const context = await this.assistant.getContextByChatId(senderId);
           let consistentCurp;
           if (data !== undefined) {
@@ -450,8 +451,7 @@ export class QuestlyAIssistant {
           }
           console.log(data, 'Curp data');
           console.log(consistentCurp, 'consistentCurp');
-          let validCurp = consistentCurp?.isCurpConsistent;
-          const validOrNot = validCurp ? consistentCurp?.message : 'El CURP proporcionado tiene un formato válido, pero no fue encontrado como un CURP existente, por favor revisalo';
+          const validOrNot = consistentCurp?.message ?? 'El CURP proporcionado tiene un formato válido, pero no fue encontrado como un CURP existente, por favor revisalo';
           await this.assistant.addNewMessage(validOrNot, senderId, GptRoles.System);
           responseText = ((await this.assistant.processFunctions('Continuemos con el proceso', senderId, context.clientName)).message.content as string);
           break;

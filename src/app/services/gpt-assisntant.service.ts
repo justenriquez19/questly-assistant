@@ -393,7 +393,7 @@ export class GPTAssistant {
       message: 'Lo siento, el CURP que proporcionaste es válido, pero no corresponde con los datos que nos diste previamente'
     };
 
-    context.chatHistory.push({ content: data, role: GptRoles.User, messageDate: new Date()});
+    context.chatHistory.push({ content: data, role: GptRoles.System, messageDate: new Date()});
     const expectedBehavior = MESSAGE_CURP_CONSISTENCY_DESCRIPTION;
     const targetGptModel = AvailableGptModels.GPT_4_O;
 

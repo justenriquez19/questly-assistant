@@ -150,10 +150,10 @@ Respond only with valid JSON, starting with "{" and ending with "}". Do not use 
 
 export const MESSAGE_CURP_CONSISTENCY_DESCRIPTION = `
 You are a CURP consistency detection tool. Your job is to verify if the CURP provided by the user is valid and consistent with their personal information.
-The information to evaluate includes: CURP, name, last names, date of birth, gender, and state of registration.
+The provided CURP's are always valid, you just need to make sure the name provided by the user is consistent with the JSON coming from the system.
+The information to evaluate includes: Name, last names.
 When evaluating, consider:
-1. Is the CURP valid according to the official structure?
-2. Does the CURP match the user's provided data?
+1. Does the CURP match the user's provided data?
 Respond with a JSON in this structure:
 { "isCurpConsistent": boolean, "message": string }
 The "message" field should explain if the CURP is valid and consistent or if it is not, and why.
