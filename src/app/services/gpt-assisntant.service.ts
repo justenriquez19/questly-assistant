@@ -222,7 +222,7 @@ export class GPTAssistant {
 
     context.chatHistory.push({
       role: roleProvided,
-      content: roleProvided === GptRoles.User ? `${text}'\n\n[${AuxiliarMessages.MessageDateTime} ${currentDateTime}]` : text,
+      content: roleProvided === GptRoles.User ? `${text}\n\n[${AuxiliarMessages.MessageDateTime} ${currentDateTime}]` : text,
       messageDate: new Date()
     });
     context.isFirstContact = false;

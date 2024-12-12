@@ -141,6 +141,7 @@ export enum ErrorMessages {
   NameObtentionFailed = 'Error during name obtention for user:',
   NotificationFailed = 'Failed to send notification to number:',
   RateLimitError = 'The OpenAi account has exceded its available balance: ',
+  ReplyMessageFailed = 'Failed to reply to the message:',
   shouldRereshQrView = 'QR code is not generated yet. Please reload this page.',
   TesseractProccesingError = 'Error processing image with Tesseract:',
   UnexpectedError = 'There has been an unexpected error: '

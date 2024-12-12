@@ -1,4 +1,4 @@
-import WAWebJS, { Client, LocalAuth, Message, MessageMedia } from 'whatsapp-web.js';
+import WAWebJS, { Client, Chat, LocalAuth, MessageMedia } from 'whatsapp-web.js';
 import { toDataURL } from 'qrcode';
 import express, { Express, Response } from 'express';
 import path from 'path';
@@ -126,9 +126,10 @@ export class QuestlyAIssistant {
    */
   private async onMessageReceived(message: ExtendedMessage): Promise<void> {
     try {
+      this.client.sendPresenceAvailable();
       const currentSenderId = message.from.replace(RegexExpressions.GET_PHONE_NUMBER, AppConstants.ONE_DOLLAR);
       if (!ContactsToIgnore.includes(currentSenderId)) {
-        const messageContent = message.body;
+        const messageContent = message.body ?? message.type;
         console.log(`${AuxiliarMessages.MessageReceivedFrom}${currentSenderId}: ${messageContent}`);
 
         let context = await this.assistant.getContextByChatId(currentSenderId);
@@ -222,7 +223,8 @@ export class QuestlyAIssistant {
           const notificationMessage = context.shouldRespond === false ? correctlyDisabled : errorDuringDisablingChat;
 
           if (isAdminChat) {
-            message.reply(notificationMessage);
+            const currentChat = await message.getChat();
+            await this.replyToChat(currentChat, notificationMessage);
           } else {
             await this.sendNotification(this.currentNotificationUser, notificationMessage);
           }
@@ -279,12 +281,16 @@ export class QuestlyAIssistant {
     const firstMessage = messages[0];
     const userName = firstMessage._data?.notifyName;
     const mediaType = this.getFirstMediaType(messages);
+    const chat = await firstMessage.getChat();
+    chat.sendSeen();
+    chat.sendStateTyping();
 
     if (this.isSingleEmptyMediaMessage(messages)) {
-      await this.handleSingleEmptyMediaMessage(senderId, userName, firstMessage, mediaType);
+      await this.handleSingleEmptyMediaMessage(senderId, userName, firstMessage, chat, mediaType);
     } else {
-      await this.handleTextMessage(messages, senderId, userName, firstMessage, mediaType);
+      await this.handleTextMessage(messages, senderId, userName, chat, mediaType);
     }
+    chat.clearState();
 
     this.clearUserMessages(senderId);
   }
@@ -350,10 +356,11 @@ export class QuestlyAIssistant {
    * @description Handles a single empty media message by replying with a specific response.
    * @param {string} senderId - The ID of the sender.
    * @param {string} userName - The user name of the sender.
-   * @param {Message} message - The message object received from WhatsApp.
+   * @param {ExtendedMessage} message - The message object received from WhatsApp.
    * @param {string} mediaType - Indicates the message main media type.
    */
-  private async handleSingleEmptyMediaMessage(senderId: string, userName: string, message: ExtendedMessage, mediaType: string): Promise<void> {
+  private async handleSingleEmptyMediaMessage(senderId: string, userName: string, message: ExtendedMessage,
+    currentChat: Chat, mediaType: string): Promise<void> {
     let messageByMediaType: string;
     let responseText: string;
     const context = await this.assistant.getContextByChatId(senderId) || await this.assistant.addNewUserMessage(`*${mediaType}*`, senderId, userName);
@@ -373,14 +380,14 @@ export class QuestlyAIssistant {
       responseText = messageByMediaType !== AppConstants.EMPTY_STRING ? `${messageByUsername}\n\n${messageByMediaType}` : messageByUsername;
 
       await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant);
-      await message.reply(responseText);
+      await this.replyToChat(currentChat, responseText);
     } else {
       if (!isBankTransferImage) {
         messageByMediaType = this.getErrorMessageByMediaType(messageType, true);
 
         await this.assistant.addNewMessage(`*${messageType}*`, senderId, GptRoles.User);
         await this.assistant.addNewMessage(messageByMediaType, senderId, GptRoles.Assistant);
-        await message.reply(messageByMediaType);
+        await this.replyToChat(currentChat, messageByMediaType);
       }
     }
 
@@ -392,10 +399,10 @@ export class QuestlyAIssistant {
    * @param {ExtendedMessage[]} messages - The array of received messages.
    * @param {string} senderId - The ID of the sender.
    * @param {string} senderUserName - The user name of the sender.
-   * @param {Message} message - The message object received from WhatsApp.
+   * @param {Chat} currentChat - The message object received from WhatsApp.
    * @param {string} mediaType - Indicates the message main media type.
    */
-  private async handleTextMessage(messages: ExtendedMessage[], senderId: string, senderUserName: string, message: Message, mediaType: string): Promise<void> {
+  private async handleTextMessage(messages: ExtendedMessage[], senderId: string, senderUserName: string, currentChat: Chat, mediaType: string): Promise<void> {
     try {
       const messagesToCombine = [];
       let isBankTransferImage = false;
@@ -484,7 +491,7 @@ export class QuestlyAIssistant {
         }
       }
 
-      await message.reply(responseText);
+      await this.replyToChat(currentChat, responseText);
 
       if (processed.context.isFirstContact) {
         responseText = processed.context.clientName !== AppConstants.DEF_USER_NAME
@@ -648,6 +655,19 @@ export class QuestlyAIssistant {
       console.error(ErrorMessages.TesseractProccesingError, error);
 
       return false;
+    }
+  }
+
+  /**
+   * @description Send the response to a chat.
+   * @param {Chat} currentChat - Chat where the response will be sent.
+   * @param {string} response - The response text to send.
+   */
+  private async replyToChat(currentChat: Chat, response: string): Promise<void> {
+    try {
+      await currentChat.sendMessage(response);
+    } catch (error) {
+      console.error(ErrorMessages.ReplyMessageFailed, error);
     }
   }
 }
