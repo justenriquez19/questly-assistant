@@ -22,6 +22,50 @@ export class CoreUtilFunctions {
   }
 
   /**
+   * @description Detects and parses a function call from a message string if it contains JSON-like data.
+   * @param {string | null} message - The input message string to check and parse.
+   * @returns {string | null} - Returns the parsed JSON string representing the function call if valid, or `null` if invalid or not found.
+   */
+  public detectFunctionCalled(message: string | null): string | null {
+    if (!message || message.trim() === AppConstants.EMPTY_STRING) {
+      return null;
+    }
+
+    const startsWithBrace = message.trim().startsWith(AppConstants.OPENING_BRACKET);
+    const includesBracket = message.trim().includes(AppConstants.CLOSING_BRACKET);
+    if (!startsWithBrace && !includesBracket) {
+      return null;
+    }
+
+    try {
+      let parsedMessage;
+      if (startsWithBrace) {
+        parsedMessage = JSON.parse(message);
+      } else if (includesBracket) {
+        const match = message.match(RegexExpressions.JSON_COMPARE);
+
+        if (match) {
+          const potentialJson = match[0];
+
+          if (this.isBalancedJson(potentialJson)) {
+            parsedMessage = JSON.parse(potentialJson);
+          }
+        } else {
+          return null;
+        }
+      }
+
+      if (parsedMessage?.name && typeof parsedMessage?.name === AppConstants.STRING_TYPE) {
+        return JSON.stringify(parsedMessage);
+      }
+
+      return null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
    * @description Converts a date string to "DD/MM/YYYY HH:MM AM/PM" format.
    * @param {Date} dateString - The ISO date to convert.
    * @returns {string} The formatted date string.
@@ -57,6 +101,28 @@ export class CoreUtilFunctions {
     const str = String(input);
 
     return str.replace(RegexExpressions.REMOVE_NON_ALPHABETIC_CHAR, AppConstants.EMPTY_STRING);
+  }
+
+  /**
+   * @description Checks if a JSON-like string has balanced curly braces.
+   * @param {string} input - The input string to check for balanced curly braces.
+   * @returns {boolean} - Returns `true` if the string has balanced curly braces, `false` otherwise.
+   */
+  public isBalancedJson(input: string): boolean {
+    const stack: string[] = [];
+
+    for (const char of input) {
+      if (char === AppConstants.OPENING_BRACKET) {
+        stack.push(char);
+      } else if (char === AppConstants.CLOSING_BRACKET) {
+        if (stack.length === 0) {
+          return false;
+        }
+        stack.pop();
+      }
+    }
+
+    return stack.length === 0;
   }
 
   /**

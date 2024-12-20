@@ -2,15 +2,16 @@
  * @description Contains constants used across the application.
  */
 export class AppConstants {
-  public static readonly AUTO_KEY: "auto" = 'auto';
   public static readonly BLANK_SPACE: string = ' ';
   public static readonly CLIENT_IS_READY: string = 'The client is up! Ready at';
+  public static readonly CLOSING_BRACKET: string = '}';
   public static readonly COMMA_KEY: string = ',';
   public static readonly CURRENT_PORT: number = 3000;
   public static readonly DEF_PUBLIC_IP: string = '0.0.0.0';
   public static readonly DEF_USER_NAME: string = 'Nobody';
   public static readonly ELLIPSES: string = '...';
   public static readonly EMPTY_STRING: string = '';
+  public static readonly FUNCTION_TYPE: 'function' = 'function';
   public static readonly MESSAGE_CREATE_KEY: string = 'message_create';
   public static readonly MESSAGE_KEY: string = 'message';
   public static readonly MX_PREFIX: string = '521';
@@ -19,8 +20,9 @@ export class AppConstants {
   public static readonly NO_QR_NEEDED: string = 'Client is already authenticated. No QR code is needed.';
   public static readonly NOT_REPLY: string = 'Mensaje automático. No responder.';
   public static readonly NUMERIC_KEY = 'numeric';
-  public static readonly OBJECT_KEY: string = 'object';
+  public static readonly OBJECT_KEY: 'object' = 'object';
   public static readonly ONE_DOLLAR: string = '$1';
+  public static readonly OPENING_BRACKET: string = '{';
   public static readonly PUPPETEER_PATCH_NO_SANDBOX: string = '--no-sandbox';
   public static readonly PUPPETEER_PATCH_NO_UID: string = '--disable-setuid-sandbox';
   public static readonly QR_CODE_GEN_01: string = '<img src="';
@@ -29,10 +31,11 @@ export class AppConstants {
   public static readonly QR_KEY: string = 'qr';
   public static readonly QR_ROUTE: string = '/qr';
   public static readonly READY_KEY: string = 'ready';
-  public static readonly REMOTE_KEY: "remote" = 'remote';
+  public static readonly REMOTE_KEY: 'remote' = 'remote';
   public static readonly SERVER_RUNNING_MESSAGE: string = 'Server running at port: 3000';
   public static readonly SESSION_KEY: string = 'wwebjs_auth_data';
   public static readonly SPANISH_KEY: string = 'spa';
+  public static readonly STRING_TYPE: 'string' = 'string';
   public static readonly TEL_KEY: string = 'TEL';
   public static readonly TITLE: string = 'questly-AIssistant';
   public static readonly TWO_DIGIT_KEY = '2-digit';
@@ -42,6 +45,7 @@ export class AppConstants {
 };
 
 export enum AuxiliarMessages {
+  AvailableDates = 'Fechas disponibles para el servicio ',
   BankTransferPayment = 'Pago por transferencia bancaria',
   CurrentDateTime = 'Fecha y hora actual:',
   FunctionsToCall = 'Función a llamar: ',
@@ -49,8 +53,10 @@ export enum AuxiliarMessages {
   MessageReceivedFrom = 'Mensaje recibido de ',
   MyNameIs = ', mi nombre es',
   NewConversationStarted = 'Nueva conversación iniciada.',
+  NotAvailableDates = 'Sin fechas disponibles. Preguntar si desea realizar la búsqueda de otro rango de fechas o saber cuál es la más próxima',
   OrderQuantity = 'Cantidad:',
   OrderRequest = 'Me gustaría este producto de su catálogo:',
+  summarizeDates = 'Resume las fechas disponibles en una lista y comparte la URL específica para el servicio buscado. Evita el uso de asteriscos (*)',
   TempContext = 'Contexto temporal creado para el número: '
 };
 
@@ -70,6 +76,7 @@ export enum FunctionNames {
   FirstConcact = 'first_contact',
   GetUsersName = 'get_users_name',
   NotifyIHaveArrived = 'notify_i_have_arrived',
+  ShouldSearchSlotsByService = 'should_search_slots_by_service',
   TalkToAle = 'talk_to_ale'
 };
 
@@ -128,7 +135,7 @@ export enum MediaTypes {
 };
 
 export enum TimeoutDurations {
-  TimeBetweenMessages = 16000
+  TimeBetweenMessages = 1000
 };
 
 export enum ErrorMessages {
@@ -161,10 +168,11 @@ export const ContactsToIgnore: Array<string> = [
 ];
 
 export class RegexExpressions {
-  public static readonly REMOVE_NON_DIGIT_CHAR = /\D/g;
   public static readonly GET_FIRST_TEN_NUMBERS = /\b\d{10}\b/;
   public static readonly GET_PHONE_NUMBER = /^.*(\d{10})@c\.us$/;
+  public static readonly JSON_COMPARE = /{[\s\S]*}/;
   public static readonly REMOVE_NON_ALPHABETIC_CHAR = /[^a-zA-Z]/g;
+  public static readonly REMOVE_NON_DIGIT_CHAR = /\D/g;
   public static readonly V_CARD_PHONE_EXTRACTOR = /(\+?\d{1,4}?\s?\(?\d{1,4}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9})/;
 };
 

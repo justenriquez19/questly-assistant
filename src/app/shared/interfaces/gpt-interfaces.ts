@@ -1,5 +1,7 @@
-import { IHistoryStructure } from "../models/persistent-chats";
+import { ChatCompletionTool } from "openai/resources";
 import { Message } from "whatsapp-web.js";
+
+import { IHistoryStructure } from "../models/persistent-chats";
 
 export interface ChatGptHistoryBody {
   content: string;
@@ -24,17 +26,8 @@ export interface ExtendedMessage extends Message {
   };
 }
 
-export interface CreateChatCompletionFunction {
-  name: string;
-  description?: string;
-  parameters?: {
-    type: string;
-    properties: object;
-  };
-}
-
-export interface FunctionsListInterface {
-  list: CreateChatCompletionFunction[];
+export interface ToolsListInterface {
+  list: ChatCompletionTool[];
 }
 
 export interface FunctionCallBody extends ChatGptHistoryBody {

@@ -11,10 +11,9 @@ import {
   GptRoles
 } from '../shared/constants/app.constants';
 import { BOT_GENERAL_BEHAVIOR, MESSAGE_NAME_DETECTION_DESCRIPTION, WHATSAPP_NAME_DETECTION_DESCRIPTION } from '../shared/constants/ales-bible.constants';
-import { ChatCompletion, ChatCompletionMessageParam } from 'openai/resources';
+import { ChatCompletion, ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources';
 import {
   ChatGptHistoryBody,
-  CreateChatCompletionFunction,
   ExecuteFunctionBody,
   IChatGptApiError,
   UpdateContextParams,
@@ -25,7 +24,7 @@ import { IChatGptHistoryBody, IHistoryStructure, PersistentChatModel } from '../
 
 export class GPTAssistant {
   public chatGpt: OpenAI;
-  public currentFunctions: CreateChatCompletionFunction[];
+  public currentFunctions: ChatCompletionTool[];
   public utils: CoreUtilFunctions;
 
   constructor() {
@@ -50,18 +49,19 @@ export class GPTAssistant {
       BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_4_O);
     let message = chatGptResponse.choices[0].message;
 
-    if (message.function_call) {
-      let args;
-      const functionName = message.function_call.name;
+    if (message.tool_calls?.length) {
+      const args = message.tool_calls[0].function?.arguments;
+      const parseContent = JSON.parse(args);
+      const functionName = message.tool_calls[0].function?.name;
       message.content = AuxiliarMessages.FunctionsToCall + functionName;
 
-      return { functionName, args, message, context };
+      return { functionName, args: parseContent, message, context };
     } else {
       if (this.utils.includesNameIntroduction(text)) {
         const nameReponse = await this.isNameValid(text, true);
         if (nameReponse.isValidName) {
           const functionName = FunctionNames.GetUsersName;
-          const args = {name: nameReponse.firstName};
+          const args = { name: nameReponse.firstName };
           message.content = AuxiliarMessages.FunctionsToCall + functionName;
 
           return { functionName, args, message, context };
@@ -69,6 +69,23 @@ export class GPTAssistant {
       }
       message = (await this.getChatGptResponse(context.chatHistory, [],
         BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_4_O)).choices[0].message;
+      const manualDetectedFunction = this.utils.detectFunctionCalled(message.content);
+
+      if (manualDetectedFunction !== null) {
+        const parseContent = JSON.parse(manualDetectedFunction);
+        const currentFunction = parseContent?.name;
+        if (currentFunction) {
+          switch (currentFunction) {
+            case FunctionNames.ShouldSearchSlotsByService:
+              const args = {
+                startDate: parseContent.arguments.startDate,
+                endDate: parseContent.arguments.endDate,
+                serviceId: parseContent.arguments.serviceId
+              };
+              return { functionName: currentFunction, args, message, context };
+          }
+        }
+      }
 
       await this.addNewMessage(message.content as string, context.chatId, GptRoles.Assistant);
     }
@@ -100,12 +117,12 @@ export class GPTAssistant {
   /**
    * @description Get the GPT model's response based on the chat history and expected behavior.
    * @param {ChatGptHistoryBody[]} chatHistory - The chat history.
-   * @param {CreateChatCompletionFunction[]} functionsList - The list of functions.
+   * @param {ChatCompletionTool[]} functionsList - The list of functions.
    * @param {string} expectedBehavior - The expected behavior for the GPT model.
    * @param {string} targetGptModel - The GPT model version to target.
    * @returns {Promise<ChatCompletion>} - The GPT model's response.
    */
-  private async getChatGptResponse(chatHistory: ChatGptHistoryBody[], functionsList: CreateChatCompletionFunction[],
+  private async getChatGptResponse(chatHistory: ChatGptHistoryBody[], functionsList: ChatCompletionTool[],
     expectedBehavior: string, targetGptModel: string): Promise<ChatCompletion> {
     try {
       const currentDateTime = this.utils.formatDate(new Date());
@@ -120,8 +137,7 @@ export class GPTAssistant {
             },
             ...chatHistory as []
           ],
-          functions: functionsList,
-          function_call: AppConstants.AUTO_KEY,
+          tools: functionsList
         });
 
         return chatResponse;

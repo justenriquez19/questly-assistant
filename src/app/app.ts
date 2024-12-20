@@ -1,9 +1,10 @@
-import WAWebJS, { Client, Chat, LocalAuth, MessageMedia } from 'whatsapp-web.js';
 import { toDataURL } from 'qrcode';
 import express, { Express, Response } from 'express';
 import path from 'path';
 import Tesseract from 'tesseract.js';
+import WAWebJS, { Client, Chat, LocalAuth, MessageMedia } from 'whatsapp-web.js';
 
+import { AmeliaService } from './services/amelia.service';
 import {
   AppConstants,
   AppPatterns,
@@ -29,6 +30,7 @@ import { MongoService } from './services/mongodb.service';
  * @description Handles WhatsApp bot interactions and server initialization.
  */
 export class QuestlyAIssistant {
+  private amelia: AmeliaService;
   private app!: Express;
   private assistant: GPTAssistant;
   private client: Client;
@@ -48,6 +50,7 @@ export class QuestlyAIssistant {
    */
   constructor() {
     this.assistant = new GPTAssistant();
+    this.amelia = new AmeliaService();
     this.mongoService = MongoService.getInstance();
     this.port = Number(process.env.PORT) || AppConstants.CURRENT_PORT;
     this.qrCode = AppConstants.EMPTY_STRING;
@@ -478,6 +481,20 @@ export class QuestlyAIssistant {
             }
           }
           mediaType = MediaTypes.Chat;
+          break;
+        case FunctionNames.ShouldSearchSlotsByService:
+          const startDate = processed.args.startDate;
+          const endDate = processed.args.endDate;
+          const serviceId = processed.args.serviceId;
+          const response = await this.amelia.getSlots(serviceId, startDate, endDate);
+
+          let availabilityMessage: string = AppConstants.EMPTY_STRING;
+          if (response.length) {
+            availabilityMessage = `${AuxiliarMessages.AvailableDates}${serviceId}:\n\n${response}\n\n${AuxiliarMessages.summarizeDates}`;
+          } else {
+            availabilityMessage = AuxiliarMessages.NotAvailableDates;
+          }
+          responseText = await this.assistant.processResponse(FunctionNames.ShouldSearchSlotsByService, availabilityMessage, senderId);
           break;
         default:
           responseText = processed.message.content as string;
