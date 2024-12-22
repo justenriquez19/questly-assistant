@@ -56,7 +56,7 @@ export enum AuxiliarMessages {
   NotAvailableDates = 'Sin fechas disponibles. Preguntar si desea realizar la búsqueda de otro rango de fechas o saber cuál es la más próxima',
   OrderQuantity = 'Cantidad:',
   OrderRequest = 'Me gustaría este producto de su catálogo:',
-  summarizeDates = 'Resume las fechas disponibles en una lista y comparte la URL específica para el servicio buscado. Evita el uso de asteriscos (*)',
+  summarizeDates = 'Resume las fechas disponibles en una lista y comparte la URL específica para el servicio buscado. Si no se especificó un rango de fechas, no dar más de 3 opciones. Evita el uso de asteriscos (*)',
   TempContext = 'Contexto temporal creado para el número: '
 };
 
