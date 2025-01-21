@@ -426,7 +426,7 @@ export class QuestlyAIssistant {
       let currentClientName: string;
       let notificationMessage: string;
       switch (processed.functionName) {
-        case FunctionNames.TalkToAle:
+        case FunctionNames.TalkToHuman:
           await this.assistant.updateContext({
             chatId: senderId,
             updateFields: { shouldRespond: false }
@@ -445,56 +445,6 @@ export class QuestlyAIssistant {
             updateFields: { clientName: currentClientName }
           });
           responseText = await this.assistant.processResponse(FunctionNames.GetUsersName, `${ResponseMessages.YourNameIs} ${currentClientName}`, senderId);
-          break;
-        case FunctionNames.NotifyIHaveArrived:
-          responseText = ResponseMessages.WelcomeCustomer;
-          currentClientName = (await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant)).clientName;
-          const imagePath = path.join(__dirname, DefinedPaths.BellLocation);
-          const media = MessageMedia.fromFilePath(imagePath);
-          const number = `${AppConstants.MX_PREFIX}${senderId}${AppConstants.WHATSAPP_USER_KEY}`;
-          this.client.sendMessage(number, media)
-          notificationMessage = `${ResponseMessages.NotificationSystem}\n\n*${currentClientName}* ${ResponseMessages.OpenTheDoor}
-            \n${AppConstants.NOT_REPLY}`;
-          await this.sendNotification(this.currentNotificationUser, notificationMessage);
-          break;
-        case FunctionNames.DetectQuotationRequest:
-          await this.assistant.updateContext({
-            chatId: senderId,
-            updateFields: { shouldRespond: false }
-          });
-          responseText = mediaType !== MediaTypes.Chat ? ResponseMessages.QuotationWithImageResponse : ResponseMessages.QuotationResponse;
-          currentClientName = (await this.assistant.addNewMessage(responseText, senderId, GptRoles.Assistant)).clientName;
-          notificationMessage = `${ResponseMessages.NotificationSystem}\n\n${ResponseMessages.PendingMessage1} *${currentClientName}*
-          \n${ResponseMessages.PendingMessage2} ${senderId}\n\n${ResponseMessages.NotifyQuotationRequest}\n\n"${messageContent}"`
-
-          if (mediaType !== MediaTypes.Chat) {
-            notificationMessage = notificationMessage + `\n${ResponseMessages.AttachMedia}\n\n${AppConstants.NOT_REPLY}`;
-          } else {
-            notificationMessage = notificationMessage + `\n\n${AppConstants.NOT_REPLY}`;
-          }
-          await this.sendNotification(this.currentNotificationUser, notificationMessage);
-
-          for (const message of messages) {
-            if (message.hasMedia) {
-              const media = await message.downloadMedia();
-              await this.sendNotification(this.currentNotificationUser, media);
-            }
-          }
-          mediaType = MediaTypes.Chat;
-          break;
-        case FunctionNames.ShouldSearchSlotsByService:
-          const startDate = processed.args.startDate;
-          const endDate = processed.args.endDate;
-          const serviceId = processed.args.serviceId;
-          const response = await this.amelia.getSlots(serviceId, startDate, endDate);
-
-          let availabilityMessage: string = AppConstants.EMPTY_STRING;
-          if (response.length) {
-            availabilityMessage = `${AuxiliarMessages.AvailableDates}${serviceId}:\n\n${response}\n\n${AuxiliarMessages.summarizeDates}`;
-          } else {
-            availabilityMessage = AuxiliarMessages.NotAvailableDates;
-          }
-          responseText = await this.assistant.processResponse(FunctionNames.ShouldSearchSlotsByService, availabilityMessage, senderId);
           break;
         default:
           responseText = processed.message.content as string;

@@ -69,23 +69,6 @@ export class GPTAssistant {
       }
       message = (await this.getChatGptResponse(context.chatHistory, [],
         BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_4_O)).choices[0].message;
-      const manualDetectedFunction = this.utils.detectFunctionCalled(message.content);
-
-      if (manualDetectedFunction !== null) {
-        const parseContent = JSON.parse(manualDetectedFunction);
-        const currentFunction = parseContent?.name;
-        if (currentFunction) {
-          switch (currentFunction) {
-            case FunctionNames.ShouldSearchSlotsByService:
-              const args = {
-                startDate: parseContent.arguments.startDate,
-                endDate: parseContent.arguments.endDate,
-                serviceId: parseContent.arguments.serviceId
-              };
-              return { functionName: currentFunction, args, message, context };
-          }
-        }
-      }
 
       await this.addNewMessage(message.content as string, context.chatId, GptRoles.Assistant);
     }
