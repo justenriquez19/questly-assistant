@@ -12,6 +12,7 @@ export class AppConstants {
   public static readonly ELLIPSES: string = '...';
   public static readonly EMPTY_STRING: string = '';
   public static readonly FUNCTION_TYPE: 'function' = 'function';
+  public static readonly LONG_KEY: 'long' = 'long';
   public static readonly MESSAGE_CREATE_KEY: string = 'message_create';
   public static readonly MESSAGE_KEY: string = 'message';
   public static readonly MX_PREFIX: string = '521';
@@ -33,7 +34,8 @@ export class AppConstants {
   public static readonly READY_KEY: string = 'ready';
   public static readonly REMOTE_KEY: 'remote' = 'remote';
   public static readonly SERVER_RUNNING_MESSAGE: string = 'Server running at port: 3000';
-  public static readonly SESSION_KEY: string = 'wwebjs_auth_data';
+  public static readonly SESSION_KEY: string = 'Session';
+  public static readonly SESSIONS_PATH_KEY: string = 'wwebjs_auth_data';
   public static readonly SPANISH_KEY: string = 'spa';
   public static readonly STRING_TYPE: 'string' = 'string';
   public static readonly TEL_KEY: string = 'TEL';
@@ -48,21 +50,29 @@ export enum AuxiliarMessages {
   AvailableDates = 'Fechas disponibles para el servicio ',
   BankTransferPayment = 'Pago por transferencia bancaria',
   CurrentDateTime = 'Fecha y hora actual:',
+  DynamicContext = 'Importante, contexto dinámico:',
+  DynamicContextDisabled = 'De momento, no hay ningún contexto dinámico',
   FunctionsToCall = 'Función a llamar: ',
   MessageDateTime = 'Fecha y hora del mensaje:',
-  MessageReceivedFrom = 'Mensaje recibido de ',
+  MessageReceivedFrom = 'Mensaje recibido de',
   MyNameIs = ', mi nombre es',
   NewConversationStarted = 'Nueva conversación iniciada.',
   NotAvailableDates = 'Sin fechas disponibles. Preguntar si desea realizar la búsqueda de otro rango de fechas o saber cuál es la más próxima',
   OrderQuantity = 'Cantidad:',
   OrderRequest = 'Me gustaría este producto de su catálogo:',
   summarizeDates = 'Resume las fechas disponibles en una lista y comparte la URL específica para el servicio buscado. Si no se especificó un rango de fechas, no dar más de 3 opciones. Evita el uso de asteriscos (*)',
-  TempContext = 'Contexto temporal creado para el número: '
+  TempContext = 'Contexto temporal creado para el número: ',
+  ToClient = 'al cliente'
 };
 
 export class AvailableGptModels {
   public static readonly GPT_4_O = 'gpt-4o';
 };
+
+export enum GptToolsMessages {
+  CurrentContext = 'Contexto actual:',
+  TentativeNewInstruction = 'Posible nueva instrucción:'
+}
 
 export enum GptRoles {
   Assistant = 'assistant',
@@ -72,52 +82,14 @@ export enum GptRoles {
 };
 
 export enum FunctionNames {
+  DetectMenuRequest = 'detect_menu_request',
   DetectQuotationRequest = 'detect_quotation_request',
   FirstConcact = 'first_contact',
   GetUsersName = 'get_users_name',
   NotifyIHaveArrived = 'notify_i_have_arrived',
+  OrderConfirmed = 'order_confirmed',
   ShouldSearchSlotsByService = 'should_search_slots_by_service',
-  TalkToAle = 'talk_to_ale'
-};
-
-export enum ResponseMessages {
-  AskTalkingToYou = `Pidió hablar directamente contigo, por favor, respóndole lo antes posible. Gracias 😊✨`,
-  AttachMedia = 'También te adjunto las imágenes que nos compartió  📸',
-  BankTransferVoucherReceived = 'Te ha enviado este comprobante de su pago por transferencia. Por favor, revísalo y verifica la transacción. Gracias 😊✨',
-  ByTheWay = 'Por cierto...',
-  FirstContact1 = "Parece que es la primera vez que te contactas con el asistente virtual de Ale's Place ✨\n\n¿Prefieres que te llame ",
-  FirstContact2 = '? ¿O te gustaría que te llame de otra forma? 😊',
-  FirstContactWithNoName = `Parece que es la primera vez que te contactas con el asistente virtual de Ale's Place ✨\n\nPrimero que nada ¿Cómo te gustaría que te llame? 😊\n\nPara poder guardar tu nombre correctamente, por favor escribe:\n\n"Me llamo *[tu nombre]*"`,
-  Hello = `¡Hola! 👋`,
-  ManualDeactivation = `Se ha desactivado manualmente el servicio de chatbot para el usuario con el número de teléfono:`,
-  ManualDeactivationFailed = `La desactivación manual del servicio de chatbot falló para el usuario con el número de teléfono:`,
-  ManualDeactivationTryAgain = 'Por favor, inténtalo de nuevo. Si no puedes desactivar un chat tras varios intentos, contacta con soporte 💬🔧',
-  NoInterruptionContact = `Podrás contactarlo sin interrupciones durante las próximas 12 horas 🕒✨`,
-  NotificationSystem = `¡Hola! 👋 Este es el asistente de notificaciones de Ale's Place 😊`,
-  NotifyQuotationRequest = 'Solicitó una cotización 💰\nPor favor, revisa su chat para poder brindarle un estimado. Aquí está su mensaje:',
-  QuotationResponse = `¡Claro! 😊 Vamos a realizar la cotización para ti. Si tienes algún ejemplo del diseño, por favor envíalo por aquí.\n\nAle te contactará pronto con un estimado. Si tienes alguna otra pregunta o necesitas más información, no dudes en decírnoslo.\n\n¡Estamos aquí para ayudarte! ✨💅`,
-  QuotationWithImageResponse = `¡Lindo diseño! 😊 Vamos a realizar la cotización para ti.\n\nAle te contactará pronto con un estimado. Si tienes alguna otra pregunta o necesitas más información, no dudes en decírnoslo.\n\n¡Estamos aquí para ayudarte! ✨💅`,
-  OpenTheDoor = 'acaba de avisar que está esperando afuera, ¡ábrele lo antes posible! 🕒✨',
-  PendingMessage1 = `👤 El usuario:`,
-  PendingMessage2 = `📞 Con número:`,
-  StopConversation = `¡Entendido! \n\nA partir de este momento ya no podré responderte ❌\n\nSiéntete libre de enviar más detalles sobre lo que quieras platicarle 🌸
-    \nAle te contactará pronto para atenderte personalmente 😊`,
-  ThanksForYourPayment = '¡Gracias por tu pago! 😊 He enviado el comprobante de tu transferencia a Ale para que la revise. 🔍📋',
-  YourNameIs = 'Entiendo, te llamas',
-  WelcomeCustomer = `¡Bienvenid@! 🌸\n\nLe acabo de notificar a Ale que llegaste, por favor, espera un momento 🕒✨
-    \nNo olvides tocar el timbre para ser atendida lo antes posible 🔔\n\nEstá del lado derecho de la reja, un poco hacia arriba.`
-};
-
-export enum MediaNotSupportedResponses {
-  Audio = 'Disculpa, actualmente no puedo escuchar mensajes de voz 🔊❌ ¿Podrías escribirme? O en caso de que necesites que Ale lo escuche, solo pídeme hablar con ella 😊👉',
-  AudioComplement = 'Por cierto, actualmente no puedo escuchar mensajes de voz 🔊❌ ¿Podrías escribirme? O en caso de que necesites que Ale lo escuche, solo pídeme hablar con ella 😊👉',
-  Default = 'Disculpa, actualmente no puedo responder mensajes de voz 🔊, fotos 📸, stickers 🖼️ o vídeos 🎥. En caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
-  DefaultComplement = 'Por cierto, actualmente no puedo responder mensajes de voz 🔊, fotos 📸, stickers 🖼️ o vídeos 🎥. En caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
-  Image = 'Disculpa, actualmente no ver lo que hay en las imágenes que me envías 🖼️❌ ¿Podrías describirlo? O en caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
-  ImageComplement = 'Por cierto, actualmente no ver lo que hay en las imágenes que me envías 🖼️❌ ¿Podrías describirlo? O en caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
-  Sticker = '¡Ups! 😕 Disculpa, no puedo ver los stickers que me envías 🚫, pero estoy seguro de que este es genial 👌',
-  Video = 'Disculpa, actualmente no ver lo que hay en los vídeos que me envías 📽️❌ ¿Podrías describirlo? O en caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
-  VideoComplement = 'Por cierto, actualmente no ver lo que hay en los vídeos que me envías 📽️❌ ¿Podrías describirlo? O en caso de que necesites que Ale lo vea, solo pídeme hablar con ella 😊👉',
+  TalkToHuman = 'talk_to_human'
 };
 
 export enum MediaTypes {
@@ -134,18 +106,16 @@ export enum MediaTypes {
   VoiceMessage = 'ptt'
 };
 
-export enum TimeoutDurations {
-  TimeBetweenMessages = 1000
-};
-
 export enum ErrorMessages {
   CallingError = 'Error calling OpenAi endpoint',
   ContextNotFound = 'Context not found for chat ID:',
   DefaultMessage = 'Controlled error: ',
   FailedDeletingContext = 'Failed trying to delete context for chat ID:',
   FailedUpdatingContext = 'Failed trying to update context for chat ID:',
+  FailedUpdatingDynamicContext = 'Failed trying to update dynamic context for user with sessionId: ',
   ImageDataNotFound = 'No image data found',
   NameObtentionFailed = 'Error during name obtention for user:',
+  NotFoundLowerCase = 'not found',
   NotificationFailed = 'Failed to send notification to number:',
   RateLimitError = 'The OpenAi account has exceded its available balance: ',
   ReplyMessageFailed = 'Failed to reply to the message:',
@@ -156,9 +126,6 @@ export enum ErrorMessages {
 
 export enum NotificationContacts {
   Broadcast = 'status@broadcast',
-  Business = '5219831079501@c.us',
-  MainContact = '5219831844892@c.us',
-  TestContact = '5219831381983@c.us',
   WhatsApp = '0@c.us'
 };
 
@@ -177,7 +144,8 @@ export class RegexExpressions {
 };
 
 export enum DefinedPaths {
-  BellLocation = 'media/images/bell_location.jpg'
+  BellLocation = '../media/images/bell_location.jpg',
+  MenuLocation = '../media/images/menu.jpg'
 };
 
 export const AppPatterns = {

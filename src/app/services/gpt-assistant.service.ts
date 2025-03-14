@@ -1,30 +1,34 @@
-import OpenAI from 'openai';
+import { ChatCompletion, ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources';
 import { Document } from 'mongoose';
+import OpenAI from 'openai';
 
-import { ALES_PLACE_MAIN_FUNCTIONS } from '../shared/constants/functions.constants';
 import {
   AppConstants,
   AuxiliarMessages,
   AvailableGptModels,
   ErrorMessages,
   FunctionNames,
-  GptRoles
+  GptRoles,
+  GptToolsMessages
 } from '../shared/constants/app.constants';
-import { BOT_GENERAL_BEHAVIOR, MESSAGE_NAME_DETECTION_DESCRIPTION, WHATSAPP_NAME_DETECTION_DESCRIPTION } from '../shared/constants/ales-bible.constants';
-import { ChatCompletion, ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources';
 import {
   ChatGptHistoryBody,
   ExecuteFunctionBody,
   IChatGptApiError,
-  UpdateContextParams,
+  UpdateChatParams,
+  UpdateUserConfigParams,
   ValidNameStructure
 } from '../shared/interfaces/gpt-interfaces';
 import { CoreUtilFunctions } from './core-utils.service';
-import { IChatGptHistoryBody, IHistoryStructure, PersistentChatModel } from '../shared/models/persistent-chats';
+import { DYNAMIC_CONTEXT_DETECTION_TOOL, MESSAGE_NAME_DETECTION_DESCRIPTION, WHATSAPP_NAME_DETECTION_DESCRIPTION } from '../shared/constants/funcition.constants';
+import { DynamicContextToolResponse } from '../shared/interfaces/gpt-tools-interfaces';
+import { IChatGptHistoryBody, IChatStructure } from '../shared/interfaces/persistent-chats.interface';
+import { IUserConfiguration } from '../shared/interfaces/user-configuration.interface';
+import { PersistentChatModel } from '../shared/models/persistent-chats';
+import { UserConfigurationModel } from '../shared/models/user-configurations';
 
-export class GPTAssistant {
+export class GptAssistant {
   public chatGpt: OpenAI;
-  public currentFunctions: ChatCompletionTool[];
   public utils: CoreUtilFunctions;
 
   constructor() {
@@ -32,7 +36,6 @@ export class GPTAssistant {
       apiKey: process.env.OPENAI_API_KEY,
     });
     this.utils = new CoreUtilFunctions;
-    this.currentFunctions = ALES_PLACE_MAIN_FUNCTIONS.list;
   }
 
   /**
@@ -42,11 +45,16 @@ export class GPTAssistant {
    * @param {string} currentClientName - The current client's name.
    * @returns {Promise<any>} - The function name and arguments if a function call is required, otherwise null.
    */
-  public async processFunctions(text: string, currentChatId: string, currentClientName: string) {
-    const context = await this.addNewUserMessage(text, currentChatId, currentClientName);
+  public async processFunctions(text: string, currentChatId: string, currentClientName: string, userConfig: IUserConfiguration) {
+    const context = await this.addNewUserMessage(text, currentChatId, currentClientName, userConfig.sessionId);
     const currentMessage = [context.chatHistory.at(-1) as IChatGptHistoryBody];
-    const chatGptResponse = await this.getChatGptResponse(currentMessage, this.currentFunctions,
-      BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_4_O);
+    const currentFunctions = userConfig.activeFunctions;
+    const botBehavior = userConfig.botBehavior;
+    const dynamicContext = userConfig.dynamicContext;
+    const botGeneralBehavior = dynamicContext.isActive ? `${botBehavior}\n\n${AuxiliarMessages.DynamicContext} ${dynamicContext.message}` : botBehavior;
+
+    const chatGptResponse = await this.getChatGptResponse(currentMessage, currentFunctions,
+      botGeneralBehavior, AvailableGptModels.GPT_4_O);
     let message = chatGptResponse.choices[0].message;
 
     if (message.tool_calls?.length) {
@@ -68,7 +76,7 @@ export class GPTAssistant {
         }
       }
       message = (await this.getChatGptResponse(context.chatHistory, [],
-        BOT_GENERAL_BEHAVIOR, AvailableGptModels.GPT_4_O)).choices[0].message;
+        botGeneralBehavior, AvailableGptModels.GPT_4_O)).choices[0].message;
       const manualDetectedFunction = this.utils.detectFunctionCalled(message.content);
 
       if (manualDetectedFunction !== null) {
@@ -77,17 +85,28 @@ export class GPTAssistant {
         if (currentFunction) {
           switch (currentFunction) {
             case FunctionNames.ShouldSearchSlotsByService:
-              const args = {
+              const searchArgs = {
                 startDate: parseContent.arguments.startDate,
                 endDate: parseContent.arguments.endDate,
                 serviceId: parseContent.arguments.serviceId
               };
-              return { functionName: currentFunction, args, message, context };
+
+              return { functionName: currentFunction, args: searchArgs, message, context };
+            case FunctionNames.OrderConfirmed:
+              const confirmationArgs = {
+                arrivalTime: parseContent.arrivalTime,
+                paymentType: parseContent.paymentType,
+                status: parseContent.status,
+                summary: parseContent.summary,
+                total: parseContent.total
+              };
+
+              return { functionName: currentFunction, args: confirmationArgs, message, context };
           }
         }
       }
 
-      await this.addNewMessage(message.content as string, context.chatId, GptRoles.Assistant);
+      await this.addNewMessage(message.content as string, context.chatId, context.sessionId, GptRoles.Assistant);
     }
 
     return { functionName: null, args: null, message, context };
@@ -98,18 +117,17 @@ export class GPTAssistant {
    * @param {string} functionName - The name of the function executed.
    * @param {string} functionResponse - The response from the executed function.
    * @param {string} currentChatId - The current chat ID.
-   * @param {string} expectedBehavior - The expected behavior for the GPT model.
    * @returns {Promise<string>} - The content of the GPT model's response.
    */
-  public async processResponse(functionName: string, functionResponse: string, currentChatId: string, expectedBehavior?: string): Promise<string> {
-    let context = await this.getContextByChatId(currentChatId);
+  public async processResponse(functionName: string, functionResponse: string, currentChatId: string, userConfig: IUserConfiguration): Promise<string> {
+    let context = await this.getContextByChatId(currentChatId, userConfig.sessionId);
     const functionToExecute = {
       functionName,
       functionResponse
     };
-    const chatGptResponse = await this.sendFunctionToChatGpt(context.chatHistory, functionToExecute, expectedBehavior);
+    const chatGptResponse = await this.sendFunctionToChatGpt(context.chatHistory, functionToExecute, userConfig);
     const content = chatGptResponse.choices[0].message.content as string;
-    await this.addNewMessage(content, context.chatId, GptRoles.Assistant);
+    await this.addNewMessage(content, context.chatId, context.sessionId, GptRoles.Assistant);
 
     return content;
   }
@@ -118,22 +136,22 @@ export class GPTAssistant {
    * @description Get the GPT model's response based on the chat history and expected behavior.
    * @param {ChatGptHistoryBody[]} chatHistory - The chat history.
    * @param {ChatCompletionTool[]} functionsList - The list of functions.
-   * @param {string} expectedBehavior - The expected behavior for the GPT model.
+   * @param {string} botGeneralBehavior - The expected behavior for the GPT model.
    * @param {string} targetGptModel - The GPT model version to target.
    * @returns {Promise<ChatCompletion>} - The GPT model's response.
    */
   private async getChatGptResponse(chatHistory: ChatGptHistoryBody[], functionsList: ChatCompletionTool[],
-    expectedBehavior: string, targetGptModel: string): Promise<ChatCompletion> {
+    botGeneralBehavior: string, targetGptModel: string): Promise<ChatCompletion> {
     try {
       const currentDateTime = this.utils.formatDate(new Date());
-      expectedBehavior = `${expectedBehavior}\n\n[${AuxiliarMessages.CurrentDateTime} ${currentDateTime}]`;
+      const currentBehavior = `${botGeneralBehavior}\n\n[${AuxiliarMessages.CurrentDateTime} ${currentDateTime}]`;
       if (functionsList.length) {
         const chatResponse = await this.chatGpt.chat.completions.create({
           model: targetGptModel,
           messages: [
             {
               role: GptRoles.System,
-              content: expectedBehavior
+              content: currentBehavior
             },
             ...chatHistory as []
           ],
@@ -147,7 +165,7 @@ export class GPTAssistant {
           messages: [
             {
               role: GptRoles.System,
-              content: expectedBehavior
+              content: currentBehavior
             },
             ...chatHistory as []
           ]
@@ -169,14 +187,17 @@ export class GPTAssistant {
    * @description Send the function execution result to the GPT model and get a response.
    * @param {ChatGptHistoryBody[]} chatHistory - The chat history.
    * @param {ExecuteFunctionBody} functionToExecute - The function to execute.
-   * @param {string} expectedBehavior - The expected behavior for the GPT model.
+   * @param {IUserConfiguration} userConfig - The user's current configuration.
    * @returns {Promise<ChatCompletion>} - The GPT model's response.
    */
-  private async sendFunctionToChatGpt(chatHistory: ChatGptHistoryBody[], functionToExecute: ExecuteFunctionBody, expectedBehavior?: string): Promise<ChatCompletion> {
+  private async sendFunctionToChatGpt(chatHistory: ChatGptHistoryBody[], functionToExecute: ExecuteFunctionBody,
+    userConfig: IUserConfiguration): Promise<ChatCompletion> {
     try {
-      const behavior = expectedBehavior ? BOT_GENERAL_BEHAVIOR + expectedBehavior : BOT_GENERAL_BEHAVIOR;
+      const botBehavior = userConfig.botBehavior;
+      const dynamicContext = userConfig.dynamicContext;
+      const botGeneralBehavior = dynamicContext.isActive ? `${botBehavior}\n\n${AuxiliarMessages.DynamicContext} ${dynamicContext.message}` : botBehavior;
       const currentDateTime = this.utils.formatDate(new Date());
-      const currentBehavior = `${behavior}\n\n[${AuxiliarMessages.CurrentDateTime} ${currentDateTime}]`;
+      const currentBehavior = `${botGeneralBehavior}\n\n[${AuxiliarMessages.CurrentDateTime} ${currentDateTime}]`;
       const chatResponse = await this.chatGpt.chat.completions.create({
         model: AvailableGptModels.GPT_4_O,
         messages: [
@@ -209,16 +230,16 @@ export class GPTAssistant {
    * @param {string} text - The input text from the user.
    * @param {string} currentChatId - The current chat ID.
    * @param {string} currentClientName - The current client's name.
-   * @returns {Promise<Document & IHistoryStructure>} - The chat context.
+   * @returns {Promise<Document & IChatStructure>} - The chat context.
    */
-  public async addNewUserMessage(text: string, currentChatId: string, currentClientName: string): Promise<Document & IHistoryStructure> {
-    let context = await this.getContextByChatId(currentChatId);
+  public async addNewUserMessage(text: string, currentChatId: string, currentClientName: string, currentSessionId: string): Promise<Document & IChatStructure> {
+    let context = await this.getContextByChatId(currentChatId, currentSessionId);
 
     if (!context) {
-      context = await this.generateInitialContext(text, currentChatId, currentClientName);
+      context = await this.generateInitialContext(text, currentChatId, currentClientName, currentSessionId);
     } else {
       if (text !== AppConstants.EMPTY_STRING) {
-        context = await this.addNewMessage(text, currentChatId, GptRoles.User);
+        context = await this.addNewMessage(text, currentChatId, currentSessionId, GptRoles.User);
       }
     }
 
@@ -230,10 +251,10 @@ export class GPTAssistant {
    * @param {string} text - The content of the message to be added.
    * @param {string} currentChatId - The ID of the current chat.
    * @param {string} roleProvided - The role of the sender (e.g., 'user', 'assistant').
-   * @returns {Promise<Document & IHistoryStructure>} - Returns the updated context document with the new message added.
+   * @returns {Promise<Document & IChatStructure>} - Returns the updated context document with the new message added.
    */
-  public async addNewMessage(text: string, currentChatId: string, roleProvided: string): Promise<Document & IHistoryStructure> {
-    let context = await this.getContextByChatId(currentChatId);
+  public async addNewMessage(text: string, currentChatId: string, currentSessionId: string, roleProvided: string): Promise<Document & IChatStructure> {
+    let context = await this.getContextByChatId(currentChatId, currentSessionId);
     const currentDateTime = this.utils.formatDate(new Date());
 
     context.chatHistory.push({
@@ -255,10 +276,10 @@ export class GPTAssistant {
   /**
    * @description Retrieve the context by chat ID.
    * @param {string} currentChatId - The current chat ID.
-   * @returns {Promise<Document & IHistoryStructure>} - The chat context.
+   * @returns {Promise<Document & IChatStructure>} - The chat context.
    */
-  public async getContextByChatId(currentChatId: string): Promise<Document & IHistoryStructure> {
-    return PersistentChatModel.findOne({ chatId: currentChatId }).exec() as Promise<Document & IHistoryStructure>;
+  public async getContextByChatId(currentChatId: string, currentSessionId: string): Promise<Document & IChatStructure> {
+    return PersistentChatModel.findOne({ chatId: currentChatId, sessionId: currentSessionId }).exec() as Promise<Document & IChatStructure>;
   }
 
   /**
@@ -266,12 +287,13 @@ export class GPTAssistant {
    * @param {string} text - The input text from the user.
    * @param {string} currentChatId - The current chat ID.
    * @param {string} currentClientName - The current client's name.
-   * @returns {Promise<Document & IHistoryStructure>} - The new chat context.
+   * @returns {Promise<Document & IChatStructure>} - The new chat context.
    */
-  private async generateInitialContext(text: string, currentChatId: string, currentClientName: string): Promise<Document & IHistoryStructure> {
+  private async generateInitialContext(text: string, currentChatId: string, currentClientName: string, currentSessionId: string): Promise<Document & IChatStructure> {
     const processedName = (await this.isNameValid(currentClientName)).firstName;
     const currentDateTimeTime = this.utils.formatDate(new Date());
     const newContext = new PersistentChatModel({
+      sessionId: currentSessionId,
       chatId: currentChatId,
       clientName: processedName,
       timeOfLastMessage: new Date(),
@@ -322,27 +344,54 @@ export class GPTAssistant {
 
   /**
    * @description Updates the specified fields of the chat context.
-   * @param {UpdateContextParams} params - The parameters including chat ID and fields to update.
-   * @returns {Promise<Document & IHistoryStructure>} - Returns the updated context document.
+   * @param {UpdateChatParams} params - The parameters including chat ID and fields to update.
+   * @returns {Promise<Document & IChatStructure>} - Returns the updated context document.
    * @throws {Error} If the context for the given chat ID is not found.
    */
-  public async updateContext(params: UpdateContextParams): Promise<Document & IHistoryStructure> {
-    const { chatId, updateFields } = params;
+  public async updateChat(params: UpdateChatParams): Promise<Document & IChatStructure> {
+    const { chatId, updateFields, sessionId } = params;
 
     try {
-      const updatedContext = await PersistentChatModel.findOneAndUpdate(
-        { chatId },
+      const updatedChat = await PersistentChatModel.findOneAndUpdate(
+        { chatId, sessionId },
         { $set: { ...updateFields, isFirstContact: false } },
         { new: true, runValidators: true }
       );
 
-      if (!updatedContext) {
+      if (!updatedChat) {
         throw new Error(`${ErrorMessages.ContextNotFound} ${chatId}`);
       }
 
-      return updatedContext;
+      return updatedChat;
     } catch (error) {
       console.error(`${ErrorMessages.FailedUpdatingContext} ${chatId}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * @description Updates a user's configuration based on the provided fields.
+   * @param {UpdateUserConfigParams} params - Session ID and fields to update.
+   * @returns {Promise<Document & IUserConfiguration>} - Updated user configuration.
+   * @throws {Error} - If no configuration is found for the given session ID.
+   */
+  public async updateUserConfiguration(params: UpdateUserConfigParams): Promise<Document & IUserConfiguration> {
+    const { sessionId, updateFields } = params;
+
+    try {
+      const updatedConfig = await UserConfigurationModel.findOneAndUpdate(
+        { sessionId },
+        { $set: { ...updateFields } },
+        { new: true, runValidators: true }
+      );
+
+      if (!updatedConfig) {
+        throw new Error(`${sessionId}`);
+      }
+
+      return updatedConfig;
+    } catch (error) {
+      console.error(`${sessionId}`, error);
       throw error;
     }
   }
@@ -353,9 +402,9 @@ export class GPTAssistant {
    * @returns {Promise<void>} - Returns a promise that resolves when the context is deleted.
    * @throws {Error} If the context for the given chat ID is not found.
    */
-  public async deleteContextByChatId(chatId: string): Promise<void> {
+  public async deleteContextByChatId(chatId: string, currentSessionId: string): Promise<void> {
     try {
-      const context = await this.getContextByChatId(chatId);
+      const context = await this.getContextByChatId(chatId, currentSessionId);
 
       if (!context) {
         throw new Error(`${ErrorMessages.ContextNotFound} ${chatId}`);
@@ -399,6 +448,45 @@ export class GPTAssistant {
       };
     } catch (error) {
       console.error(`${ErrorMessages.NameObtentionFailed} ${name}`, error);
+      return defaultResponse;
+    }
+  }
+
+  /**
+   * @description Determines if the user's dynamic context should be updated based on message content.
+   * @param {string} messageContent - The message to evaluate for context updates.
+   * @param {IUserConfiguration} userConfig - The user's current configuration.
+   * @returns {Promise<DynamicContextToolResponse>} - Indicates whether an update is needed and the new context.
+   */
+  public async shouldUpdateDynamicContext(messageContent: string, userConfig: IUserConfiguration): Promise<DynamicContextToolResponse> {
+    const defaultResponse = {
+      shouldUpdate: false,
+      contextUpdated: AppConstants.EMPTY_STRING
+    };
+
+    if (!messageContent?.length) return defaultResponse;
+
+    const dynamicContext = userConfig.dynamicContext.isActive ? userConfig.dynamicContext.message : AppConstants.EMPTY_STRING;
+    const currentDirective = `${GptToolsMessages.CurrentContext} ${dynamicContext}`;
+    const tentativeInstruction = `${GptToolsMessages.TentativeNewInstruction} ${messageContent}`;
+    const chatHistory: ChatGptHistoryBody[] = [{ content: currentDirective, role: GptRoles.System }, { content: tentativeInstruction, role: GptRoles.User }];
+    const expectedBehavior = DYNAMIC_CONTEXT_DETECTION_TOOL;
+    const targetGptModel = AvailableGptModels.GPT_4_O;
+
+    try {
+      const chatResponse = await this.getChatGptResponse(chatHistory, [], expectedBehavior, targetGptModel);
+      const responseContent = chatResponse.choices[0].message.content;
+
+      if (!responseContent) return defaultResponse;
+
+      const parsedResponse = JSON.parse(responseContent.trim());
+
+      return {
+        shouldUpdate: parsedResponse.shouldUpdate,
+        contextUpdated: parsedResponse.contextUpdated
+      };
+    } catch (error) {
+      console.error(`${ErrorMessages.FailedUpdatingDynamicContext} ${userConfig.sessionId}`, error);
       return defaultResponse;
     }
   }

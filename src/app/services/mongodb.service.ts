@@ -1,8 +1,14 @@
 import mongoose from 'mongoose';
 
+/**
+ * @description Singleton service for managing MongoDB connections.
+ */
 export class MongoService {
-  private static instance: MongoService;
+  private static _instance: MongoService;
 
+  /**
+   * @description Private constructor to prevent instantiation.
+   */
   private constructor() { }
 
   /**
@@ -10,10 +16,11 @@ export class MongoService {
    * @returns {MongoService} The instance of MongoService.
    */
   public static getInstance(): MongoService {
-    if (!MongoService.instance) {
-      MongoService.instance = new MongoService();
+    if (!MongoService._instance) {
+      MongoService._instance = new MongoService();
     }
-    return MongoService.instance;
+
+    return MongoService._instance;
   }
 
   /**

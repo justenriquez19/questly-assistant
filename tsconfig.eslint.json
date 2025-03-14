@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/**/*.ts",
+    "test/**/*.ts",
+    "commands/**/*.ts"
+  ],
+  "exclude": [".eslintrc.js", "node_modules", "dist", ".editable_behavior.ts"]
+}

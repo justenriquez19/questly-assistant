@@ -53,3 +53,6 @@ typings/
 
 # WhatsApp Session
 wwebjs_auth_data
+
+# Bot behavior config
+editable_behavior.ts

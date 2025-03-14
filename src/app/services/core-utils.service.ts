@@ -1,4 +1,6 @@
-import { AppConstants, AppPatterns, RegexExpressions } from "../shared/constants/app.constants";
+import crypto from 'crypto';
+
+import { AppConstants, AppPatterns, RegexExpressions } from '../shared/constants/app.constants';
 
 export class CoreUtilFunctions {
   /**
@@ -31,29 +33,14 @@ export class CoreUtilFunctions {
       return null;
     }
 
-    const startsWithBrace = message.trim().startsWith(AppConstants.OPENING_BRACKET);
-    const includesBracket = message.trim().includes(AppConstants.CLOSING_BRACKET);
-    if (!startsWithBrace && !includesBracket) {
-      return null;
-    }
-
     try {
-      let parsedMessage;
-      if (startsWithBrace) {
-        parsedMessage = JSON.parse(message);
-      } else if (includesBracket) {
-        const match = message.match(RegexExpressions.JSON_COMPARE);
+      const potentialJson = this.extractJsonFromMessage(message);
 
-        if (match) {
-          const potentialJson = match[0];
-
-          if (this.isBalancedJson(potentialJson)) {
-            parsedMessage = JSON.parse(potentialJson);
-          }
-        } else {
-          return null;
-        }
+      if (!potentialJson || !this.isBalancedJson(potentialJson)) {
+        return null;
       }
+
+      const parsedMessage = JSON.parse(potentialJson);
 
       if (parsedMessage?.name && typeof parsedMessage?.name === AppConstants.STRING_TYPE) {
         return JSON.stringify(parsedMessage);
@@ -75,6 +62,7 @@ export class CoreUtilFunctions {
     const localTime = new Date(date.getTime() - 5 * 60 * 60 * 1000);
 
     const options: Intl.DateTimeFormatOptions = {
+      weekday: AppConstants.LONG_KEY,
       day: AppConstants.TWO_DIGIT_KEY,
       month: AppConstants.TWO_DIGIT_KEY,
       year: AppConstants.NUMERIC_KEY,
@@ -163,5 +151,41 @@ export class CoreUtilFunctions {
     }
 
     return false;
+  }
+
+  public obfuscatePhone(phone: string): string {
+    return crypto.createHash('sha256').update(phone).digest('hex').slice(0, 8);
+  }
+
+  /**
+   * @description Replaces placeholders in a given string with corresponding values from the replacements object.
+   * @param {string} text - The input string containing placeholders in the format ${key}.
+   * @param {Record<string, string>} replacements - An object mapping keys to their replacement values.
+   * @returns {string} - The formatted string with replaced placeholders.
+   */
+  public replacePlaceholders(text: string, replacements: Record<string, string>): string {
+    return text.replace(/\${(.*?)}/g, (_, key) => replacements[key] || `\${${key}}`);
+  }
+
+  /**
+   * @description Extracts a JSON string from a given message by identifying the first valid JSON structure.
+   * @param {string} message - The input string that may contain a JSON object.
+   * @returns {string | null} - The extracted JSON string if found; otherwise, `null`.
+   */
+  private extractJsonFromMessage(message: string): string | null {
+    let startIndex = message.indexOf(AppConstants.OPENING_BRACKET);
+    if (startIndex === -1) return null;
+
+    let braceCount = 0;
+    for (let i = startIndex; i < message.length; i++) {
+      if (message[i] === AppConstants.OPENING_BRACKET) braceCount++;
+      if (message[i] === AppConstants.CLOSING_BRACKET) braceCount--;
+
+      if (braceCount === 0) {
+        return message.substring(startIndex, i + 1);
+      }
+    }
+
+    return null;
   }
 }

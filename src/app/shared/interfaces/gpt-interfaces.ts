@@ -1,7 +1,8 @@
 import { ChatCompletionTool } from "openai/resources";
 import { Message } from "whatsapp-web.js";
 
-import { IHistoryStructure } from "../models/persistent-chats";
+import { IChatStructure } from "./persistent-chats.interface";
+import { IUserConfiguration } from "./user-configuration.interface";
 
 export interface ChatGptHistoryBody {
   content: string;
@@ -46,9 +47,15 @@ export interface IChatGptApiError {
   message: string;
 }
 
-export interface UpdateContextParams {
+export interface UpdateChatParams {
   chatId: string;
-  updateFields: Partial<IHistoryStructure>;
+  sessionId: string;
+  updateFields: Partial<IChatStructure>;
+}
+
+export interface UpdateUserConfigParams {
+  sessionId: string;
+  updateFields: Partial<IUserConfiguration>;
 }
 
 export interface ValidNameStructure {
