@@ -43,9 +43,6 @@ RUN apt-get update -qq && \
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Disabling IPV6
-RUN sysctl -w net.ipv6.conf.all.disable_ipv6=1
-
 # Install dependencies
 RUN npm install
 
