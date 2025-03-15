@@ -17,7 +17,7 @@ primary_region = 'gdl'
   processes = ['app']
 
 [[vm]]
-  memory = '1024'
+  memory = '1,536'
   cpu_kind = 'shared'
   cpus = 1
 
