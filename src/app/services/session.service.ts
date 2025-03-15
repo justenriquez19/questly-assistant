@@ -31,8 +31,10 @@ export class SessionService {
     if (fs.existsSync(sessionsDir)) {
       const sessionDirs = fs.readdirSync(sessionsDir);
       sessionDirs.forEach((sessionId) => {
-        console.log(`Auto loading session ${sessionId}`);
-        this.loadSession(sessionId);
+        if (!AppConstants.FOLDERS_TO_IGNORE.includes(sessionId)) {
+          console.log(`${AppConstants.AUTO_LOAD_SESSION} ${sessionId}`);
+          this.loadSession(sessionId);
+        }
       });
     }
   }
@@ -64,7 +66,7 @@ export class SessionService {
       }),
       isClientReady: false,
       isProcessingMessages: false,
-      processingUsers: new Map (),
+      processingUsers: new Map(),
       qrCode: AppConstants.EMPTY_STRING,
       tempMessageQueue: new Map(),
       userMessages: new Map(),
@@ -115,7 +117,7 @@ export class SessionService {
         }
       }),
       isClientReady: false,
-      processingUsers: new Map (),
+      processingUsers: new Map(),
       qrCode: AppConstants.EMPTY_STRING,
       userMessages: new Map(),
       userMessageTimers: new Map(),

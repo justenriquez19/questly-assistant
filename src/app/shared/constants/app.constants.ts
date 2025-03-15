@@ -2,6 +2,7 @@
  * @description Contains constants used across the application.
  */
 export class AppConstants {
+  public static readonly AUTO_LOAD_SESSION: string = 'Auto loading session';
   public static readonly BLANK_SPACE: string = ' ';
   public static readonly CLIENT_IS_READY: string = 'The client is up! Ready at';
   public static readonly CLOSING_BRACKET: string = '}';
@@ -11,6 +12,7 @@ export class AppConstants {
   public static readonly DEF_USER_NAME: string = 'Nobody';
   public static readonly ELLIPSES: string = '...';
   public static readonly EMPTY_STRING: string = '';
+  public static readonly FOLDERS_TO_IGNORE: Array<string> = ['lost+found', 'session'];
   public static readonly FUNCTION_TYPE: 'function' = 'function';
   public static readonly LONG_KEY: 'long' = 'long';
   public static readonly MESSAGE_CREATE_KEY: string = 'message_create';
