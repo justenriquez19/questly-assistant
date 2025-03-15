@@ -35,7 +35,7 @@ export class AppConstants {
   public static readonly REMOTE_KEY: 'remote' = 'remote';
   public static readonly SERVER_RUNNING_MESSAGE: string = 'Server running at port: 3000';
   public static readonly SESSION_KEY: string = 'Session';
-  public static readonly SESSIONS_PATH_KEY: string = 'wwebjs_auth_data';
+  public static readonly SESSIONS_PATH_KEY: string = '/wwebjs_auth_data';
   public static readonly SPANISH_KEY: string = 'spa';
   public static readonly STRING_TYPE: 'string' = 'string';
   public static readonly TEL_KEY: string = 'TEL';
