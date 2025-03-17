@@ -4,12 +4,14 @@ import { AmeliaService } from './services/amelia.service';
 import { AppConstants } from './shared/constants/app.constants';
 import { AuthController } from './controllers/auth.controller';
 import { AuthMiddleware } from './middlewares/auth.middleware';
+import { ChatDataService } from './data/chat-data.service';
 import { CoreUtilFunctions } from './services/core-utils.service';
 import { GptAssistant } from './services/gpt-assistant.service';
 import { MessageService } from './services/message.service';
-import { MongoService } from './services/mongodb.service';
+import { MongoService } from './data/mongodb.service';
 import { OcrService } from './services/ocr.service';
 import { SessionService } from './services/session.service';
+import { UserConfigDataService } from './data/user-config-data.service';
 
 /**
  * @description Handles WhatsApp bot interactions and server initialization for multiple sessions.
@@ -20,6 +22,8 @@ export class QuestlyAi {
   public assistant: GptAssistant;
   public authController: AuthController;
   public messageService: MessageService;
+  public chatDataService: ChatDataService;
+  public userConfigDataService: UserConfigDataService;
   public mongoService: MongoService;
   public ocrService: OcrService;
   public port: number;
@@ -31,13 +35,15 @@ export class QuestlyAi {
    */
   constructor() {
     this.mongoService = MongoService.getInstance();
+    this.chatDataService = new ChatDataService();
+    this.userConfigDataService = new UserConfigDataService();
     this.amelia = new AmeliaService();
-    this.assistant = new GptAssistant();
     this.authController = new AuthController();
     this.utils = new CoreUtilFunctions();
+    this.assistant = new GptAssistant(this.chatDataService, this.utils);
     this.ocrService = new OcrService(this.assistant);
-    this.messageService = new MessageService(this.assistant, this.amelia, this.utils, this.ocrService);
-    this.sessionService = new SessionService(this.messageService, this.utils);
+    this.messageService = new MessageService(this.amelia, this.assistant, this.chatDataService, this.ocrService, this.userConfigDataService, this.utils);
+    this.sessionService = new SessionService(this.messageService, this.userConfigDataService, this.utils);
     this.port = Number(process.env.PORT) || AppConstants.CURRENT_PORT;
     this.app = express();
     this.initialize();
@@ -62,7 +68,7 @@ export class QuestlyAi {
   /**
    * @description Registers routes for session creation and QR code retrieval.
    */
-  private initializeRoutes(): void {
+  private async initializeRoutes(): Promise<void> {
     this.app.get('/session/:phone/create', AuthMiddleware.verifyUserSession, (req: Request, res: Response) => {
       return this.sessionService.createSessionRoute(req, res);
     });
@@ -71,6 +77,12 @@ export class QuestlyAi {
     });
     this.app.post('/auth/admin/token', (req: Request, res: Response) => {
       return this.authController.generateAdminToken(req, res);
+    });
+    this.app.get('/session/:phone/pause', AuthMiddleware.verifyUserSession, async (req: Request, res: Response) => {
+      return await this.sessionService.pauseSessionRoute(req, res);
+    });
+    this.app.get('/session/:phone/resume', AuthMiddleware.verifyUserSession, async (req: Request, res: Response) => {
+      return await this.sessionService.resumeSessionRoute(req, res);
     });
   }
 

@@ -42,6 +42,7 @@ const UserConfigurationSchema = new Schema<IUserConfiguration>(
     activeFunctions: { type: [ActiveFunctionSchema], required: true },
     botBehavior: { type: String, required: true },
     dynamicContext: { type: DynamicContextSchema, required: true },
+    isPaused: { type: Boolean, required: true },
     mediaNotSupportedResponses: { type: Schema.Types.Mixed, required: true },
     responseMessages: { type: Schema.Types.Mixed, required: true },
     sessionId: { type: String, required: true },

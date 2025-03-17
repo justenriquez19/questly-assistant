@@ -9,6 +9,7 @@ import { CoreUtilFunctions } from './core-utils.service';
 import { ExtendedMessage } from '../shared/interfaces/gpt-interfaces';
 import { MessageService } from './message.service';
 import { SessionContext } from '../shared/interfaces/session.interfaces';
+import { UserConfigDataService } from '../data/user-config-data.service';
 
 /**
  * @description Manages sessions and initializes WhatsApp Web clients.
@@ -18,6 +19,7 @@ export class SessionService {
 
   constructor(
     private messageService: MessageService,
+    private userConfigDataService: UserConfigDataService,
     private utils: CoreUtilFunctions
   ) {
     this.sessions = new Map();
@@ -26,28 +28,34 @@ export class SessionService {
   /**
    * @description Automatically loads saved sessions from the session directory.
    */
-  public autoLoadSessions(): void {
+  public async autoLoadSessions(): Promise<void> {
     const sessionsDir = AppConstants.SESSIONS_PATH_KEY;
+
     if (fs.existsSync(sessionsDir)) {
       const sessionDirs = fs.readdirSync(sessionsDir);
-      sessionDirs.forEach((sessionId) => {
+
+      for (const sessionId of sessionDirs) {
         if (!AppConstants.FOLDERS_TO_IGNORE.includes(sessionId)) {
-          console.log(`${AppConstants.AUTO_LOAD_SESSION} ${sessionId}`);
-          this.loadSession(sessionId);
+          const config = await this.userConfigDataService.getConfigBySession(sessionId);
+
+          await this.loadSession(sessionId, config.isPaused);
         }
-      });
+      }
     }
   }
+
 
   /**
    * @description Loads a session using the provided sessionId.
    * @param {string} sessionId - The session identifier.
    */
-  private loadSession(sessionId: string): void {
+  private async loadSession(sessionId: string, isPaused: boolean): Promise<void> {
     if (this.sessions.has(sessionId)) {
       console.log(`Session ${sessionId} is already loaded.`);
+
       return;
     }
+
     const session: SessionContext = {
       client: new Client({
         authStrategy: new LocalAuth({
@@ -86,7 +94,15 @@ export class SessionService {
     session.client.on(AppConstants.MESSAGE_CREATE_KEY, (message: ExtendedMessage) => {
       this.messageService.onMessageCreated(sessionId, message, session);
     });
-    session.client.initialize();
+
+    if (!isPaused) {
+      await session.client.initialize();
+
+      console.log(`${AppConstants.AUTO_LOAD_SESSION} ${sessionId}`);
+    } else {
+      console.log(`Session ${sessionId} is paused. Created but not initialized.`);
+    }
+
     this.sessions.set(sessionId, session);
   }
 
@@ -94,8 +110,9 @@ export class SessionService {
     * @description Creates and initializes a new session using the user's phone number.
     * @param {string} phone - The user's phone number.
     */
-  public createSession(phone: string): void {
+  public async createSession(phone: string): Promise<void> {
     const sessionId = this.utils.obfuscatePhone(phone);
+
     if (this.sessions.has(sessionId)) {
       console.log(`Session for phone ${phone} already exists.`);
       return;
@@ -117,12 +134,12 @@ export class SessionService {
         }
       }),
       isClientReady: false,
+      isProcessingMessages: false,
       processingUsers: new Map(),
       qrCode: AppConstants.EMPTY_STRING,
-      userMessages: new Map(),
-      userMessageTimers: new Map(),
       tempMessageQueue: new Map(),
-      isProcessingMessages: false
+      userMessages: new Map(),
+      userMessageTimers: new Map()
     };
     session.client.on(AppConstants.QR_KEY, async (qr: string) => {
       session.qrCode = await toDataURL(qr);
@@ -138,7 +155,9 @@ export class SessionService {
     session.client.on(AppConstants.MESSAGE_CREATE_KEY, (message: ExtendedMessage) => {
       this.messageService.onMessageCreated(sessionId, message, session);
     });
-    session.client.initialize();
+
+    await session.client.initialize();
+
     this.sessions.set(sessionId, session);
   }
 
@@ -147,9 +166,10 @@ export class SessionService {
    * @param {Request} req - Express request containing the phone parameter.
    * @param {Response} res - Express response to return the confirmation message.
    */
-  public createSessionRoute(req: Request, res: Response): void {
+  public async createSessionRoute(req: Request, res: Response): Promise<void> {
     const phone = req.params.phone;
-    this.createSession(phone);
+
+    await this.createSession(phone);
     res.send(`Session created for phone ${phone}.`);
   }
 
@@ -162,10 +182,12 @@ export class SessionService {
     const phone = req.params.phone;
     const sessionId = this.utils.obfuscatePhone(phone);
     const session = this.sessions.get(sessionId);
+
     if (!session) {
       res.status(404).send('Session not found. Create the session first.');
       return;
     }
+
     if (session.isClientReady) {
       res.send(AppConstants.NO_QR_NEEDED);
     } else if (session.qrCode) {
@@ -173,5 +195,74 @@ export class SessionService {
     } else {
       res.send(ErrorMessages.shouldRereshQrView);
     }
+  }
+
+  /**
+   * @description Temporarily disconnects a session to save resources.
+   * @param {string} sessionId - The session identifier.
+   */
+  public async pauseSession(sessionId: string): Promise<boolean> {
+    const session = this.sessions.get(sessionId);
+
+    if (!session) {
+      console.log(`Session ${sessionId} not found.`);
+      return false;
+    }
+
+    await session.client.destroy();
+    await this.userConfigDataService.updateUserConfiguration({
+      sessionId,
+      updateFields: { isPaused: true },
+    });
+
+    console.log(`Session ${sessionId} has been paused.`);
+
+    return true;
+  }
+
+
+  /**
+   * @description Resumes a previously paused session without requiring a new QR code.
+   * @param {string} sessionId - The session identifier.
+   */
+  public async resumeSession(sessionId: string): Promise<boolean> {
+    const session = this.sessions.get(sessionId);
+    const config = await this.userConfigDataService.getConfigBySession(sessionId);
+
+    if (!session || !config.isPaused) {
+      console.log(`Session ${sessionId} is not paused or does not exist.`);
+      return false;
+    }
+
+    await session.client.initialize();
+    await this.userConfigDataService.updateUserConfiguration({
+      sessionId,
+      updateFields: { isPaused: false },
+    });
+
+    console.log(`Session ${sessionId} has been resumed.`);
+    return true;
+  }
+
+  /**
+   * @description API route to pause a session.
+   */
+  public async pauseSessionRoute(req: Request, res: Response): Promise<void> {
+    const phone = req.params.phone;
+    const sessionId = this.utils.obfuscatePhone(phone);
+
+    await this.pauseSession(sessionId);
+    res.send(`Session for phone ${phone} has been paused.`);
+  }
+
+  /**
+   * @description API route to resume a session.
+   */
+  public async resumeSessionRoute(req: Request, res: Response): Promise<void> {
+    const phone = req.params.phone;
+    const sessionId = this.utils.obfuscatePhone(phone);
+
+    await this.resumeSession(sessionId);
+    res.send(`Session for phone ${phone} has been resumed.`);
   }
 }

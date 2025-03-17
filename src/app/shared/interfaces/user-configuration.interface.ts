@@ -26,6 +26,7 @@ export interface IUserConfiguration extends Document {
   activeFunctions: Array<IActiveFunctions>;
   botBehavior: string;
   dynamicContext: IDynamicContext;
+  isPaused: boolean;
   mediaNotSupportedResponses: Record<string, string>;
   responseMessages: Record<string, string>;
   sessionId: string;

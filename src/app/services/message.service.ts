@@ -1,4 +1,3 @@
-import { Document } from 'mongoose';
 import path from 'path';
 import WAWebJS, { Chat, MessageMedia } from 'whatsapp-web.js';
 
@@ -14,6 +13,7 @@ import {
   GptRoles,
   DefinedPaths
 } from '../shared/constants/app.constants';
+import { ChatDataService } from '../data/chat-data.service';
 import { CoreUtilFunctions } from './core-utils.service';
 import { ExtendedMessage } from '../shared/interfaces/gpt-interfaces';
 import { GptAssistant } from './gpt-assistant.service';
@@ -21,14 +21,16 @@ import { IProcessDynamicContext } from '../shared/interfaces/gpt-tools-interface
 import { IUserConfiguration } from '../shared/interfaces/user-configuration.interface';
 import { OcrService } from './ocr.service';
 import { SessionContext } from '../shared/interfaces/session.interfaces';
-import { UserConfigurationModel } from '../shared/models/user-configurations';
+import { UserConfigDataService } from '../data/user-config-data.service';
 
 export class MessageService {
   constructor(
-    private assistant: GptAssistant,
     private amelia: AmeliaService,
-    private utils: CoreUtilFunctions,
-    private ocrService: OcrService
+    private assistant: GptAssistant,
+    private chatDataService: ChatDataService,
+    private ocrService: OcrService,
+    private userConfigDataService: UserConfigDataService,
+    private utils: CoreUtilFunctions
   ) { }
 
   /**
@@ -37,7 +39,7 @@ export class MessageService {
    * @param {ExtendedMessage} message - The message created by the bot.
    */
   public async onMessageCreated(sessionId: string, message: ExtendedMessage, session: SessionContext): Promise<void> {
-    const userConfig = await this.getConfigBySession(sessionId)
+    const userConfig = await this.userConfigDataService.getConfigBySession(sessionId)
 
     if (!session) return;
 
@@ -83,17 +85,17 @@ export class MessageService {
       }
 
       if (recipientPhoneNumber) {
-        let context = await this.assistant.getContextByChatId(recipientPhoneNumber, sessionId);
+        let context = await this.chatDataService.getContextByChatId(recipientPhoneNumber, sessionId);
 
         if (context && context.shouldRespond) {
-          context = await this.assistant.updateChat({
+          context = await this.chatDataService.updateChat({
             chatId: recipientPhoneNumber,
             sessionId: userConfig.sessionId,
             updateFields: { shouldRespond: false, timeOfLastMessage: new Date() }
           });
         } else if (!context) {
           await this.assistant.addNewUserMessage(`${AuxiliarMessages.TempContext}${recipientPhoneNumber}`, recipientPhoneNumber, AppConstants.DEF_USER_NAME, sessionId);
-          context = await this.assistant.updateChat({
+          context = await this.chatDataService.updateChat({
             chatId: recipientPhoneNumber,
             sessionId: userConfig.sessionId,
             updateFields: { shouldRespond: false, shouldDeleteAfterContact: true, timeOfLastMessage: new Date() }
@@ -137,7 +139,7 @@ export class MessageService {
    */
   public async onMessageReceived(sessionId: string, message: ExtendedMessage, session: SessionContext): Promise<void> {
     try {
-      const userConfig = await this.getConfigBySession(sessionId);
+      const userConfig = await this.userConfigDataService.getConfigBySession(sessionId);
 
       if (!session) {
         console.error(` ${AppConstants.SESSION_KEY} ${sessionId} ${ErrorMessages.NotFoundLowerCase}.`);
@@ -150,16 +152,16 @@ export class MessageService {
         const messageContent = message.body ?? message.type;
         console.log(`${AuxiliarMessages.MessageReceivedFrom} ${currentSenderId} ${AuxiliarMessages.ToClient} ${sessionId}: ${messageContent}`);
 
-        let context = await this.assistant.getContextByChatId(currentSenderId, userConfig.sessionId);
+        let context = await this.chatDataService.getContextByChatId(currentSenderId, userConfig.sessionId);
 
         if (context) {
           if (context.shouldDeleteAfterContact && this.utils.isMoreThanDaysAgo(context.timeOfLastMessage, 0.5)) {
-            await this.assistant.deleteContextByChatId(currentSenderId, userConfig.sessionId);
-            context = await this.assistant.getContextByChatId(currentSenderId, userConfig.sessionId);
+            await this.chatDataService.deleteContextByChatId(currentSenderId, userConfig.sessionId);
+            context = await this.chatDataService.getContextByChatId(currentSenderId, userConfig.sessionId);
           } else if (this.utils.isMoreThanDaysAgo(context.timeOfLastMessage, 0.5)) {
             if (!context.shouldRespond) {
               context.shouldRespond = true;
-              context = await this.assistant.updateChat({
+              context = await this.chatDataService.updateChat({
                 chatId: currentSenderId,
                 sessionId: userConfig.sessionId,
                 updateFields: { shouldRespond: true }
@@ -328,7 +330,7 @@ export class MessageService {
     let messageByMediaType: string;
     let responseText: string;
     let isBankTransferImage = false;
-    let context = await this.assistant.getContextByChatId(senderId, userConfig.sessionId) || await this.assistant.addNewUserMessage(`*${mediaType}*`, senderId, userName, sessionId);
+    let context = await this.chatDataService.getContextByChatId(senderId, userConfig.sessionId) || await this.assistant.addNewUserMessage(`*${mediaType}*`, senderId, userName, sessionId);
 
     if (mediaType === MediaTypes.Image) {
       isBankTransferImage = await this.ocrService.detectBankTransfer(userConfig, message, senderId, session);
@@ -391,7 +393,7 @@ export class MessageService {
       let media: MessageMedia;
       switch (processed.functionName) {
         case FunctionNames.TalkToHuman:
-          await this.assistant.updateChat({
+          await this.chatDataService.updateChat({
             chatId: senderId,
             sessionId: userConfig.sessionId,
             updateFields: { shouldRespond: false }
@@ -405,7 +407,7 @@ export class MessageService {
           break;
         case FunctionNames.GetUsersName:
           currentClientName = processed.args?.name as string;
-          await this.assistant.updateChat({
+          await this.chatDataService.updateChat({
             chatId: senderId,
             sessionId: userConfig.sessionId,
             updateFields: { clientName: currentClientName }
@@ -426,7 +428,7 @@ export class MessageService {
           await this.sendNotification(session, currentNotificationUser, notificationMessage);
           break;
         case FunctionNames.DetectQuotationRequest:
-          await this.assistant.updateChat({
+          await this.chatDataService.updateChat({
             chatId: senderId,
             sessionId: userConfig.sessionId,
             updateFields: { shouldRespond: false }
@@ -513,7 +515,7 @@ export class MessageService {
         const number = `${AppConstants.MX_PREFIX}${senderId}${AppConstants.WHATSAPP_USER_KEY}`;
         session.client.sendMessage(number, responseText);
         await this.assistant.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant);
-        await this.assistant.updateChat({
+        await this.chatDataService.updateChat({
           chatId: senderId,
           sessionId: userConfig.sessionId,
           updateFields: { isFirstContact: false }
@@ -615,15 +617,6 @@ export class MessageService {
   }
 
   /**
-   * @description Fetches user configuration by session ID.
-   * @param {string} currentSessionId - Session ID for config lookup.
-   * @returns {Promise<Document & IUserConfiguration>} - The configuration document.
-   */
-  private async getConfigBySession(currentSessionId: string): Promise<Document & IUserConfiguration> {
-    return UserConfigurationModel.findOne({ sessionId: currentSessionId }).lean().exec() as Promise<Document & IUserConfiguration>;
-  }
-
-  /**
    * @description Updates the user's dynamic context if needed based on message content.
    * @param {string} messageContent - Message that may trigger a context update.
    * @param {IUserConfiguration} userConfig - User's current configuration.
@@ -638,7 +631,7 @@ export class MessageService {
         message: dynamicToolResponse.contextUpdated || AuxiliarMessages.DynamicContextDisabled
       };
 
-      await this.assistant.updateUserConfiguration({
+      await this.userConfigDataService.updateUserConfiguration({
         sessionId: userConfig.sessionId,
         updateFields: { dynamicContext: newDynamicConxtext }
       });

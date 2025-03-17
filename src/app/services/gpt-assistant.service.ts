@@ -15,27 +15,26 @@ import {
   ChatGptHistoryBody,
   ExecuteFunctionBody,
   IChatGptApiError,
-  UpdateChatParams,
-  UpdateUserConfigParams,
   ValidNameStructure
 } from '../shared/interfaces/gpt-interfaces';
+import { ChatDataService } from '../data/chat-data.service';
 import { CoreUtilFunctions } from './core-utils.service';
 import { DYNAMIC_CONTEXT_DETECTION_TOOL, MESSAGE_NAME_DETECTION_DESCRIPTION, WHATSAPP_NAME_DETECTION_DESCRIPTION } from '../shared/constants/funcition.constants';
 import { DynamicContextToolResponse } from '../shared/interfaces/gpt-tools-interfaces';
 import { IChatGptHistoryBody, IChatStructure } from '../shared/interfaces/persistent-chats.interface';
 import { IUserConfiguration } from '../shared/interfaces/user-configuration.interface';
 import { PersistentChatModel } from '../shared/models/persistent-chats';
-import { UserConfigurationModel } from '../shared/models/user-configurations';
 
 export class GptAssistant {
   public chatGpt: OpenAI;
-  public utils: CoreUtilFunctions;
 
-  constructor() {
+  constructor(
+    private chatDataService: ChatDataService,
+    private utils: CoreUtilFunctions
+  ) {
     this.chatGpt = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
-    this.utils = new CoreUtilFunctions;
   }
 
   /**
@@ -120,7 +119,7 @@ export class GptAssistant {
    * @returns {Promise<string>} - The content of the GPT model's response.
    */
   public async processResponse(functionName: string, functionResponse: string, currentChatId: string, userConfig: IUserConfiguration): Promise<string> {
-    let context = await this.getContextByChatId(currentChatId, userConfig.sessionId);
+    let context = await this.chatDataService.getContextByChatId(currentChatId, userConfig.sessionId);
     const functionToExecute = {
       functionName,
       functionResponse
@@ -233,7 +232,7 @@ export class GptAssistant {
    * @returns {Promise<Document & IChatStructure>} - The chat context.
    */
   public async addNewUserMessage(text: string, currentChatId: string, currentClientName: string, currentSessionId: string): Promise<Document & IChatStructure> {
-    let context = await this.getContextByChatId(currentChatId, currentSessionId);
+    let context = await this.chatDataService.getContextByChatId(currentChatId, currentSessionId);
 
     if (!context) {
       context = await this.generateInitialContext(text, currentChatId, currentClientName, currentSessionId);
@@ -254,7 +253,7 @@ export class GptAssistant {
    * @returns {Promise<Document & IChatStructure>} - Returns the updated context document with the new message added.
    */
   public async addNewMessage(text: string, currentChatId: string, currentSessionId: string, roleProvided: string): Promise<Document & IChatStructure> {
-    let context = await this.getContextByChatId(currentChatId, currentSessionId);
+    let context = await this.chatDataService.getContextByChatId(currentChatId, currentSessionId);
     const currentDateTime = this.utils.formatDate(new Date());
 
     context.chatHistory.push({
@@ -271,15 +270,6 @@ export class GptAssistant {
     await context.save();
 
     return context;
-  }
-
-  /**
-   * @description Retrieve the context by chat ID.
-   * @param {string} currentChatId - The current chat ID.
-   * @returns {Promise<Document & IChatStructure>} - The chat context.
-   */
-  public async getContextByChatId(currentChatId: string, currentSessionId: string): Promise<Document & IChatStructure> {
-    return PersistentChatModel.findOne({ chatId: currentChatId, sessionId: currentSessionId }).exec() as Promise<Document & IChatStructure>;
   }
 
   /**
@@ -340,81 +330,6 @@ export class GptAssistant {
    */
   private isGptApiError(error: unknown): error is IChatGptApiError {
     return typeof error === 'object' && error !== null && 'message' in error;
-  }
-
-  /**
-   * @description Updates the specified fields of the chat context.
-   * @param {UpdateChatParams} params - The parameters including chat ID and fields to update.
-   * @returns {Promise<Document & IChatStructure>} - Returns the updated context document.
-   * @throws {Error} If the context for the given chat ID is not found.
-   */
-  public async updateChat(params: UpdateChatParams): Promise<Document & IChatStructure> {
-    const { chatId, updateFields, sessionId } = params;
-
-    try {
-      const updatedChat = await PersistentChatModel.findOneAndUpdate(
-        { chatId, sessionId },
-        { $set: { ...updateFields, isFirstContact: false } },
-        { new: true, runValidators: true }
-      );
-
-      if (!updatedChat) {
-        throw new Error(`${ErrorMessages.ContextNotFound} ${chatId}`);
-      }
-
-      return updatedChat;
-    } catch (error) {
-      console.error(`${ErrorMessages.FailedUpdatingContext} ${chatId}`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * @description Updates a user's configuration based on the provided fields.
-   * @param {UpdateUserConfigParams} params - Session ID and fields to update.
-   * @returns {Promise<Document & IUserConfiguration>} - Updated user configuration.
-   * @throws {Error} - If no configuration is found for the given session ID.
-   */
-  public async updateUserConfiguration(params: UpdateUserConfigParams): Promise<Document & IUserConfiguration> {
-    const { sessionId, updateFields } = params;
-
-    try {
-      const updatedConfig = await UserConfigurationModel.findOneAndUpdate(
-        { sessionId },
-        { $set: { ...updateFields } },
-        { new: true, runValidators: true }
-      );
-
-      if (!updatedConfig) {
-        throw new Error(`${sessionId}`);
-      }
-
-      return updatedConfig;
-    } catch (error) {
-      console.error(`${sessionId}`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * @description Deletes the chat context for the specified chat ID.
-   * @param {string} chatId - The chat ID for which the context should be deleted.
-   * @returns {Promise<void>} - Returns a promise that resolves when the context is deleted.
-   * @throws {Error} If the context for the given chat ID is not found.
-   */
-  public async deleteContextByChatId(chatId: string, currentSessionId: string): Promise<void> {
-    try {
-      const context = await this.getContextByChatId(chatId, currentSessionId);
-
-      if (!context) {
-        throw new Error(`${ErrorMessages.ContextNotFound} ${chatId}`);
-      }
-
-      await PersistentChatModel.deleteOne({ chatId });
-    } catch (error) {
-      console.error(`${ErrorMessages.FailedDeletingContext} ${chatId}`, error);
-      throw error;
-    }
   }
 
   /**
