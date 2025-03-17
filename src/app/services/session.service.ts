@@ -38,7 +38,7 @@ export class SessionService {
         if (!AppConstants.FOLDERS_TO_IGNORE.includes(sessionId)) {
           const config = await this.userConfigDataService.getConfigBySession(sessionId);
 
-          await this.loadSession(sessionId, config.isPaused);
+          this.loadSession(sessionId, config.isPaused);
         }
       }
     }
@@ -49,7 +49,7 @@ export class SessionService {
    * @description Loads a session using the provided sessionId.
    * @param {string} sessionId - The session identifier.
    */
-  private async loadSession(sessionId: string, isPaused: boolean): Promise<void> {
+  private loadSession(sessionId: string, isPaused: boolean): void {
     if (this.sessions.has(sessionId)) {
       console.log(`Session ${sessionId} is already loaded.`);
 
@@ -82,6 +82,7 @@ export class SessionService {
     };
     session.client.on(AppConstants.QR_KEY, async (qr: string) => {
       session.qrCode = await toDataURL(qr);
+      session.isClientReady = false;
       console.log(`QR generated for auto-loaded session ${sessionId} at ${new Date()}`);
     });
     session.client.on(AppConstants.READY_KEY, () => {
@@ -96,7 +97,7 @@ export class SessionService {
     });
 
     if (!isPaused) {
-      await session.client.initialize();
+      session.client.initialize();
 
       console.log(`${AppConstants.AUTO_LOAD_SESSION} ${sessionId}`);
     } else {
@@ -143,6 +144,7 @@ export class SessionService {
     };
     session.client.on(AppConstants.QR_KEY, async (qr: string) => {
       session.qrCode = await toDataURL(qr);
+      session.isClientReady = false;
       console.log(`QR generated for session ${sessionId} at ${new Date()}`);
     });
     session.client.on(AppConstants.READY_KEY, () => {
