@@ -467,19 +467,23 @@ export class MessageService {
           responseText = await this.assistant.processResponse(FunctionNames.ShouldSearchSlotsByService, availabilityMessage, senderId, userConfig);
           break;
         case FunctionNames.OrderConfirmed:
+        case FunctionNames.OrderUpdated:
+          const isOrderConfirmed = processed.functionName === FunctionNames.OrderConfirmed;
+          const orderMessage = isOrderConfirmed ? responseMessages.OrderConfirmed : responseMessages.OrderUpdated;
+          const requestType = isOrderConfirmed ? responseMessages.HasMadeAnOrder : responseMessages.HasUpdateAnOrder;
           const arrivalTime = processed.args.arrivalTime;
           const orderSummary = processed.args.summary;
           const orderTotal = processed.args.total;
           const paymentType = processed.args.paymentType;
           const replacements = { arrivalTime: arrivalTime, orderSummary: orderSummary, orderTotal: orderTotal, paymentType: paymentType };
 
-          const orderConfirmed = this.utils.replacePlaceholders(responseMessages.OrderConfirmed, replacements);
+          const orderStatus = this.utils.replacePlaceholders(orderMessage, replacements);
 
-          await this.replyToChat(currentChat, orderConfirmed);
-          const chatConfig = await this.assistant.addNewMessage(orderConfirmed, senderId, sessionId, GptRoles.Assistant);
+          await this.replyToChat(currentChat, orderStatus);
+          const chatConfig = await this.assistant.addNewMessage(orderStatus, senderId, sessionId, GptRoles.Assistant);
 
           notificationMessage = `${responseMessages.NotificationSystem}\n\n${responseMessages.PendingMessage1} *${chatConfig.clientName}*
-          \n${responseMessages.PendingMessage2} ${senderId}\n\n${responseMessages.NotifyQuotationRequest}\n\n📝 Resumen: ${orderSummary}\n\n💵 Total: ${orderTotal}\n\n🔄 Tipo de pago: ${paymentType}\n\n⏱️ Pasarán por el: ${arrivalTime}`;
+          \n${responseMessages.PendingMessage2} ${senderId}\n\n${requestType}\n\n📝 Resumen:\n\n${orderSummary}\n\n💵 Total: ${orderTotal}\n\n🔄 Tipo de pago: ${paymentType}\n\n⏱️ Pasarán por el: ${arrivalTime}`;
 
           await this.sendNotification(session, currentNotificationUser, notificationMessage);
 

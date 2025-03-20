@@ -90,6 +90,7 @@ export enum FunctionNames {
   GetUsersName = 'get_users_name',
   NotifyIHaveArrived = 'notify_i_have_arrived',
   OrderConfirmed = 'order_confirmed',
+  OrderUpdated = 'order_updated',
   ShouldSearchSlotsByService = 'should_search_slots_by_service',
   TalkToHuman = 'talk_to_human'
 };

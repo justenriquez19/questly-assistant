@@ -92,6 +92,7 @@ export class GptAssistant {
 
               return { functionName: currentFunction, args: searchArgs, message, context };
             case FunctionNames.OrderConfirmed:
+            case FunctionNames.OrderUpdated:
               const confirmationArgs = {
                 arrivalTime: parseContent.arrivalTime,
                 paymentType: parseContent.paymentType,
@@ -144,6 +145,7 @@ export class GptAssistant {
     try {
       const currentDateTime = this.utils.formatDate(new Date());
       const currentBehavior = `${botGeneralBehavior}\n\n[${AuxiliarMessages.CurrentDateTime} ${currentDateTime}]`;
+      const cleanMessages = this.utils.extractRelevantChatMessages(chatHistory);
       if (functionsList.length) {
         const chatResponse = await this.chatGpt.chat.completions.create({
           model: targetGptModel,
@@ -152,7 +154,7 @@ export class GptAssistant {
               role: GptRoles.System,
               content: currentBehavior
             },
-            ...chatHistory as []
+            ...cleanMessages as []
           ],
           tools: functionsList
         });
@@ -166,7 +168,7 @@ export class GptAssistant {
               role: GptRoles.System,
               content: currentBehavior
             },
-            ...chatHistory as []
+            ...cleanMessages as []
           ]
         });
 
@@ -197,6 +199,7 @@ export class GptAssistant {
       const botGeneralBehavior = dynamicContext.isActive ? `${botBehavior}\n\n${AuxiliarMessages.DynamicContext} ${dynamicContext.message}` : botBehavior;
       const currentDateTime = this.utils.formatDate(new Date());
       const currentBehavior = `${botGeneralBehavior}\n\n[${AuxiliarMessages.CurrentDateTime} ${currentDateTime}]`;
+      const cleanMessages = this.utils.extractRelevantChatMessages(chatHistory);
       const chatResponse = await this.chatGpt.chat.completions.create({
         model: AvailableGptModels.GPT_4_O,
         messages: [
@@ -204,7 +207,7 @@ export class GptAssistant {
             role: GptRoles.System,
             content: currentBehavior
           },
-          ...chatHistory as ChatCompletionMessageParam[],
+          ...cleanMessages as ChatCompletionMessageParam[],
           {
             role: GptRoles.Function,
             name: functionToExecute.functionName,

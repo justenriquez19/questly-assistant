@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 
 import { AppConstants, AppPatterns, RegexExpressions } from '../shared/constants/app.constants';
+import { ChatGptHistoryBody } from '../shared/interfaces/gpt-interfaces';
 
 export class CoreUtilFunctions {
   /**
@@ -165,6 +166,15 @@ export class CoreUtilFunctions {
    */
   public replacePlaceholders(text: string, replacements: Record<string, string>): string {
     return text.replace(/\${(.*?)}/g, (_, key) => replacements[key] || `\${${key}}`);
+  }
+
+  /**
+   * @description Filters an array of messages to include only the required fields (role and content).
+   * @param {Array<ChatGptHistoryBody>} messages - The original messages array.
+   * @returns {Array<ChatGptHistoryBody>} - The sanitized messages array.
+   */
+  public extractRelevantChatMessages(messages: Array<ChatGptHistoryBody>): Array<ChatGptHistoryBody> {
+    return messages.map(({ role, content }) => ({ role, content }));
   }
 
   /**
