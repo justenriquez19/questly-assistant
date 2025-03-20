@@ -218,6 +218,7 @@ export class MessageService {
     session.userMessageTimers.set(senderId, setTimeout(async () => {
       try {
         await this.processGroupedMessages(session, userConfig, senderId);
+        session.processingUsers.set(senderId, false);
         await this.processTempQueue(session, userConfig, senderId);
       } catch (error) {
         console.error(`Error processing messages for sender ${senderId}:`, error);
