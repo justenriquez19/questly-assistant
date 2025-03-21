@@ -148,7 +148,7 @@ export class MessageService {
       session.client.sendPresenceAvailable();
       const currentSenderId = message.from.replace(RegexExpressions.GET_PHONE_NUMBER, AppConstants.ONE_DOLLAR);
 
-      if (!ContactsToIgnore.includes(currentSenderId)) {
+      if (!ContactsToIgnore.includes(currentSenderId) || !currentSenderId.includes('.us')) {
         const messageContent = message.body ?? message.type;
         console.log(`${AuxiliarMessages.MessageReceivedFrom} ${currentSenderId} ${AuxiliarMessages.ToClient} ${sessionId}: ${messageContent}`);
 
