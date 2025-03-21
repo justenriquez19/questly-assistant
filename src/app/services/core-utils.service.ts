@@ -198,4 +198,15 @@ export class CoreUtilFunctions {
 
     return null;
   }
+
+  /**
+   * @description Waits for 2.5, 3, or 3.5 seconds to simulate a human delay.
+   * @returns {Promise<void>} - Resolves after the chosen delay.
+   */
+  public async delayRandom(): Promise<void> {
+    const secondsOptions = [2500, 3000, 3500];
+    const delay = secondsOptions[Math.floor(Math.random() * secondsOptions.length)];
+
+    return new Promise(resolve => setTimeout(resolve, delay));
+  }
 }

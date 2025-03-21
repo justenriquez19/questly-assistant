@@ -24,7 +24,8 @@ const ActiveFunctionSchema = new Schema(
 
 const UtilitiesSchema = new Schema(
   {
-    firstTimeWelcome: { type: Boolean, required: true }
+    firstTimeWelcome: { type: Boolean, required: true },
+    shouldSplitMessages: { type: Boolean, required: true }
   },
   { _id: false }
 );

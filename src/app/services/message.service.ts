@@ -490,6 +490,10 @@ export class MessageService {
 
           responseText = responseMessages.ConfirmationResponse;
           await this.assistant.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant)
+
+          await new Promise(resolve => setTimeout(resolve, 300));
+          await currentChat.sendStateTyping();
+          await this.utils.delayRandom();
           break;
         case FunctionNames.DetectMenuRequest:
           responseText = responseMessages.MenuShared;
@@ -511,7 +515,27 @@ export class MessageService {
           responseText += `\n\n${messageByMediaType}`;
         }
       }
-      await this.replyToChat(currentChat, responseText);
+
+      if (userConfig.utilities.shouldSplitMessages) {
+        const parts = responseText.split("⏭️").map(p => p.trim());
+
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i];
+          await this.replyToChat(currentChat, part);
+
+          const isLast = i === parts.length - 1;
+
+          if (!isLast) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+            await currentChat.sendStateTyping();
+            await this.utils.delayRandom();
+          }
+        }
+
+        currentChat.clearState();
+      } else {
+        await this.replyToChat(currentChat, responseText);
+      }
 
       if (processed.context.isFirstContact && userConfig.utilities.firstTimeWelcome) {
         responseText = processed.context.clientName !== AppConstants.DEF_USER_NAME

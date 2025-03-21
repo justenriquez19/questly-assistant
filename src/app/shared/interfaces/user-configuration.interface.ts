@@ -2,6 +2,7 @@ import { Document } from "mongoose";
 
 export interface IUtilities {
   firstTimeWelcome: boolean;
+  shouldSplitMessages: boolean;
 }
 
 export interface IDynamicContext {
