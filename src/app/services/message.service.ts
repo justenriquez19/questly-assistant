@@ -11,7 +11,8 @@ import {
   RegexExpressions,
   FunctionNames,
   GptRoles,
-  DefinedPaths
+  DefinedPaths,
+  firstEverContactTypes
 } from '../shared/constants/app.constants';
 import { ChatDataService } from '../data/chat-data.service';
 import { CoreUtilFunctions } from './core-utils.service';
@@ -148,7 +149,8 @@ export class MessageService {
       session.client.sendPresenceAvailable();
       const currentSenderId = message.from.replace(RegexExpressions.GET_PHONE_NUMBER, AppConstants.ONE_DOLLAR);
 
-      if (!ContactsToIgnore.includes(currentSenderId) || !currentSenderId.includes('.us')) {
+      if ((!ContactsToIgnore.includes(currentSenderId) && !currentSenderId.includes(AppConstants.WHATSAPP_GROUP_KEY)) &&
+        !firstEverContactTypes.includes(message.type)) {
         const messageContent = message.body ?? message.type;
         console.log(`${AuxiliarMessages.MessageReceivedFrom} ${currentSenderId} ${AuxiliarMessages.ToClient} ${sessionId}: ${messageContent}`);
 

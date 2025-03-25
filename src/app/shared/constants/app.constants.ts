@@ -45,6 +45,7 @@ export class AppConstants {
   public static readonly TWO_DIGIT_KEY = '2-digit';
   public static readonly UTC_KEY: string = 'UTC';
   public static readonly WEB_VERSION_PATCH: string = 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html';
+  public static readonly WHATSAPP_GROUP_KEY: string = '@g.us';
   public static readonly WHATSAPP_USER_KEY: string = '@c.us';
 };
 
@@ -108,6 +109,11 @@ export enum MediaTypes {
   Video = 'video',
   VoiceMessage = 'ptt'
 };
+
+export const firstEverContactTypes: Array<string> = [
+  MediaTypes.E2ENotification,
+  MediaTypes.NotificationTemplate,
+];
 
 export enum ErrorMessages {
   CallingError = 'Error calling OpenAi endpoint',
