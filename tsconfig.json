@@ -11,5 +11,6 @@
     "strict": true,
     "target": "ESNext",
     "typeRoots": ["node_modules/@type", "@types"]
-  }
+  },
+  "include": ["src"]
 }

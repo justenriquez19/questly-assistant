@@ -62,3 +62,6 @@ eng.traineddata
 
 # Bot behavior config
 editable_behavior.ts
+
+# Ignore compiled JavaScript output
+dist/
