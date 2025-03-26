@@ -86,6 +86,7 @@ export class MessageService {
       }
 
       if (recipientPhoneNumber) {
+        let hasUpdatedContext: boolean = false;
         let context = await this.chatDataService.getContextByChatId(recipientPhoneNumber, sessionId);
 
         if (context && context.shouldRespond) {
@@ -94,6 +95,7 @@ export class MessageService {
             sessionId: userConfig.sessionId,
             updateFields: { shouldRespond: false, timeOfLastMessage: new Date() }
           });
+          hasUpdatedContext = true;
         } else if (!context) {
           await this.assistant.addNewUserMessage(`${AuxiliarMessages.TempContext}${recipientPhoneNumber}`, recipientPhoneNumber, AppConstants.DEF_USER_NAME, sessionId);
           context = await this.chatDataService.updateChat({
@@ -101,20 +103,23 @@ export class MessageService {
             sessionId: userConfig.sessionId,
             updateFields: { shouldRespond: false, shouldDeleteAfterContact: true, timeOfLastMessage: new Date() }
           });
+          hasUpdatedContext = true;
         }
-        const correctlyDisabled = `${userConfig.responseMessages.NotificationSystem}\n\n${userConfig.responseMessages.ManualDeactivation}
-          \n${recipientPhoneNumber}\n\n${userConfig.responseMessages.NoInterruptionContact}\n\n${AppConstants.NOT_REPLY}`;
-        const errorDuringDisablingChat = `${userConfig.responseMessages.NotificationSystem}\n\n${userConfig.responseMessages.ManualDeactivationFailed}
-          \n${recipientPhoneNumber}\n\n${userConfig.responseMessages.ManualDeactivationTryAgain}\n\n${AppConstants.NOT_REPLY}`;
-        const notificationMessage = context.shouldRespond === false ? correctlyDisabled : errorDuringDisablingChat;
 
-        if (isAdminChat) {
-          const currentChat = await message.getChat();
-          await this.replyToChat(currentChat, notificationMessage);
-        } else {
-          await this.sendNotification(session, userConfig.notificationContacts.mainContact, notificationMessage);
+        if (hasUpdatedContext) {
+          const correctlyDisabled = `${userConfig.responseMessages.NotificationSystem}\n\n${userConfig.responseMessages.ManualDeactivation}
+          \n${recipientPhoneNumber}\n\n${userConfig.responseMessages.NoInterruptionContact}\n\n${AppConstants.NOT_REPLY}`;
+          const errorDuringDisablingChat = `${userConfig.responseMessages.NotificationSystem}\n\n${userConfig.responseMessages.ManualDeactivationFailed}
+          \n${recipientPhoneNumber}\n\n${userConfig.responseMessages.ManualDeactivationTryAgain}\n\n${AppConstants.NOT_REPLY}`;
+          const notificationMessage = context.shouldRespond === false ? correctlyDisabled : errorDuringDisablingChat;
+
+          if (isAdminChat) {
+            const currentChat = await message.getChat();
+            await this.replyToChat(currentChat, notificationMessage);
+          } else {
+            await this.sendNotification(session, userConfig.notificationContacts.mainContact, notificationMessage);
+          }
         }
-        return;
       } else {
         const contextToolResponse = await this.processDynamicContextUpdate(messageContent, userConfig);
         const dynamicConxtext = contextToolResponse?.newDynamicConxtext;
