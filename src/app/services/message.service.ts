@@ -345,7 +345,7 @@ export class MessageService {
     }
     const validatedUserName = (await this.assistant.isNameValid(userName)).firstName;
 
-    if (context.isFirstContact) {
+    if (context.isFirstContact && userConfig.utilities.firstTimeWelcome) {
       messageByMediaType = isBankTransferImage ? AppConstants.EMPTY_STRING : this.getErrorMessageByMediaType(messageType, false, userConfig);
       const messageByUsername = validatedUserName !== AppConstants.DEF_USER_NAME
         ? `${responseMessages.Hello} ${responseMessages.FirstContact1}${validatedUserName}${responseMessages.FirstContact2}`
