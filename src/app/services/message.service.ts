@@ -425,7 +425,7 @@ export class MessageService {
         case FunctionNames.NotifyIHaveArrived:
           responseText = responseMessages.WelcomeCustomer;
           currentClientName = (await this.assistant.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant)).clientName;
-          imagePath = path.join(__dirname, DefinedPaths.BellLocation);
+          imagePath = path.join(process.cwd(), DefinedPaths.BellLocation);
           media = MessageMedia.fromFilePath(imagePath);
 
           await this.replyToChat(currentChat, media);
@@ -505,7 +505,7 @@ export class MessageService {
         case FunctionNames.DetectMenuRequest:
           responseText = responseMessages.MenuShared;
           await this.assistant.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant);
-          imagePath = path.join(__dirname, DefinedPaths.MenuLocation);
+          imagePath = path.join(process.cwd(), DefinedPaths.MenuLocation);
           media = MessageMedia.fromFilePath(imagePath);
 
           await this.replyToChat(currentChat, media);

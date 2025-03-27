@@ -153,8 +153,8 @@ export class RegexExpressions {
 };
 
 export enum DefinedPaths {
-  BellLocation = '../media/images/bell_location.jpg',
-  MenuLocation = '../media/images/menu.jpg'
+  BellLocation = 'assets/media/images/bell_location.jpg',
+  MenuLocation = 'assets/media/images/menu.jpg'
 };
 
 export const AppPatterns = {
