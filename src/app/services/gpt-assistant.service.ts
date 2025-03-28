@@ -80,7 +80,7 @@ export class GptAssistant {
 
       if (manualDetectedFunction !== null) {
         const parseContent = JSON.parse(manualDetectedFunction);
-        const currentFunction = parseContent?.name;
+        const currentFunction = parseContent?.function;
         if (currentFunction) {
           switch (currentFunction) {
             case FunctionNames.ShouldSearchSlotsByService:
@@ -95,6 +95,7 @@ export class GptAssistant {
             case FunctionNames.OrderUpdated:
               const confirmationArgs = {
                 arrivalTime: parseContent.arrivalTime,
+                clientName: parseContent.clientName,
                 paymentType: parseContent.paymentType,
                 status: parseContent.status,
                 summary: parseContent.summary,

@@ -43,7 +43,7 @@ export class CoreUtilFunctions {
 
       const parsedMessage = JSON.parse(potentialJson);
 
-      if (parsedMessage?.name && typeof parsedMessage?.name === AppConstants.STRING_TYPE) {
+      if (parsedMessage?.function && typeof parsedMessage?.function === AppConstants.STRING_TYPE) {
         return JSON.stringify(parsedMessage);
       }
 

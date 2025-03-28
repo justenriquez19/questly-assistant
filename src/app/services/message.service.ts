@@ -343,9 +343,9 @@ export class MessageService {
     if (mediaType === MediaTypes.Image) {
       isBankTransferImage = await this.ocrService.detectBankTransfer(userConfig, message, senderId, session);
     }
-    const validatedUserName = (await this.assistant.isNameValid(userName)).firstName;
 
     if (context.isFirstContact && userConfig.utilities.firstTimeWelcome) {
+      const validatedUserName = (await this.assistant.isNameValid(userName)).firstName;
       messageByMediaType = isBankTransferImage ? AppConstants.EMPTY_STRING : this.getErrorMessageByMediaType(messageType, false, userConfig);
       const messageByUsername = validatedUserName !== AppConstants.DEF_USER_NAME
         ? `${responseMessages.Hello} ${responseMessages.FirstContact1}${validatedUserName}${responseMessages.FirstContact2}`
@@ -483,12 +483,21 @@ export class MessageService {
           const orderSummary = processed.args.summary;
           const orderTotal = processed.args.total;
           const paymentType = processed.args.paymentType;
+          const clientName = processed.args.clientName;
           const replacements = { arrivalTime: arrivalTime, orderSummary: orderSummary, orderTotal: orderTotal, paymentType: paymentType };
 
           const orderStatus = this.utils.replacePlaceholders(orderMessage, replacements);
 
           await this.replyToChat(currentChat, orderStatus);
-          const chatConfig = await this.assistant.addNewMessage(orderStatus, senderId, sessionId, GptRoles.Assistant);
+          let chatConfig = await this.assistant.addNewMessage(orderStatus, senderId, sessionId, GptRoles.Assistant);
+
+          if (chatConfig.clientName !== clientName) {
+            chatConfig = await this.chatDataService.updateChat({
+              chatId: senderId,
+              sessionId: userConfig.sessionId,
+              updateFields: { clientName: clientName }
+            });
+          }
 
           notificationMessage = `${responseMessages.NotificationSystem}\n\n${responseMessages.PendingMessage1} *${chatConfig.clientName}*
           \n${responseMessages.PendingMessage2} ${senderId}\n\n${requestType}\n\n📝 Resumen:\n\n${orderSummary}\n\n💵 Total: ${orderTotal}\n\n🔄 Tipo de pago: ${paymentType}\n\n⏱️ Pasarán por el: ${arrivalTime}`;
