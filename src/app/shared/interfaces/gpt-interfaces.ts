@@ -1,8 +1,15 @@
-import { ChatCompletionTool } from "openai/resources";
+import { ChatCompletionMessage, ChatCompletionTool } from "openai/resources";
 import { Message } from "whatsapp-web.js";
 
 import { IChatStructure } from "./persistent-chats.interface";
 import { IUserConfiguration } from "./user-configuration.interface";
+
+export interface IProcessFunctions {
+  args: Record<string, string>;
+  context: IChatStructure;
+  functionName: string;
+  message: ChatCompletionMessage;
+}
 
 export interface ChatGptHistoryBody {
   content: string;

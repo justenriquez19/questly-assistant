@@ -1,17 +1,18 @@
 import Tesseract from 'tesseract.js';
 import { Buffer } from 'buffer';
+
 import { AppConstants, AppPatterns, AuxiliarMessages, MediaTypes, ErrorMessages, GptRoles } from '../shared/constants/app.constants';
+import { ConversationManager } from './conversation-manager.service';
 import { ExtendedMessage } from '../shared/interfaces/gpt-interfaces';
-import { GptAssistant } from './gpt-assistant.service';
-import { SessionContext } from '../shared/interfaces/session.interfaces';
 import { IUserConfiguration } from '../shared/interfaces/user-configuration.interface';
+import { SessionContext } from '../shared/interfaces/session.interfaces';
 
 /**
  * @description Provides optical character recognition.
  */
 export class OcrService {
   constructor(
-    private assistant: GptAssistant
+    private conversationManager: ConversationManager
   ) { }
 
   /**
@@ -19,6 +20,7 @@ export class OcrService {
    * @param {IUserConfiguration} userConfig - The session identifier.
    * @param {ExtendedMessage} message - The image message.
    * @param {string} senderId - The sender identifier.
+   * @param {SessionContext} session - Current session for processing messages.
    * @returns {Promise<boolean>} True if bank transfer is detected.
    */
   public async detectBankTransfer(userConfig: IUserConfiguration, message: ExtendedMessage,
@@ -49,8 +51,8 @@ export class OcrService {
 
       if (detectedBankPattern) {
         const responseText = responseMessages.ThanksForYourPayment;
-        await this.assistant.addNewMessage(`${MediaTypes.Image}: ${AuxiliarMessages.BankTransferPayment}`, senderId, sessionId, GptRoles.User);
-        const currentClientName = (await this.assistant.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant)).clientName;
+        await this.conversationManager.addNewMessage(`${MediaTypes.Image}: ${AuxiliarMessages.BankTransferPayment}`, senderId, sessionId, GptRoles.User);
+        const currentClientName = (await this.conversationManager.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant)).clientName;
         session.client.sendMessage(message.from, responseText);
         const notificationMessage = `${responseMessages.NotificationSystem}\n\n${responseMessages.PendingMessage1} ${currentClientName}
           \n${responseMessages.PendingMessage2} ${senderId}\n\n${responseMessages.BankTransferVoucherReceived}\n\n${AppConstants.NOT_REPLY}`;
@@ -61,7 +63,7 @@ export class OcrService {
         return false;
       }
     } catch (error) {
-      console.error(ErrorMessages.TesseractProccesingError, error);
+      console.error(ErrorMessages.TesseractProcessingError, error);
       return false;
     }
   }

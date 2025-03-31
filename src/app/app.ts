@@ -5,30 +5,34 @@ import { AppConstants } from './shared/constants/app.constants';
 import { AuthController } from './controllers/auth.controller';
 import { AuthMiddleware } from './middlewares/auth.middleware';
 import { ChatDataService } from './data/chat-data.service';
-import { CoreUtilFunctions } from './services/core-utils.service';
+import { CoreUtils } from './services/core-utils.service';
 import { GptAssistant } from './services/gpt-assistant.service';
 import { MessageService } from './services/message.service';
 import { MongoService } from './data/mongodb.service';
 import { OcrService } from './services/ocr.service';
 import { SessionService } from './services/session.service';
 import { UserConfigDataService } from './data/user-config-data.service';
+import { AiTools } from './services/ai-tools.service';
+import { ConversationManager } from './services/conversation-manager.service';
 
 /**
  * @description Handles WhatsApp bot interactions and server initialization for multiple sessions.
  */
 export class QuestlyAi {
+  public aiTools: AiTools
   public amelia: AmeliaService;
   public app: Express;
   public assistant: GptAssistant;
   public authController: AuthController;
-  public messageService: MessageService;
   public chatDataService: ChatDataService;
-  public userConfigDataService: UserConfigDataService;
+  public conversationManager: ConversationManager;
+  public messageService: MessageService;
   public mongoService: MongoService;
   public ocrService: OcrService;
   public port: number;
   public sessionService: SessionService;
-  public utils: CoreUtilFunctions;
+  public userConfigDataService: UserConfigDataService;
+  public utils: CoreUtils;
 
   /**
    * @description Initializes the main application services and dependencies.
@@ -39,10 +43,12 @@ export class QuestlyAi {
     this.userConfigDataService = new UserConfigDataService();
     this.amelia = new AmeliaService();
     this.authController = new AuthController();
-    this.utils = new CoreUtilFunctions();
-    this.assistant = new GptAssistant(this.chatDataService, this.utils);
-    this.ocrService = new OcrService(this.assistant);
-    this.messageService = new MessageService(this.amelia, this.assistant, this.chatDataService, this.ocrService, this.userConfigDataService, this.utils);
+    this.utils = new CoreUtils();
+    this.assistant = new GptAssistant(this.utils);
+    this.aiTools = new AiTools(this.assistant);
+    this.conversationManager = new ConversationManager(this.aiTools, this.assistant, this.chatDataService, this.utils);
+    this.ocrService = new OcrService(this.conversationManager);
+    this.messageService = new MessageService(this.aiTools, this.amelia, this.chatDataService, this.conversationManager, this.ocrService, this.userConfigDataService, this.utils);
     this.sessionService = new SessionService(this.messageService, this.userConfigDataService, this.utils);
     this.port = Number(process.env.PORT) || AppConstants.CURRENT_PORT;
     this.app = express();

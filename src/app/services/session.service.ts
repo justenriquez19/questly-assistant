@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { AppConstants, ErrorMessages } from '../shared/constants/app.constants';
-import { CoreUtilFunctions } from './core-utils.service';
+import { CoreUtils } from './core-utils.service';
 import { ExtendedMessage } from '../shared/interfaces/gpt-interfaces';
 import { MessageService } from './message.service';
 import { SessionContext } from '../shared/interfaces/session.interfaces';
@@ -20,7 +20,7 @@ export class SessionService {
   constructor(
     private messageService: MessageService,
     private userConfigDataService: UserConfigDataService,
-    private utils: CoreUtilFunctions
+    private utils: CoreUtils
   ) {
     this.sessions = new Map();
   }

@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import { AppConstants, AppPatterns, RegexExpressions } from '../shared/constants/app.constants';
 import { ChatGptHistoryBody } from '../shared/interfaces/gpt-interfaces';
 
-export class CoreUtilFunctions {
+export class CoreUtils {
   /**
    * @description Constructor for the UsefulFunctions class.
    */

@@ -1,6 +1,7 @@
 import path from 'path';
 import WAWebJS, { Chat, MessageMedia } from 'whatsapp-web.js';
 
+import { AiTools } from './ai-tools.service';
 import { AmeliaService } from './amelia.service';
 import {
   AppConstants,
@@ -15,9 +16,9 @@ import {
   firstEverContactTypes
 } from '../shared/constants/app.constants';
 import { ChatDataService } from '../data/chat-data.service';
-import { CoreUtilFunctions } from './core-utils.service';
+import { ConversationManager } from './conversation-manager.service';
+import { CoreUtils } from './core-utils.service';
 import { ExtendedMessage } from '../shared/interfaces/gpt-interfaces';
-import { GptAssistant } from './gpt-assistant.service';
 import { IProcessDynamicContext } from '../shared/interfaces/gpt-tools-interfaces';
 import { IUserConfiguration } from '../shared/interfaces/user-configuration.interface';
 import { OcrService } from './ocr.service';
@@ -26,12 +27,13 @@ import { UserConfigDataService } from '../data/user-config-data.service';
 
 export class MessageService {
   constructor(
+    private aiTools: AiTools,
     private amelia: AmeliaService,
-    private assistant: GptAssistant,
     private chatDataService: ChatDataService,
+    private conversationManager: ConversationManager,
     private ocrService: OcrService,
     private userConfigDataService: UserConfigDataService,
-    private utils: CoreUtilFunctions
+    private utils: CoreUtils
   ) { }
 
   /**
@@ -97,7 +99,7 @@ export class MessageService {
           });
           hasUpdatedContext = true;
         } else if (!context) {
-          await this.assistant.addNewUserMessage(`${AuxiliarMessages.TempContext}${recipientPhoneNumber}`, recipientPhoneNumber, AppConstants.DEF_USER_NAME, sessionId);
+          await this.conversationManager.addNewUserMessage(`${AuxiliarMessages.TempContext}${recipientPhoneNumber}`, recipientPhoneNumber, AppConstants.DEF_USER_NAME, sessionId);
           context = await this.chatDataService.updateChat({
             chatId: recipientPhoneNumber,
             sessionId: userConfig.sessionId,
@@ -174,7 +176,7 @@ export class MessageService {
                 updateFields: { shouldRespond: true }
               });
             } else {
-              await this.assistant.addNewMessage(AuxiliarMessages.NewConversationStarted, currentSenderId, userConfig.sessionId, GptRoles.System);
+              await this.conversationManager.addNewMessage(AuxiliarMessages.NewConversationStarted, currentSenderId, userConfig.sessionId, GptRoles.System);
             }
           }
         }
@@ -338,26 +340,26 @@ export class MessageService {
     let messageByMediaType: string;
     let responseText: string;
     let isBankTransferImage = false;
-    let context = await this.chatDataService.getContextByChatId(senderId, userConfig.sessionId) || await this.assistant.addNewUserMessage(`*${mediaType}*`, senderId, userName, sessionId);
+    let context = await this.chatDataService.getContextByChatId(senderId, userConfig.sessionId) || await this.conversationManager.addNewUserMessage(`*${mediaType}*`, senderId, userName, sessionId);
 
     if (mediaType === MediaTypes.Image) {
       isBankTransferImage = await this.ocrService.detectBankTransfer(userConfig, message, senderId, session);
     }
 
     if (context.isFirstContact && userConfig.utilities.firstTimeWelcome) {
-      const validatedUserName = (await this.assistant.isNameValid(userName)).firstName;
+      const validatedUserName = (await this.aiTools.isNameValid(userName)).firstName;
       messageByMediaType = isBankTransferImage ? AppConstants.EMPTY_STRING : this.getErrorMessageByMediaType(messageType, false, userConfig);
       const messageByUsername = validatedUserName !== AppConstants.DEF_USER_NAME
         ? `${responseMessages.Hello} ${responseMessages.FirstContact1}${validatedUserName}${responseMessages.FirstContact2}`
         : `${responseMessages.Hello} ${responseMessages.FirstContactWithNoName}`;
       responseText = messageByMediaType !== AppConstants.EMPTY_STRING ? `${messageByUsername}\n\n${messageByMediaType}` : messageByUsername;
-      await this.assistant.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant);
+      await this.conversationManager.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant);
       await this.replyToChat(currentChat, responseText);
     } else {
       if (!isBankTransferImage) {
         messageByMediaType = this.getErrorMessageByMediaType(messageType, true, userConfig);
-        await this.assistant.addNewMessage(`*${messageType}*`, senderId, sessionId, GptRoles.User);
-        await this.assistant.addNewMessage(messageByMediaType, senderId, sessionId, GptRoles.Assistant);
+        await this.conversationManager.addNewMessage(`*${messageType}*`, senderId, sessionId, GptRoles.User);
+        await this.conversationManager.addNewMessage(messageByMediaType, senderId, sessionId, GptRoles.Assistant);
         await this.replyToChat(currentChat, messageByMediaType);
       }
     }
@@ -393,7 +395,7 @@ export class MessageService {
         }
       }
       const messageContent = this.combineMessagesContent(messagesToCombine);
-      const processed = await this.assistant.processFunctions(messageContent, senderId, senderUserName, userConfig);
+      const processed = await this.conversationManager.processFunctions(messageContent, senderId, senderUserName, userConfig);
       let responseText: string;
       let currentClientName: string;
       let notificationMessage: string;
@@ -407,7 +409,7 @@ export class MessageService {
             updateFields: { shouldRespond: false }
           });
           responseText = responseMessages.StopConversation;
-          currentClientName = (await this.assistant.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant)).clientName;
+          currentClientName = (await this.conversationManager.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant)).clientName;
           notificationMessage = `${responseMessages.NotificationSystem}\n\n${responseMessages.PendingMessage1} ${currentClientName}
             \n${responseMessages.PendingMessage2} ${senderId}\n\n${responseMessages.AskTalkingToYou}
             \n${responseMessages.NoInterruptionContact}\n\n${AppConstants.NOT_REPLY}`;
@@ -420,11 +422,11 @@ export class MessageService {
             sessionId: userConfig.sessionId,
             updateFields: { clientName: currentClientName }
           });
-          responseText = await this.assistant.processResponse(FunctionNames.GetUsersName, `${responseMessages.YourNameIs} ${currentClientName}`, senderId, userConfig);
+          responseText = await this.conversationManager.processFunction(FunctionNames.GetUsersName, `${responseMessages.YourNameIs} ${currentClientName}`, senderId, userConfig);
           break;
         case FunctionNames.NotifyIHaveArrived:
           responseText = responseMessages.WelcomeCustomer;
-          currentClientName = (await this.assistant.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant)).clientName;
+          currentClientName = (await this.conversationManager.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant)).clientName;
           imagePath = path.join(process.cwd(), DefinedPaths.BellLocation);
           media = MessageMedia.fromFilePath(imagePath);
 
@@ -442,7 +444,7 @@ export class MessageService {
             updateFields: { shouldRespond: false }
           });
           responseText = mediaType !== MediaTypes.Chat ? responseMessages.QuotationWithImageResponse : responseMessages.QuotationResponse;
-          currentClientName = (await this.assistant.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant)).clientName;
+          currentClientName = (await this.conversationManager.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant)).clientName;
           notificationMessage = `${responseMessages.NotificationSystem}\n\n${responseMessages.PendingMessage1} *${currentClientName}*
           \n${responseMessages.PendingMessage2} ${senderId}\n\n${responseMessages.NotifyQuotationRequest}\n\n"${messageContent}"`;
 
@@ -463,7 +465,7 @@ export class MessageService {
         case FunctionNames.ShouldSearchSlotsByService:
           const startDate = processed.args.startDate;
           const endDate = processed.args.endDate;
-          const serviceId = processed.args.serviceId;
+          const serviceId = Number(processed.args.serviceId);
           const response = await this.amelia.getSlots(serviceId, startDate, endDate);
           let availabilityMessage: string = AppConstants.EMPTY_STRING;
 
@@ -472,7 +474,7 @@ export class MessageService {
           } else {
             availabilityMessage = AuxiliarMessages.NotAvailableDates;
           }
-          responseText = await this.assistant.processResponse(FunctionNames.ShouldSearchSlotsByService, availabilityMessage, senderId, userConfig);
+          responseText = await this.conversationManager.processFunction(FunctionNames.ShouldSearchSlotsByService, availabilityMessage, senderId, userConfig);
           break;
         case FunctionNames.OrderConfirmed:
         case FunctionNames.OrderUpdated:
@@ -489,7 +491,7 @@ export class MessageService {
           const orderStatus = this.utils.replacePlaceholders(orderMessage, replacements);
 
           await this.replyToChat(currentChat, orderStatus);
-          let chatConfig = await this.assistant.addNewMessage(orderStatus, senderId, sessionId, GptRoles.Assistant);
+          let chatConfig = await this.conversationManager.addNewMessage(orderStatus, senderId, sessionId, GptRoles.Assistant);
 
           if (chatConfig.clientName !== clientName) {
             chatConfig = await this.chatDataService.updateChat({
@@ -505,7 +507,7 @@ export class MessageService {
           await this.sendNotification(session, currentNotificationUser, notificationMessage);
 
           responseText = responseMessages.ConfirmationResponse;
-          await this.assistant.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant)
+          await this.conversationManager.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant)
 
           await new Promise(resolve => setTimeout(resolve, 300));
           await currentChat.sendStateTyping();
@@ -513,7 +515,7 @@ export class MessageService {
           break;
         case FunctionNames.DetectMenuRequest:
           responseText = responseMessages.MenuShared;
-          await this.assistant.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant);
+          await this.conversationManager.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant);
           imagePath = path.join(process.cwd(), DefinedPaths.MenuLocation);
           media = MessageMedia.fromFilePath(imagePath);
 
@@ -559,7 +561,7 @@ export class MessageService {
           : `${responseMessages.ByTheWay} ${responseMessages.FirstContactWithNoName}`;
         const number = `${AppConstants.MX_PREFIX}${senderId}${AppConstants.WHATSAPP_USER_KEY}`;
         session.client.sendMessage(number, responseText);
-        await this.assistant.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant);
+        await this.conversationManager.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant);
         await this.chatDataService.updateChat({
           chatId: senderId,
           sessionId: userConfig.sessionId,
@@ -668,7 +670,7 @@ export class MessageService {
    * @returns {Promise<IProcessDynamicContext>} - Updated dynamic context and update status.
    */
   private async processDynamicContextUpdate(messageContent: string, userConfig: IUserConfiguration): Promise<IProcessDynamicContext> {
-    const dynamicToolResponse = await this.assistant.shouldUpdateDynamicContext(messageContent, userConfig);
+    const dynamicToolResponse = await this.aiTools.shouldUpdateDynamicContext(messageContent, userConfig);
 
     if (dynamicToolResponse.shouldUpdate) {
       const newDynamicConxtext = {
