@@ -41,7 +41,7 @@ export class ConversationManager {
     const dynamicContext = userConfig.dynamicContext;
 
     const chatGptResponse = await this.assistant.getChatGptResponse(currentMessage, currentFunctions,
-      behavior, AvailableGptModels.GPT_4_O, true, dynamicContext);
+      behavior, AvailableGptModels.GPT4_1, true, dynamicContext);
     let message = chatGptResponse.choices[0].message;
 
     if (message.tool_calls?.length) {
@@ -63,7 +63,7 @@ export class ConversationManager {
         }
       }
       message = (await this.assistant.getChatGptResponse(context.chatHistory, [],
-        behavior, AvailableGptModels.GPT_4_O, true, dynamicContext)).choices[0].message;
+        behavior, AvailableGptModels.GPT4_1, true, dynamicContext)).choices[0].message;
       const manualDetectedFunction = this.utils.detectFunctionCalled(message.content);
 
       if (manualDetectedFunction !== null) {
@@ -119,7 +119,7 @@ export class ConversationManager {
     };
 
     const chatGptResponse = await this.assistant.sendFunctionToChatGpt(context.chatHistory,
-      functionToExecute, behavior, AvailableGptModels.GPT_4_O, true, dynamicContext);
+      functionToExecute, behavior, AvailableGptModels.GPT4_1, true, dynamicContext);
     const content = chatGptResponse.choices[0].message.content as string;
     await this.addNewMessage(content, context.chatId, context.sessionId, GptRoles.Assistant);
 

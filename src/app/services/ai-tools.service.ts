@@ -26,7 +26,7 @@ export class AiTools {
 
     const chatHistory: ChatGptHistoryBody[] = [{ content: name, role: GptRoles.User }];
     const expectedBehavior = isMessageDetection ? MESSAGE_NAME_DETECTION_DESCRIPTION : WHATSAPP_NAME_DETECTION_DESCRIPTION;
-    const targetGptModel = AvailableGptModels.GPT_4_O;
+    const targetGptModel = AvailableGptModels.GPT4_1_M;
 
     try {
       const chatResponse = await this.assistant.getChatGptResponse(chatHistory, [], expectedBehavior, targetGptModel, false);
@@ -65,7 +65,7 @@ export class AiTools {
     const tentativeInstruction = `${GptToolsMessages.TentativeNewInstruction} ${messageContent}`;
     const chatHistory: ChatGptHistoryBody[] = [{ content: currentDirective, role: GptRoles.System }, { content: tentativeInstruction, role: GptRoles.User }];
     const expectedBehavior = DYNAMIC_CONTEXT_DETECTION_TOOL;
-    const targetGptModel = AvailableGptModels.GPT_4_O;
+    const targetGptModel = AvailableGptModels.GPT4_1_M;
 
     try {
       const chatResponse = await this.assistant.getChatGptResponse(chatHistory, [], expectedBehavior, targetGptModel, false);

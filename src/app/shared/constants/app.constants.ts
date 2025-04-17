@@ -69,7 +69,9 @@ export enum AuxiliarMessages {
 };
 
 export class AvailableGptModels {
-  public static readonly GPT_4_O = 'gpt-4o';
+  public static readonly GPT4_1 = 'gpt-4.1';
+  public static readonly GPT4_1_M = 'gpt-4.1-mini';
+  public static readonly GPT4_O = 'gpt-4o';
 };
 
 export enum GptToolsMessages {
