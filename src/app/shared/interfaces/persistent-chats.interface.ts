@@ -10,6 +10,7 @@ export interface IChatStructure extends Document {
   chatHistory: IChatGptHistoryBody[];
   chatId: string;
   clientName: string;
+  isConfirmationPhase: boolean;
   isFirstContact: boolean;
   sessionId: string;
   shouldDeleteAfterContact: boolean;

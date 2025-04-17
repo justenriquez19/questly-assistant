@@ -1,6 +1,14 @@
 import mongoose, { Schema } from 'mongoose';
 import { IUserConfiguration } from '../interfaces/user-configuration.interface';
 
+const ActiveUtilitiesSchema = new Schema (
+  {
+    isActive: { type: Boolean, required: true },
+    triggers: { type: [String], required: true }
+  },
+  { _id: false }
+);
+
 const FunctionParametersSchema = new Schema(
   {
     type: { type: String, required: true },
@@ -25,6 +33,7 @@ const ActiveFunctionSchema = new Schema(
 const UtilitiesSchema = new Schema(
   {
     firstTimeWelcome: { type: Boolean, required: true },
+    detectConfirmationPhase: { type: ActiveUtilitiesSchema, required: true },
     shouldSplitMessages: { type: Boolean, required: true }
   },
   { _id: false }

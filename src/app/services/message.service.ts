@@ -337,6 +337,7 @@ export class MessageService {
     const sessionId = userConfig.sessionId;
     const messageType = message.type;
     const responseMessages = userConfig.responseMessages;
+    const utilities = userConfig.utilities;
     let messageByMediaType: string;
     let responseText: string;
     let isBankTransferImage = false;
@@ -346,7 +347,7 @@ export class MessageService {
       isBankTransferImage = await this.ocrService.detectBankTransfer(userConfig, message, senderId, session);
     }
 
-    if (context.isFirstContact && userConfig.utilities.firstTimeWelcome) {
+    if (context.isFirstContact && utilities.firstTimeWelcome) {
       const validatedUserName = (await this.aiTools.isNameValid(userName)).firstName;
       messageByMediaType = isBankTransferImage ? AppConstants.EMPTY_STRING : this.getErrorMessageByMediaType(messageType, false, userConfig);
       const messageByUsername = validatedUserName !== AppConstants.DEF_USER_NAME
@@ -361,6 +362,14 @@ export class MessageService {
         await this.conversationManager.addNewMessage(`*${messageType}*`, senderId, sessionId, GptRoles.User);
         await this.conversationManager.addNewMessage(messageByMediaType, senderId, sessionId, GptRoles.Assistant);
         await this.replyToChat(currentChat, messageByMediaType);
+      } else if (utilities.detectConfirmationPhase.isActive && context.isConfirmationPhase) {
+        const chatType = MediaTypes.Chat as string;
+        const confirmationMessage = {
+          body: AuxiliarMessages.BankTransferDone,
+          type: chatType
+        } as ExtendedMessage;
+
+        await this.handleTextMessage(userConfig, session, [confirmationMessage], senderId, userName, currentChat, chatType);
       }
     }
   }
@@ -381,6 +390,7 @@ export class MessageService {
     try {
       const messagesToCombine: Array<ExtendedMessage> = [];
       const responseMessages = userConfig.responseMessages;
+      const utilities = userConfig.utilities;
       const sessionId = userConfig.sessionId;
       const currentNotificationUser = userConfig.notificationContacts.mainContact;
       let isBankTransferImage = false;
@@ -512,6 +522,12 @@ export class MessageService {
           await new Promise(resolve => setTimeout(resolve, 300));
           await currentChat.sendStateTyping();
           await this.utils.delayRandom();
+
+          await this.chatDataService.updateChat({
+            chatId: senderId,
+            sessionId: userConfig.sessionId,
+            updateFields: { isConfirmationPhase: false }
+          });
           break;
         case FunctionNames.DetectMenuRequest:
           responseText = responseMessages.MenuShared;
@@ -526,6 +542,24 @@ export class MessageService {
           break;
       }
 
+      if (utilities.detectConfirmationPhase.isActive) {
+        let isConfirmationMessage = false;
+
+        for (const phrase of utilities.detectConfirmationPhase.triggers) {
+          if (responseText.includes(phrase)) {
+            isConfirmationMessage = true;
+          }
+        }
+
+        if (isConfirmationMessage) {
+          await this.chatDataService.updateChat({
+            chatId: senderId,
+            sessionId: userConfig.sessionId,
+            updateFields: { isConfirmationPhase: true }
+          });
+        }
+      }
+
       if ((mediaType !== MediaTypes.Chat && !isBankTransferImage) || mediaType === MediaTypes.Mixed) {
         const messageByMediaType = this.getErrorMessageByMediaType(mediaType, false, userConfig);
 
@@ -534,7 +568,7 @@ export class MessageService {
         }
       }
 
-      if (userConfig.utilities.shouldSplitMessages) {
+      if (utilities.shouldSplitMessages) {
         const parts = responseText.split("⏭️").map(p => p.trim());
 
         for (let i = 0; i < parts.length; i++) {
@@ -555,7 +589,7 @@ export class MessageService {
         await this.replyToChat(currentChat, responseText);
       }
 
-      if (processed.context.isFirstContact && userConfig.utilities.firstTimeWelcome) {
+      if (processed.context.isFirstContact && utilities.firstTimeWelcome) {
         responseText = processed.context.clientName !== AppConstants.DEF_USER_NAME
           ? `${responseMessages.ByTheWay} ${responseMessages.FirstContact1}${processed.context.clientName}${responseMessages.FirstContact2}`
           : `${responseMessages.ByTheWay} ${responseMessages.FirstContactWithNoName}`;

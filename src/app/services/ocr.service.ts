@@ -58,6 +58,7 @@ export class OcrService {
           \n${responseMessages.PendingMessage2} ${senderId}\n\n${responseMessages.BankTransferVoucherReceived}\n\n${AppConstants.NOT_REPLY}`;
         session.client.sendMessage(currentNotificationUser, notificationMessage);
         session.client.sendMessage(currentNotificationUser, media, { caption: message._data.caption });
+
         return true;
       } else {
         return false;

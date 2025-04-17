@@ -191,6 +191,7 @@ export class ConversationManager {
       chatId: currentChatId,
       clientName: processedName,
       timeOfLastMessage: new Date(),
+      isConfirmationPhase: false,
       isFirstContact: true,
       shouldRespond: true,
       shouldDeleteAfterContact: false,

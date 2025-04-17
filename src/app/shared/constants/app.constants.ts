@@ -51,6 +51,7 @@ export class AppConstants {
 
 export enum AuxiliarMessages {
   AvailableDates = 'Fechas disponibles para el servicio ',
+  BankTransferDone = 'Confirmo, transferencia lista',
   BankTransferPayment = 'Pago por transferencia bancaria',
   CurrentDateTime = 'Fecha y hora actual:',
   DynamicContext = 'Importante, contexto dinámico:',

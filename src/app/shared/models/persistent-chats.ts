@@ -13,6 +13,7 @@ const HistoryStructureSchema = new Schema<IChatStructure>({
     chatHistory: [ChatGptHistoryBodySchema],
     chatId: { type: String, required: true },
     clientName: { type: String, required: true },
+    isConfirmationPhase: { type: Boolean, required: true },
     isFirstContact: { type: Boolean, required: true },
     sessionId: { type: String, required: true },
     shouldDeleteAfterContact: { type: Boolean, required: true },

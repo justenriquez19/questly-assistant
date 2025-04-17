@@ -1,6 +1,12 @@
 import { Document } from "mongoose";
 
+export interface IActiveUtilities {
+  isActive: boolean;
+  triggers: Array<string>;
+}
+
 export interface IUtilities {
+  detectConfirmationPhase: IActiveUtilities;
   firstTimeWelcome: boolean;
   shouldSplitMessages: boolean;
 }
