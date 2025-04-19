@@ -2,7 +2,7 @@ import { Job } from 'agenda';
 
 import { AI_SYSTEM } from '../index';
 import { IConfirmationReminderJob, IReminderDelayConfig } from '../app/shared/interfaces/jobs/confirmation-reminder.interface';
-import { ErrorMessages, WarningMessages } from '../app/shared/constants/app.constants';
+import { ErrorMessages, GptRoles, WarningMessages } from '../app/shared/constants/app.constants';
 
 /**
  * @description Job that handles sending confirmation reminders to users.
@@ -38,17 +38,30 @@ export class ConfirmationReminderJob {
       const session = AI_SYSTEM.sessionService.getSessionById(sessionId);
       if (!session) return this.stopJob(job);
 
-      const currentDelay = delays.find((delay) => delay.attempt === attempt);
+      const currentDelay = delays.find((delay: IReminderDelayConfig) => {
+        return delay.attempt === attempt;
+      });
+
       if (!currentDelay) return this.stopJob(job);
 
-      await AI_SYSTEM.conversationManager.sendNotification(session, senderId, currentDelay.message);
+      const responseMessage = currentDelay.message;
+
+      await AI_SYSTEM.conversationManager.sendNotification(session, senderId, responseMessage);
+      await AI_SYSTEM.conversationManager.addNewMessage(responseMessage, senderId, sessionId, GptRoles.Assistant)
 
       if (attempt >= delays.length - 1) {
         return this.stopJob(job);
       }
 
-      job.attrs.data.attempt = attempt + 1;
-      await job.schedule(currentDelay.time).save();
+      const nextAttempt = attempt + 1;
+      const delayToAppy = delays.find((delay: IReminderDelayConfig) => {
+        return delay.attempt === nextAttempt;
+      });
+
+      if (!delayToAppy) return this.stopJob(job);
+
+      job.attrs.data.attempt = nextAttempt;
+      await job.schedule(delayToAppy.time).save();
     } catch (error) {
       console.error(`${ErrorMessages.ErrorSettingReminder} ${senderId}: `, error);
     }
