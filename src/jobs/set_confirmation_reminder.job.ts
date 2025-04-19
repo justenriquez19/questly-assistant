@@ -27,12 +27,9 @@ export class ConfirmationReminderJob {
 
     try {
       const userConfig = await AI_SYSTEM.userConfigDataService.getConfigBySession(sessionId);
-      const context = await AI_SYSTEM.chatDataService.getContextByChatId(senderId, sessionId);
       const reminderConfig = userConfig.utilities.detectConfirmationPhase;
       const delays: Array<IReminderDelayConfig> | undefined = reminderConfig?.delays;
 
-      if (!context) return this.stopJob(job);
-      if (!context.isConfirmationPhase) return this.stopJob(job);
       if (!delays) return this.stopJob(job);
 
       const session = AI_SYSTEM.sessionService.getSessionById(sessionId);
@@ -44,10 +41,14 @@ export class ConfirmationReminderJob {
 
       if (!currentDelay) return this.stopJob(job);
 
+      const context = await AI_SYSTEM.chatDataService.getContextByChatId(senderId, sessionId);
+      if (!context) return this.stopJob(job);
+      if (!context.isConfirmationPhase) return this.stopJob(job);
+
       const responseMessage = currentDelay.message;
 
-      await AI_SYSTEM.conversationManager.sendNotification(session, senderId, responseMessage);
       await AI_SYSTEM.conversationManager.addNewMessage(responseMessage, senderId, sessionId, GptRoles.Assistant)
+      await AI_SYSTEM.conversationManager.sendNotification(session, senderId, responseMessage);
 
       if (attempt >= delays.length - 1) {
         return this.stopJob(job);
