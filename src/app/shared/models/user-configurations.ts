@@ -1,10 +1,20 @@
 import mongoose, { Schema } from 'mongoose';
 import { IUserConfiguration } from '../interfaces/user-configuration.interface';
 
+const DelaySchema = new Schema (
+  {
+    attempt: { type: Number, required: true },
+    message: { type: String, required: true },
+    time: { type: String, required: true }
+  },
+  { _id: false }
+);
+
 const ActiveUtilitiesSchema = new Schema (
   {
     isActive: { type: Boolean, required: true },
-    triggers: { type: [String], required: true }
+    triggers: { type: [String], required: true },
+    delays: { type: DelaySchema, required: false }
   },
   { _id: false }
 );

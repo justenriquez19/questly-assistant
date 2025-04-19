@@ -45,8 +45,9 @@ typings/
 # Optional REPL history
 .node_repl_history
 
-# dotenv environment variables file
-.env
+# dotenv environment variables files
+.env.web
+.env.worker
 
 # MacOS system files
 .DS_Store

@@ -1,0 +1,10 @@
+{
+  "watch": [
+    "src/"
+  ],
+  "ignore": [
+    "src/worker/"
+  ],
+  "ext": "ts",
+  "exec": "dotenv -e .env.web -- cross-env PROCESS_TYPE=web ts-node src/index.ts"
+}

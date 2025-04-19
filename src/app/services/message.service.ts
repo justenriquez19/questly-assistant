@@ -1,19 +1,21 @@
 import path from 'path';
-import WAWebJS, { Chat, MessageMedia } from 'whatsapp-web.js';
+import { Chat, MessageMedia } from 'whatsapp-web.js';
 
+import { AgendaService } from '../../worker/agenda.service';
 import { AiTools } from './ai-tools.service';
 import { AmeliaService } from './amelia.service';
 import {
   AppConstants,
   AuxiliarMessages,
   ContactsToIgnore,
+  DefinedPaths,
   ErrorMessages,
-  MediaTypes,
-  RegexExpressions,
+  firstEverContactTypes,
   FunctionNames,
   GptRoles,
-  DefinedPaths,
-  firstEverContactTypes
+  JobList,
+  MediaTypes,
+  RegexExpressions
 } from '../shared/constants/app.constants';
 import { ChatDataService } from '../data/chat-data.service';
 import { ConversationManager } from './conversation-manager.service';
@@ -27,6 +29,7 @@ import { UserConfigDataService } from '../data/user-config-data.service';
 
 export class MessageService {
   constructor(
+    private agendaService: AgendaService,
     private aiTools: AiTools,
     private amelia: AmeliaService,
     private chatDataService: ChatDataService,
@@ -117,9 +120,9 @@ export class MessageService {
 
           if (isAdminChat) {
             const currentChat = await message.getChat();
-            await this.replyToChat(currentChat, notificationMessage);
+            await this.conversationManager.replyToChat(currentChat, notificationMessage);
           } else {
-            await this.sendNotification(session, userConfig.notificationContacts.mainContact, notificationMessage);
+            await this.conversationManager.sendNotification(session, userConfig.notificationContacts.mainContact, notificationMessage);
           }
         }
       } else {
@@ -135,7 +138,7 @@ export class MessageService {
         }
 
         const currentChat = await message.getChat();
-        await this.replyToChat(currentChat, responseMessage);
+        await this.conversationManager.replyToChat(currentChat, responseMessage);
       }
     }
   }
@@ -355,13 +358,13 @@ export class MessageService {
         : `${responseMessages.Hello} ${responseMessages.FirstContactWithNoName}`;
       responseText = messageByMediaType !== AppConstants.EMPTY_STRING ? `${messageByUsername}\n\n${messageByMediaType}` : messageByUsername;
       await this.conversationManager.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant);
-      await this.replyToChat(currentChat, responseText);
+      await this.conversationManager.replyToChat(currentChat, responseText);
     } else {
       if (!isBankTransferImage) {
         messageByMediaType = this.getErrorMessageByMediaType(messageType, true, userConfig);
         await this.conversationManager.addNewMessage(`*${messageType}*`, senderId, sessionId, GptRoles.User);
         await this.conversationManager.addNewMessage(messageByMediaType, senderId, sessionId, GptRoles.Assistant);
-        await this.replyToChat(currentChat, messageByMediaType);
+        await this.conversationManager.replyToChat(currentChat, messageByMediaType);
       } else if (utilities.detectConfirmationPhase.isActive && context.isConfirmationPhase) {
         const chatType = MediaTypes.Chat as string;
         const confirmationMessage = {
@@ -423,7 +426,7 @@ export class MessageService {
           notificationMessage = `${responseMessages.NotificationSystem}\n\n${responseMessages.PendingMessage1} ${currentClientName}
             \n${responseMessages.PendingMessage2} ${senderId}\n\n${responseMessages.AskTalkingToYou}
             \n${responseMessages.NoInterruptionContact}\n\n${AppConstants.NOT_REPLY}`;
-          await this.sendNotification(session, currentNotificationUser, notificationMessage);
+          await this.conversationManager.sendNotification(session, currentNotificationUser, notificationMessage);
           break;
         case FunctionNames.GetUsersName:
           currentClientName = processed.args?.name as string;
@@ -440,12 +443,12 @@ export class MessageService {
           imagePath = path.join(process.cwd(), DefinedPaths.BellLocation);
           media = MessageMedia.fromFilePath(imagePath);
 
-          await this.replyToChat(currentChat, media);
+          await this.conversationManager.replyToChat(currentChat, media);
 
           notificationMessage = `${responseMessages.NotificationSystem}\n\n*${currentClientName}* ${responseMessages.OpenTheDoor}
             \n${AppConstants.NOT_REPLY}`;
 
-          await this.sendNotification(session, currentNotificationUser, notificationMessage);
+          await this.conversationManager.sendNotification(session, currentNotificationUser, notificationMessage);
           break;
         case FunctionNames.DetectQuotationRequest:
           await this.chatDataService.updateChat({
@@ -463,11 +466,11 @@ export class MessageService {
           } else {
             notificationMessage = notificationMessage + `\n\n${AppConstants.NOT_REPLY}`;
           }
-          await this.sendNotification(session, currentNotificationUser, notificationMessage);
+          await this.conversationManager.sendNotification(session, currentNotificationUser, notificationMessage);
           for (const message of messages) {
             if (message.hasMedia) {
               const media = await message.downloadMedia();
-              await this.sendNotification(session, currentNotificationUser, media);
+              await this.conversationManager.sendNotification(session, currentNotificationUser, media);
             }
           }
           mediaType = MediaTypes.Chat;
@@ -500,7 +503,7 @@ export class MessageService {
 
           const orderStatus = this.utils.replacePlaceholders(orderMessage, replacements);
 
-          await this.replyToChat(currentChat, orderStatus);
+          await this.conversationManager.replyToChat(currentChat, orderStatus);
           let chatConfig = await this.conversationManager.addNewMessage(orderStatus, senderId, sessionId, GptRoles.Assistant);
 
           if (chatConfig.clientName !== clientName) {
@@ -514,20 +517,15 @@ export class MessageService {
           notificationMessage = `${responseMessages.NotificationSystem}\n\n${responseMessages.PendingMessage1} *${chatConfig.clientName}*
           \n${responseMessages.PendingMessage2} ${senderId}\n\n${requestType}\n\n📝 Resumen:\n\n${orderSummary}\n\n💵 Total: ${orderTotal}\n\n🔄 Tipo de pago: ${paymentType}\n\n⏱️ Pasarán por el: ${arrivalTime}`;
 
-          await this.sendNotification(session, currentNotificationUser, notificationMessage);
+          await this.conversationManager.sendNotification(session, currentNotificationUser, notificationMessage);
 
           responseText = responseMessages.ConfirmationResponse;
           await this.conversationManager.addNewMessage(responseText, senderId, sessionId, GptRoles.Assistant)
 
-          await new Promise(resolve => setTimeout(resolve, 300));
+          await new Promise(resolve => setTimeout(resolve, 600));
           await currentChat.sendStateTyping();
           await this.utils.delayRandom();
-
-          await this.chatDataService.updateChat({
-            chatId: senderId,
-            sessionId: userConfig.sessionId,
-            updateFields: { isConfirmationPhase: false }
-          });
+          await this.updateIsConfirmationPhase(sessionId, senderId, false);
           break;
         case FunctionNames.DetectMenuRequest:
           responseText = responseMessages.MenuShared;
@@ -535,7 +533,7 @@ export class MessageService {
           imagePath = path.join(process.cwd(), DefinedPaths.MenuLocation);
           media = MessageMedia.fromFilePath(imagePath);
 
-          await this.replyToChat(currentChat, media);
+          await this.conversationManager.replyToChat(currentChat, media);
           break;
         default:
           responseText = processed.message.content as string;
@@ -543,21 +541,7 @@ export class MessageService {
       }
 
       if (utilities.detectConfirmationPhase.isActive) {
-        let isConfirmationMessage = false;
-
-        for (const phrase of utilities.detectConfirmationPhase.triggers) {
-          if (responseText.includes(phrase)) {
-            isConfirmationMessage = true;
-          }
-        }
-
-        if (isConfirmationMessage) {
-          await this.chatDataService.updateChat({
-            chatId: senderId,
-            sessionId: userConfig.sessionId,
-            updateFields: { isConfirmationPhase: true }
-          });
-        }
+        await this.detectAndHandleConfirmationTrigger(utilities.detectConfirmationPhase.triggers, responseText, senderId, userConfig);
       }
 
       if ((mediaType !== MediaTypes.Chat && !isBankTransferImage) || mediaType === MediaTypes.Mixed) {
@@ -573,12 +557,12 @@ export class MessageService {
 
         for (let i = 0; i < parts.length; i++) {
           const part = parts[i];
-          await this.replyToChat(currentChat, part);
+          await this.conversationManager.replyToChat(currentChat, part);
 
           const isLast = i === parts.length - 1;
 
           if (!isLast) {
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await new Promise(resolve => setTimeout(resolve, 600));
             await currentChat.sendStateTyping();
             await this.utils.delayRandom();
           }
@@ -586,7 +570,7 @@ export class MessageService {
 
         currentChat.clearState();
       } else {
-        await this.replyToChat(currentChat, responseText);
+        await this.conversationManager.replyToChat(currentChat, responseText);
       }
 
       if (processed.context.isFirstContact && utilities.firstTimeWelcome) {
@@ -638,33 +622,6 @@ export class MessageService {
       for (const message of tempMessages) {
         await this.handleMessageStorage(session, userConfig, senderId, message);
       }
-    }
-  }
-
-  /**
-   * @description Sends a response message to a chat for a session.
-   * @param {Chat} currentChat - The chat object.
-   * @param {string} response - The response message.
-   */
-  private async replyToChat(currentChat: Chat, response: WAWebJS.MessageContent): Promise<void> {
-    try {
-      await currentChat.sendMessage(response);
-    } catch (error) {
-      console.error(ErrorMessages.ReplyMessageFailed, error);
-    }
-  }
-
-  /**
-   * @description Sends a notification message to a specified phone number using the session's client.
-   * @param {string} phoneNumber - The target phone number.
-   * @param {string} message - The notification message.
-   */
-  private async sendNotification(session: SessionContext, phoneNumber: string, message: any): Promise<void> {
-    try {
-      if (!session) { return; }
-      await session.client.sendMessage(phoneNumber, message);
-    } catch (error) {
-      console.error(`${ErrorMessages.NotificationFailed} ${phoneNumber}`, error);
     }
   }
 
@@ -727,5 +684,57 @@ export class MessageService {
       newDynamicConxtext: { isActive: false, message: AuxiliarMessages.DynamicContextDisabled },
       shouldUpdate: false
     };
+  }
+
+  /**
+   * @description Detects if the user's message contains a confirmation trigger phrase.
+   * If a match is found, it sets `isConfirmationPhase` to true and schedules a reminder job.
+   * @param {Array<string>} triggers - List of phrases that indicate confirmation intent.
+   * @param {string} responseText - Text generated by GPT or sent to the user.
+   * @param {string} senderId - WhatsApp ID of the user.
+   * @param {IUserConfiguration} userConfig - User's configuration settings.
+   * @returns {Promise<void>}
+   */
+  private async detectAndHandleConfirmationTrigger(triggers: Array<string>, responseText: string,
+    senderId: string, userConfig: IUserConfiguration): Promise<void> {
+    const sessionId = userConfig.sessionId;
+    const firstDelay = userConfig.utilities.detectConfirmationPhase.delays?.find((delay: any) => delay.attempt === 0);
+    let isConfirmationMessage = false;
+
+    for (const phrase of triggers) {
+      if (responseText.includes(phrase)) {
+        isConfirmationMessage = true;
+        break;
+      }
+    }
+
+    if (!isConfirmationMessage) return;
+    if (!firstDelay) return;
+
+    await this.updateIsConfirmationPhase(sessionId, senderId, true);
+
+    await this.agendaService.getInstance()
+      .create(JobList.SetConfirmationReminder, {
+        senderId,
+        sessionId,
+        attempt: 0
+      })
+      .schedule(firstDelay.time)
+      .save();
+  }
+
+
+  /**
+   * @description Updates the `isConfirmationPhase` field in the database for a specific chat.
+   * @param {string} sessionId - The session ID of the chat. 
+   * @param {string} senderId - The sender's unique identifier.
+   * @param {boolean} newValue - The new value to set for `isConfirmationPhase`.
+   */
+  private async updateIsConfirmationPhase(sessionId: string, senderId: string, newValue: boolean): Promise<void> {
+    await this.chatDataService.updateChat({
+      chatId: senderId,
+      sessionId: sessionId,
+      updateFields: { isConfirmationPhase: newValue }
+    });
   }
 }

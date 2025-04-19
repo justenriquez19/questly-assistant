@@ -1,0 +1,7 @@
+{
+  "watch": [
+    "src/worker/"
+  ],
+  "ext": "ts",
+  "exec": "dotenv -e .env.worker -- cross-env PROCESS_TYPE=worker ts-node src/worker/start.worker.ts"
+}

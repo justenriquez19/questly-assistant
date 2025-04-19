@@ -1,8 +1,15 @@
 import { Document } from "mongoose";
 
+export interface IActiveDelays {
+  attempt: number;
+  message: string;
+  time: string;
+}
+
 export interface IActiveUtilities {
   isActive: boolean;
   triggers: Array<string>;
+  delays?: Array<IActiveDelays>;
 }
 
 export interface IUtilities {

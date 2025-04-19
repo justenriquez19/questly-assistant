@@ -267,4 +267,13 @@ export class SessionService {
     await this.resumeSession(sessionId);
     res.send(`Session for phone ${phone} has been resumed.`);
   }
+
+  /**
+   * @description Retrieves the session context by session ID.
+   * @param {string} sessionId - The session ID to retrieve.
+   * @returns {SessionContext | undefined} The session context or undefined.
+   */
+  public getSessionById(sessionId: string): SessionContext | undefined {
+    return this.sessions.get(sessionId);
+  }
 }

@@ -1,10 +1,13 @@
 import express, { Express, Request, Response } from 'express';
 
+import { AgendaService } from '../worker/agenda.service';
+import { AiTools } from './services/ai-tools.service';
 import { AmeliaService } from './services/amelia.service';
 import { AppConstants } from './shared/constants/app.constants';
 import { AuthController } from './controllers/auth.controller';
 import { AuthMiddleware } from './middlewares/auth.middleware';
 import { ChatDataService } from './data/chat-data.service';
+import { ConversationManager } from './services/conversation-manager.service';
 import { CoreUtils } from './services/core-utils.service';
 import { GptAssistant } from './services/gpt-assistant.service';
 import { MessageService } from './services/message.service';
@@ -12,14 +15,14 @@ import { MongoService } from './data/mongodb.service';
 import { OcrService } from './services/ocr.service';
 import { SessionService } from './services/session.service';
 import { UserConfigDataService } from './data/user-config-data.service';
-import { AiTools } from './services/ai-tools.service';
-import { ConversationManager } from './services/conversation-manager.service';
 
 /**
- * @description Handles WhatsApp bot interactions and server initialization for multiple sessions.
+ * @description Central application container for Questly AI.
+ * Exposes all shared services so jobs and other modules can reuse them.
  */
 export class QuestlyAi {
-  public aiTools: AiTools
+  public agendaService: AgendaService;
+  public aiTools: AiTools;
   public amelia: AmeliaService;
   public app: Express;
   public assistant: GptAssistant;
@@ -35,9 +38,11 @@ export class QuestlyAi {
   public utils: CoreUtils;
 
   /**
-   * @description Initializes the main application services and dependencies.
+   * @description Initializes core dependencies and services.
+   * `initializeApp()` must be called after connecting to Mongo.
    */
   constructor() {
+    this.agendaService = AgendaService.getInstance();
     this.mongoService = MongoService.getInstance();
     this.chatDataService = new ChatDataService();
     this.userConfigDataService = new UserConfigDataService();
@@ -48,52 +53,50 @@ export class QuestlyAi {
     this.aiTools = new AiTools(this.assistant);
     this.conversationManager = new ConversationManager(this.aiTools, this.assistant, this.chatDataService, this.utils);
     this.ocrService = new OcrService(this.conversationManager);
-    this.messageService = new MessageService(this.aiTools, this.amelia, this.chatDataService, this.conversationManager, this.ocrService, this.userConfigDataService, this.utils);
+    this.messageService = new MessageService(this.agendaService, this.aiTools, this.amelia, this.chatDataService, this.conversationManager, this.ocrService, this.userConfigDataService, this.utils);
     this.sessionService = new SessionService(this.messageService, this.userConfigDataService, this.utils);
     this.port = Number(process.env.PORT) || AppConstants.CURRENT_PORT;
     this.app = express();
-    this.initialize();
   }
 
   /**
-   * @description Initializes app by connecting to MongoDB, setting up Express, loading sessions/routes, then starting server.
+   * @description Initializes the app: Express, routes, sessions, and HTTP server.
+   * Should be called after Mongo connection and Agenda setup.
    */
-  private async initialize(): Promise<void> {
-    try {
-      await this.mongoService.connect();
-      this.setupMiddlewares();
-      this.initializeRoutes();
-      this.sessionService.autoLoadSessions();
-      this.startServer();
-    } catch (error) {
-      console.error('Error initializing QuestlyAI:', error);
-      process.exit(1);
-    }
+  public async initializeApp(): Promise<void> {
+    this.setupMiddlewares();
+    this.initializeRoutes();
+    this.sessionService.autoLoadSessions();
+    this.startServer();
   }
 
   /**
-   * @description Registers routes for session creation and QR code retrieval.
+   * @description Registers Express routes.
    */
-  private async initializeRoutes(): Promise<void> {
+  private initializeRoutes(): void {
     this.app.get('/session/:phone/create', AuthMiddleware.verifyUserSession, (req: Request, res: Response) => {
       return this.sessionService.createSessionRoute(req, res);
     });
+
     this.app.get('/session/:phone/qr', AuthMiddleware.verifyUserSession, (req: Request, res: Response) => {
       return this.sessionService.getSessionQr(req, res);
     });
+
     this.app.post('/auth/admin/token', (req: Request, res: Response) => {
       return this.authController.generateAdminToken(req, res);
     });
+
     this.app.get('/session/:phone/pause', AuthMiddleware.verifyUserSession, async (req: Request, res: Response) => {
       return await this.sessionService.pauseSessionRoute(req, res);
     });
+
     this.app.get('/session/:phone/resume', AuthMiddleware.verifyUserSession, async (req: Request, res: Response) => {
       return await this.sessionService.resumeSessionRoute(req, res);
     });
   }
 
   /**
-   * @description Configures necessary middlewares for Express.
+   * @description Sets up Express middlewares.
    */
   private setupMiddlewares(): void {
     this.app.use(express.json());
@@ -101,7 +104,7 @@ export class QuestlyAi {
   }
 
   /**
-   * @description Starts the Express server on the defined port and IP, logging a startup message.
+   * @description Starts the HTTP server.
    */
   private startServer(): void {
     this.app

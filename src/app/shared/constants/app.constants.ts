@@ -122,6 +122,7 @@ export enum ErrorMessages {
   CallingError = 'Error calling OpenAi endpoint',
   ContextNotFound = 'Context not found for chat ID:',
   DefaultMessage = 'Controlled error: ',
+  ErrorSettingReminder = 'Error setting reminder for user:',
   FailedDeletingContext = 'Failed trying to delete context for chat ID:',
   FailedUpdatingContext = 'Failed trying to update context for chat ID:',
   FailedUpdatingDynamicContext = 'Failed trying to update dynamic context for user with sessionId: ',
@@ -134,6 +135,10 @@ export enum ErrorMessages {
   shouldRereshQrView = 'QR code is not generated yet. Please reload this page.',
   TesseractProcessingError = 'Error processing image with Tesseract:',
   UnexpectedError = 'There has been an unexpected error: '
+};
+
+export enum WarningMessages {
+  WebSystemNotFound = 'Web system (AI_SYSTEM) is undefined in this context.'
 };
 
 export enum NotificationContacts {
@@ -158,6 +163,10 @@ export class RegexExpressions {
 export enum DefinedPaths {
   BellLocation = 'assets/media/images/bell_location.jpg',
   MenuLocation = 'assets/media/images/menu.jpg'
+};
+
+export enum JobList {
+  SetConfirmationReminder = 'setConfirmationReminder',
 };
 
 export const AppPatterns = {

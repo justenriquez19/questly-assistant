@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node dist/index.js",
-    "dev": "nodemon --ext ts --exec ts-node src/index.ts",
+    "start:worker": "node dist/worker/start.worker.js",
+    "dev": "concurrently -n WEB,WORKER -c green,blue \"npm run dev:web\" \"npm run dev:worker\"",
+    "dev:web": "nodemon --config nodemon.web.json",
+    "dev:worker": "nodemon --config nodemon.worker.json",
     "build": "tsc"
   },
   "keywords": [],
@@ -13,12 +16,16 @@
   "license": "ISC",
   "devDependencies": {
     "@flydotio/dockerfile": "^0.5.7",
+    "@types/agenda": "^4.1.4",
     "@types/axios": "^0.14.4",
     "@types/node": "^22.13.5",
     "@types/qrcode": "^1.5.5",
     "@types/qrcode-terminal": "^0.12.2",
     "@typescript-eslint/eslint-plugin": "^8.25.0",
     "@typescript-eslint/parser": "^8.25.0",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "dotenv-cli": "^8.0.0",
     "eslint": "^8.57.1",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-deprecation": "^3.0.0",
@@ -31,6 +38,7 @@
   "dependencies": {
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.9",
+    "agenda": "^5.0.0",
     "axios": "^1.7.9",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",

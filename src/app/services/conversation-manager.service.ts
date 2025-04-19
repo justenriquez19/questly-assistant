@@ -1,10 +1,12 @@
 import { Document } from 'mongoose';
+import WAWebJS, { Chat } from 'whatsapp-web.js';
 
 import { AiTools } from './ai-tools.service';
 import {
   AppConstants,
   AuxiliarMessages,
   AvailableGptModels,
+  ErrorMessages,
   FunctionNames,
   GptRoles,
 } from '../shared/constants/app.constants';
@@ -12,9 +14,10 @@ import { ChatDataService } from '../data/chat-data.service';
 import { CoreUtils } from './core-utils.service';
 import { GptAssistant } from './gpt-assistant.service';
 import { IChatGptHistoryBody, IChatStructure } from '../shared/interfaces/persistent-chats.interface';
+import { IProcessFunctions } from '../shared/interfaces/gpt-interfaces';
 import { IUserConfiguration } from '../shared/interfaces/user-configuration.interface';
 import { PersistentChatModel } from '../shared/models/persistent-chats';
-import { IProcessFunctions } from '../shared/interfaces/gpt-interfaces';
+import { SessionContext } from '../shared/interfaces/session.interfaces';
 
 export class ConversationManager {
   constructor(
@@ -214,5 +217,34 @@ export class ConversationManager {
     await newContext.save();
 
     return newContext;
+  }
+
+  /**
+   * @description Sends a notification message to a specified phone number using the session's client.
+   * @param {string} phoneNumber - The target phone number (with or without @c.us).
+   * @param {string} message - The notification message.
+   */
+  public async sendNotification(session: SessionContext, phoneNumber: string, message: any): Promise<void> {
+    try {
+      if (!session) return;
+
+      const chatId = phoneNumber.includes(AppConstants.WHATSAPP_USER_KEY) ? phoneNumber : `521${phoneNumber}${AppConstants.WHATSAPP_USER_KEY}`;
+      await session.client.sendMessage(chatId, message);
+    } catch (error) {
+      console.error(`${ErrorMessages.NotificationFailed} ${phoneNumber}`, error);
+    }
+  }
+
+  /**
+   * @description Sends a response message to a chat for a session.
+   * @param {Chat} currentChat - The chat object.
+   * @param {string} response - The response message.
+   */
+  public async replyToChat(currentChat: Chat, response: WAWebJS.MessageContent): Promise<void> {
+    try {
+      await currentChat.sendMessage(response);
+    } catch (error) {
+      console.error(ErrorMessages.ReplyMessageFailed, error);
+    }
   }
 }
